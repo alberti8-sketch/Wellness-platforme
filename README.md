@@ -134,13 +134,24 @@ frontend/
   components/territory-map.tsx
   public/geo/departements.geojson   contours des 96 départements métropolitains
 data/
-  sources/WP25.xlsx          classeur de l'équipe (Drive « HACKATHON 13/11/26 / DATA SCORING »)
-  wp25_communes.xlsx         WP25 converti au format de la plateforme (14 communes)
+  wp25_communes.xlsx         WP25 converti au format de la plateforme (14 communes) — versionné, utilisé par la démo et les tests
   wellness_template.xlsx     modèle vierge (feuilles « data » et « dictionnaire »)
 backend/scripts/import_wp25.py   conversion WP25 → modèle (résolution des codes INSEE, population, QPV)
 backend/scripts/seed_demo.py     charge et publie WP25 via le pipeline normal
 backend/geo.py                   référentiel communes/départements + contours (cache + geo.api.gouv.fr)
 ```
+
+### Fichiers bruts du Drive (non versionnés)
+
+Les fichiers d'origine (WP25, classeur CNAM, documents de pondération, prototype 2…) restent sur le Drive
+« HACKATHON 13/11/26 » et **ne sont plus dans le dépôt** : seules leurs versions converties le sont
+(`data/wp25_communes.xlsx`, `frontend/data/*.json`). Pour régénérer ces fichiers ou lancer les tests sur
+données brutes (ignorés automatiquement sinon), télécharger localement :
+
+| Fichier du Drive | Emplacement local (ignoré par Git) | Usage |
+|---|---|---|
+| `DATA SCORING/WP25 .xlsx` | `data/sources/WP25.xlsx` | `python -m scripts.import_wp25 data/sources/WP25.xlsx` |
+| `DATA & PONDERATION/2024_effectif-departemental-….xls` | `context/` | `scripts/build_reference_data.py` + tests CNAM réels |
 
 ## Méthode de scoring
 

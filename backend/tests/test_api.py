@@ -9,9 +9,9 @@ META = {"submitted_by": "Test User", "organization": "ORS Test"}
 
 @pytest.fixture()
 def wp25_rows():
-    from scripts.import_wp25 import DEFAULT_SOURCE, convert
+    from scripts.import_wp25 import load_converted
 
-    return convert(DEFAULT_SOURCE)[0]
+    return load_converted()
 
 
 def _xlsx(rows):
@@ -21,12 +21,23 @@ def _xlsx(rows):
                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
 
 
-def test_wp25_import(wp25_rows):
+def test_wp25_converted_file(wp25_rows):
     assert len(wp25_rows) == 14
     rennes = next(r for r in wp25_rows if r["territory_code"] == "35238")
     assert rennes["territory_type"] == "urbain" and rennes["population"] == 225_000
     assert rennes["social_qpv_pct"] == 9.3
     assert {r["territory_type"] for r in wp25_rows} == {"urbain", "semi-urbain", "rural"}
+
+
+def test_converted_file_matches_raw_workbook(wp25_rows):
+    from scripts.import_wp25 import DEFAULT_SOURCE, convert
+
+    if not DEFAULT_SOURCE.exists():
+        pytest.skip("WP25 brut non versionné : placer le fichier du Drive dans data/sources/ pour ce test")
+    def filled(rows):
+        return [{k: v for k, v in r.items() if v is not None} for r in rows]
+
+    assert filled(convert(DEFAULT_SOURCE)[0]) == filled(wp25_rows)
 
 
 def test_auth_required(client):

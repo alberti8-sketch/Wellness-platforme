@@ -4,13 +4,16 @@ from pathlib import Path
 import unittest
 
 import openpyxl
+import pytest
 
 from app.department_health import parse_department_health
 from tests.conftest import ADMIN_B2B, ADMIN_B2G, CONTRIB_B2G
 
 
 ROOT = Path(__file__).resolve().parents[2]
+# Raw CNAM workbook from the team Drive — not versioned. Put it in context/ (git-ignored) to run the real-data tests.
 SOURCE = ROOT / "context/2024_effectif-departemental-par-pathologie-sexe-age_serie-annuelle.xls"
+NO_SOURCE = "Classeur CNAM brut non versionné (Drive) : le placer dans context/ pour ce test"
 
 
 def small_workbook(counts=(12, "<10", None), year=2025, department="35", cohorts=None):
@@ -28,6 +31,7 @@ def small_workbook(counts=(12, "<10", None), year=2025, department="35", cohorts
 
 
 class DepartmentParserTests(unittest.TestCase):
+    @unittest.skipUnless(SOURCE.exists(), NO_SOURCE)
     def test_real_workbook_matches_bundled_reference_and_both_sheets(self):
         parsed = parse_department_health(SOURCE.read_bytes(), SOURCE.name)
         bundled = json.loads((ROOT / "frontend/data/department-health-2024.json").read_text())
@@ -85,6 +89,7 @@ def upload(client, contents=None, filename="future.xlsx", headers=CONTRIB_B2G):
     )
 
 
+@pytest.mark.skipif(not SOURCE.exists(), reason=NO_SOURCE)
 def test_upload_reload_and_authenticated_tenant_reads(client):
     response = upload(client, contents=SOURCE.read_bytes(), filename=SOURCE.name)
     assert response.status_code == 201, response.text
