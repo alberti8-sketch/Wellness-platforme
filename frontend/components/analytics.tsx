@@ -36,7 +36,7 @@ interface Analytics {
 const Ctx = createContext<Analytics | null>(null);
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const { ready, catalog, apiKey } = useSession();
+  const { ready, catalog, apiKey, loggedIn } = useSession();
   const defaults = useMemo(() => (catalog ? Object.fromEntries(catalog.dimensions.map((d) => [d.code, d.default_weight])) : null), [catalog]);
   const [weights, setWeightsState] = useState<Record<string, number> | null>(null);
   const [period, setPeriod] = useState<number | null>(null);
@@ -99,7 +99,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    if (!ready || !weights) return;
+    if (!ready || !weights || !loggedIn) return;
     const t = setTimeout(() => {
       setLoading(true);
       const q = new URLSearchParams({ weights: weightsParam });
@@ -115,7 +115,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         .finally(() => setLoading(false));
     }, 200);
     return () => clearTimeout(t);
-  }, [ready, weights, weightsParam, period, ttype, apiKey]);
+  }, [ready, weights, weightsParam, period, ttype, apiKey, loggedIn]);
 
   // Deep link ?territoire=<code> opens the side panel; keep the URL in sync (shareable).
   useEffect(() => {

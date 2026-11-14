@@ -19,7 +19,14 @@ interface Session {
   error: string | null;
   ready: boolean;
   isAdmin: boolean;
+  /** Demo sign-in: a flag remembered in this browser (replace with real auth / SSO). */
+  loggedIn: boolean;
+  authReady: boolean;
+  login: () => void;
+  logout: () => void;
 }
+
+const AUTH_KEY = "wellness.signedIn";
 
 const SessionContext = createContext<Session | null>(null);
 
@@ -66,9 +73,48 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  useEffect(() => {
+    try {
+      setLoggedIn(window.localStorage.getItem(AUTH_KEY) === "1");
+    } catch {
+      /* storage unavailable: signed out */
+    }
+    setAuthReady(true);
+  }, []);
+  const login = useCallback(() => {
+    setLoggedIn(true);
+    try {
+      window.localStorage.setItem(AUTH_KEY, "1");
+    } catch {
+      /* storage unavailable: session-only sign-in */
+    }
+  }, []);
+  const logout = useCallback(() => {
+    setLoggedIn(false);
+    try {
+      window.localStorage.removeItem(AUTH_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
   const value = useMemo<Session>(
-    () => ({ apiKey, setApiKey, me, catalog, error, ready: !!me && !!catalog, isAdmin: me?.role === "admin" }),
-    [apiKey, setApiKey, me, catalog, error],
+    () => ({
+      apiKey,
+      setApiKey,
+      me,
+      catalog,
+      error,
+      ready: !!me && !!catalog,
+      isAdmin: me?.role === "admin",
+      loggedIn,
+      authReady,
+      login,
+      logout,
+    }),
+    [apiKey, setApiKey, me, catalog, error, loggedIn, authReady, login, logout],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
