@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import DepartmentHealthUpload from "@/components/DepartmentHealthUpload";
 
 import { Download, FileSpreadsheet, Keyboard, Plus, Send, Trash2, UploadCloud } from "lucide-react";
@@ -122,7 +123,12 @@ export default function CollectPage() {
     <div className="space-y-4">
       <DepartmentHealthUpload key={apiKey} />
       <PageHeader
-        title="Collecte"
+        title="Gérer les données"
+        actions={
+          <Link href="/processing" className="secondary-btn">
+            Suivre le traitement
+          </Link>
+        }
         subtitle={
           <>
             Déposez des indicateurs <strong className="font-medium text-ink">agrégés par territoire</strong>. Les données sont validées avant envoi, puis traitées par le pipeline et

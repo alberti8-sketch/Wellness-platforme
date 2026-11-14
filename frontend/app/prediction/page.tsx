@@ -1,5 +1,6 @@
 "use client";
 
+import { NextStep } from "@/components/next-step";
 import { Info, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
@@ -99,7 +100,7 @@ export default function PredictionPage() {
   return (
     <div>
       <PageHeader
-        title="Prédiction des maladies"
+        title="Prédire les maladies"
         subtitle="Arbre de décision entraîné sur les 96 départements de métropole : à partir du profil d'un territoire, il prédit la prévalence d'une maladie chronique."
         actions={
           <div className="seg" role="group" aria-label="Maladie prédite">
@@ -338,6 +339,7 @@ export default function PredictionPage() {
           </p>
         </>
       )}
+      <NextStep step={3} />
     </div>
   );
 }

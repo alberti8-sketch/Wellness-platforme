@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   AlertCircle,
   AlertTriangle,
@@ -69,7 +70,15 @@ function ProcessingHub() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Traitement" subtitle="Suivi du pipeline déterministe, inspection des valeurs, corrections et validation avant publication." />
+      <PageHeader
+        title="Traitement des données"
+        subtitle="Suivi du pipeline, inspection des valeurs, corrections et validation avant publication."
+        actions={
+          <Link href="/collect" className="secondary-btn">
+            Déposer des données
+          </Link>
+        }
+      />
       {error && <ErrorBox>{error}</ErrorBox>}
       <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <Card title="Jeux de données" actions={<Button variant="ghost" icon={RefreshCw} onClick={loadList} aria-label="Rafraîchir" />} className="h-fit">

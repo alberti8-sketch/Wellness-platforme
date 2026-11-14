@@ -1,40 +1,14 @@
 "use client";
 
-import { Activity, BarChart3, Building2, Database, GitCompareArrows, HeartPulse, LayoutGrid, LogOut, Map, Network, SlidersHorizontal, Upload, Workflow, X } from "lucide-react";
+import { Activity, Database, GitCompareArrows, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useAnalytics } from "./analytics";
+import { STEPS } from "@/lib/steps";
 import { DEMO_ACCOUNTS, useSession } from "./session";
 import { TerritoryDrawer } from "./territory-drawer";
 import { ErrorBox, cx } from "./ui";
-
-const SECTIONS = [
-  {
-    title: "Analyse",
-    items: [
-      { href: "/dashboard", label: "Tableau de bord", icon: LayoutGrid },
-      { href: "/prediction", label: "Prédiction maladies", icon: Network },
-      { href: "/carte", label: "Carte & graphique", icon: Map },
-      { href: "/classement", label: "Classement", icon: BarChart3 },
-      { href: "/ponderation", label: "Pondération & méthode", icon: SlidersHorizontal },
-    ],
-  },
-  {
-    title: "Référentiels",
-    items: [
-      { href: "/villes", label: "Villes WP25", icon: Building2 },
-      { href: "/sante", label: "Santé CNAM", icon: HeartPulse },
-    ],
-  },
-  {
-    title: "Données",
-    items: [
-      { href: "/collect", label: "Collecte", icon: Upload },
-      { href: "/processing", label: "Traitement", icon: Workflow },
-    ],
-  },
-];
 
 function initials(name: string) {
   return name
@@ -85,7 +59,6 @@ function GlobalDrawer() {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { apiKey, setApiKey, me, error, loggedIn, authReady, logout } = useSession();
-  const { overview } = useAnalytics();
   const router = useRouter();
   const isLanding = pathname === "/";
 
@@ -110,40 +83,43 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        <nav className="flex flex-col gap-4 overflow-y-auto">
-          {SECTIONS.map((s) => (
-            <div key={s.title} className="flex flex-wrap gap-1 md:flex-col">
-              <p className="mb-1.5 w-full px-3 text-xs font-medium text-ink-muted">{s.title}</p>
-              {s.items.map(({ href, label, icon: Icon }) => {
-                const on = pathname?.startsWith(href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    aria-current={on ? "page" : undefined}
-                    className={cx(
-                      "flex min-h-[40px] items-center gap-2.5 rounded-[10px] px-3 text-sm transition",
-                      on ? "bg-primary font-medium text-white" : "text-[#3A3D44] hover:bg-hover",
-                    )}
-                  >
-                    <Icon className="h-[18px] w-[18px]" aria-hidden />
-                    {label}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+        <nav aria-label="Étapes" className="flex flex-wrap gap-1 md:flex-col">
+          {STEPS.map(({ href, label, hint }, i) => {
+            const on = pathname?.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={on ? "page" : undefined}
+                className={cx("flex min-h-[52px] items-center gap-3 rounded-xl px-3 transition", on ? "bg-primary text-white" : "text-ink hover:bg-hover")}
+              >
+                <span
+                  className={cx("num grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold", on ? "bg-white text-ink" : "bg-plane text-ink-2")}
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium">{label}</span>
+                  <span className={cx("hidden text-xs md:block", on ? "text-white/70" : "text-ink-muted")}>{hint}</span>
+                </span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="mt-auto flex flex-col gap-3">
-          <div className="rounded-xl bg-plane p-3.5 text-xs leading-relaxed text-ink-2">
-            <p className="flex items-center gap-1.5 font-semibold text-ink">
-              <Database className="h-3.5 w-3.5" aria-hidden /> Jeu publié · {overview?.period ?? "—"}
-            </p>
-            <p>
-              {overview?.territories.length ?? 0} territoires · données agrégées uniquement
-            </p>
-          </div>
+          {me && me.role !== "viewer" && (
+            <Link
+              href="/collect"
+              className={cx(
+                "inline-flex min-h-[40px] items-center gap-2 rounded-[10px] px-3 text-[13px] transition",
+                pathname?.startsWith("/collect") || pathname?.startsWith("/processing") ? "bg-hover font-medium text-ink" : "text-ink-2 hover:bg-hover",
+              )}
+            >
+              <Database className="h-4 w-4" aria-hidden /> Gérer les données
+            </Link>
+          )}
           <div className="flex items-center gap-2.5 px-2">
             <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-hairline text-xs font-semibold text-ink">
               {me ? initials(me.name) : "··"}
@@ -162,16 +138,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <LogOut className="h-4 w-4" aria-hidden /> Se déconnecter
           </button>
-          <label className="px-2 text-xs text-ink-muted">
-            <span className="mb-1 block">Compte de démo</span>
-            <select value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="h-10 w-full rounded-[10px] border border-line bg-white px-2 text-[13px] text-ink">
+          <details className="px-2 text-xs text-ink-muted">
+            <summary className="cursor-pointer select-none py-1 hover:text-ink">Changer de compte (démo)</summary>
+            <select
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              aria-label="Compte de démo"
+              className="mt-1.5 h-10 w-full rounded-[10px] border border-line bg-white px-2 text-[13px] text-ink"
+            >
               {DEMO_ACCOUNTS.map((a) => (
                 <option key={a.key} value={a.key}>
                   {a.label}
                 </option>
               ))}
             </select>
-          </label>
+          </details>
         </div>
       </aside>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { NextStep } from "@/components/next-step";
 import { ArrowDown, ArrowUp, GitCompareArrows, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -90,7 +91,7 @@ export default function ClassementPage() {
   return (
     <div>
       <PageHeader
-        title="Classement des territoires"
+        title="Comparer les villes"
         subtitle={`Triez, filtrez et comparez les territoires dimension par dimension · ${overview?.period ?? ""}`}
         actions={<CityPicker align="right" onValidate={showComparison} />}
       />
@@ -232,6 +233,7 @@ export default function ClassementPage() {
           )}
         </Card>
       </div>
+      <NextStep step={2} />
     </div>
   );
 }

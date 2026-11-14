@@ -153,16 +153,20 @@ données brutes (ignorés automatiquement sinon), télécharger localement :
 | `DATA SCORING/WP25 .xlsx` | `data/sources/WP25.xlsx` | `python -m scripts.import_wp25 data/sources/WP25.xlsx` |
 | `DATA & PONDERATION/2024_effectif-departemental-….xls` | `context/` | `scripts/build_reference_data.py` + tests CNAM réels |
 
-## Interface (refonte d'après la maquette « Wellness Platform »)
+## Interface
 
-| Page | Contenu |
-|---|---|
-| `/dashboard` | Indicateurs clés, scores moyens par dimension, répartition par niveau, pondération active, distribution, typologies, extrêmes, couverture, **évolution du diabète 2015 → 2024**, nuage **Sport × diabète / Fast-food × diabète** |
-| `/carte` | Carte où **seule la France ressort** (le reste est grisé), repères par ville avec aperçu au survol, filtres (indicateur, typologie, niveau), couche **Fast-food** (OpenStreetMap), mode comparaison, liste « Villes à comparer » validable |
-| `/classement` | Tableau triable, recherche, filtres ; **comparaison** (jusqu'à 4 villes) : radar + tableau d'écarts (dimensions, indicateurs, maladies, environnement alimentaire) |
-| `/ponderation` | Curseurs, impact sur le classement, méthode, catalogue des indicateurs, sources des poids |
-| `/villes`, `/sante` | Scores sources WP25 (/100) ; vue CNAM de l'équipe |
-| `/collect`, `/processing` | Dépôt et pipeline |
+Landing publique (`/`) : un titre, une phrase, un bouton « Se connecter » (connexion de démo en un clic).
+Une fois connecté, l'application est un **parcours en 4 étapes** (barre latérale numérotée, bouton « Étape suivante ») :
+
+| Étape | Page | Contenu |
+|---|---|---|
+| 1. Vue d'ensemble | `/dashboard` | Indice moyen, villes Best / Middle / Bad, scores par dimension, extrêmes, évolution du diabète |
+| 2. Carte | `/carte` | Fond gris clair (Esri, sans clé ni filigrane), France mise en avant ; clic sur une ville : zoom, couleur sur 10 classes, échelle « valeur de la ville / moyenne », phrase de synthèse (style City Health Dashboard). Filtres secondaires repliés (typologie, niveau, fast-food, mode comparaison) |
+| 3. Comparer | `/classement` | Tableau triable, liste « Villes à comparer » validable, radar et tableau d'écarts |
+| 4. Prédire | `/prediction` | Arbre de décision, chemin d'une ville, simulateur « Et si… ? » |
+
+Hors du menu, accessibles par des liens : `/ponderation` (« Comment l'indice est calculé »), `/collect` et `/processing`
+(« Gérer les données », comptes autorisés), `/sante` (vue CNAM de l'équipe).
 
 Un clic sur un territoire, où qu'il soit, ouvre sa **fiche latérale** : note, dimensions, contexte, évolution des maladies,
 environnement alimentaire, indicateurs. Liens partageables : `?territoire=35238`, `?comparer=35238,44109`.
