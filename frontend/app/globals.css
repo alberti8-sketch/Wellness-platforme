@@ -28,64 +28,7 @@ input[type="range"] {
   background: #e9e9e4;
 }
 
-/* ---- City pins (maquette « Wellness Platform ») ---- */
-.city-pin {
-  background: transparent;
-  border: 0;
-}
-.city-pin__hit {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-}
-.city-pin__dot {
-  display: block;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 4px rgba(21, 23, 28, 0.35);
-  transition: transform 0.15s ease;
-}
-.city-pin__hit:hover .city-pin__dot {
-  transform: scale(1.25);
-}
-.city-pin--on .city-pin__dot {
-  box-shadow: 0 0 0 3px #15171c;
-}
-.city-pin--cmp .city-pin__dot {
-  box-shadow: 0 0 0 2px #15171c, 0 1px 4px rgba(21, 23, 28, 0.35);
-}
-.city-pin__cmp {
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #15171c;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  pointer-events: none;
-}
-.city-pin__label {
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: #15171c;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  pointer-events: none;
-}
+/* ---- Map tooltips ---- */
 .leaflet-tooltip.pin-tip {
   padding: 10px 12px;
   border: 1px solid #e7e7e2;

@@ -15,7 +15,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("WELLNESS_DATABASE_URL", f"sqlite:///{tmp_path / 'test.db'}")
     # Re-import modules bound to the database URL so each test gets a fresh DB.
     for mod in [m for m in list(sys.modules) if m.split(".")[0] in
-                {"config", "db", "models", "main", "routers", "pipeline", "security", "schemas", "geo", "app", "ml_tree", "external_data"}]:
+                {"config", "db", "models", "main", "routers", "pipeline", "security", "schemas", "geo", "app", "ml_tree", "external_data", "commune_domains"}]:
         del sys.modules[mod]
     from fastapi.testclient import TestClient
 

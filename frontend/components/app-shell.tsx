@@ -35,6 +35,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { apiKey, setApiKey, me, error, loggedIn, authReady, logout } = useSession();
   const router = useRouter();
   const isLanding = pathname === "/";
+  // The map is full-screen (floating panels), the other pages use the centred column.
+  const fullBleed = pathname?.startsWith("/carte") ?? false;
 
   // Demo sign-in gate: the app pages need a signed-in user; the landing page is public.
   useEffect(() => {
@@ -123,8 +125,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-[999_1_560px] px-4 pb-24 pt-7 md:px-8">
-        <div className="mx-auto max-w-[1320px]">
+      <main className={`min-w-0 flex-[999_1_560px] ${fullBleed ? "" : "px-4 pb-24 pt-7 md:px-8"}`}>
+        <div className={fullBleed ? "" : "mx-auto max-w-[1320px]"}>
           {error && (
             <div className="mb-4">
               <ErrorBox>{error}</ErrorBox>

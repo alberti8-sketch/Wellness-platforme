@@ -60,7 +60,7 @@ function once<T>(key: string, load: () => Promise<T>): Promise<T> {
   return cache.get(key) as Promise<T>;
 }
 
-function useLoad<T>(key: string | null, load: () => Promise<T>) {
+export function useLoad<T>(key: string | null, load: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {

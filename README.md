@@ -151,6 +151,8 @@ données brutes (ignorés automatiquement sinon), télécharger localement :
 | Fichier du Drive | Emplacement local (ignoré par Git) | Usage |
 |---|---|---|
 | `DATA SCORING/WP25 .xlsx` | `data/sources/WP25.xlsx` | `python -m scripts.import_wp25 data/sources/WP25.xlsx` |
+| Baromètre des villes marchables 2023 (liste détaillée des communes) | `data/sources/barometre_villes_marchables_2023.xlsx` | `python -m scripts.build_commune_domains` |
+| `VT_2024_cyclabilite_stationnement_commune.csv` (Vélo & Territoires) | `data/sources/` | idem |
 | `DATA & PONDERATION/2024_effectif-departemental-….xls` | `context/` | `scripts/build_reference_data.py` + tests CNAM réels |
 
 ## Interface
@@ -161,7 +163,7 @@ Une fois connecté, la barre latérale ne propose que **4 entrées**, dans l'ord
 | Entrée | Page | Contenu |
 |---|---|---|
 | Vue d'ensemble | `/dashboard` | Indice moyen, villes Best / Middle / Bad, scores par dimension, extrêmes, évolution du diabète |
-| Carte de France | `/carte` | **Carte choroplèthe des 96 départements** (diabète, maladies cardioneurovasculaires, respiratoires, cancers, pauvreté, restauration rapide, équipements sportifs, 65 ans et +), fond gris clair Esri sans clé ni filigrane ; clic sur un département : zoom, échelle « valeur / moyenne des départements », phrase de synthèse (style City Health Dashboard) |
+| Carte de France | `/carte` | **Carte plein écran par domaine** (style baromètre vélo FUB) : 5 401 communes de métropole (≥ 2 000 hab.) en cercles colorés par classe (vert = favorable), panneau flottant Marche / Vélo / Alimentation / Sport / Santé / Contexte, chiffre clé, légende ; recherche d'une commune (« Nos villes » en raccourci), zoom et fiche avec les pastilles de tous les domaines. Les indicateurs départementaux (diabète, prévention, Framingham, pauvreté, vétérinaires) s'affichent en choroplèthe des départements |
 | Comparer | `/classement` | Un seul sélecteur « Villes à comparer » (2 à 4 villes), radar et tableau d'écarts, puis le classement complet |
 | Prédire | `/prediction` | Arbre de décision, chemin d'une ville, simulateur « Et si… ? » |
 
@@ -171,6 +173,23 @@ Hors du menu, accessibles par des liens : `/ponderation` (« Comment l'indice es
 Un clic sur un territoire, où qu'il soit, ouvre sa **fiche latérale** : note, dimensions, contexte, évolution des maladies,
 environnement alimentaire, indicateurs. Liens partageables : `?territoire=35238`, `?comparer=35238,44109`.
 Carte : `python -m scripts.build_france_mask` (dev, shapely) régénère le masque `frontend/public/geo/france-*.geojson`.
+
+## Carte par domaine — données communales
+
+`python -m scripts.build_commune_domains` (~2 min, appels mis en cache dans `backend/data/cache/commune_domains/`) produit
+`data/ml/communes_domaines_2024.csv`, servi par `GET /api/communes/domaines` (format colonnes / lignes, gzip ~220 Ko).
+
+| Domaine | Indicateur (commune) | Source |
+|---|---|---|
+| Marche | Classe A+ → G et indice /20, sécurité, confort, effort de la ville, services | Baromètre des villes marchables 2023 (235 communes appariées par nom + département) |
+| Vélo | Part de la voirie avec aménagement cyclable (km aménagés / km de voirie), stationnement pour 1 000 hab. | Vélo & Territoires 2024 |
+| Alimentation | Fast-foods et snacks (NAF 56.10C), restaurants traditionnels (56.10A) pour 10 000 hab. | SIRENE, établissements actifs (agrégat opendatasoft) |
+| Sport | Équipements sportifs pour 10 000 hab. ; taux de pratique INJEP 2023 de la taille d'agglomération (contexte national) | Recensement des équipements sportifs ; Baromètre national des pratiques sportives 2023, p. 33 |
+| Santé | Cabinets de médecine générale (86.21Z) pour 10 000 hab. | SIRENE |
+
+Classes : quintiles des communes affichées, arrondis ; la classe verte est la plus favorable à la santé (bleu quand
+l'indicateur n'a pas de sens favorable : restaurants, densité). Le baromètre INJEP est une enquête nationale
+(~4 000 personnes) : il ne mesure pas la pratique d'une commune, il donne le taux moyen des agglomérations de même taille.
 
 ## Prédiction du diabète (arbre de décision) — `/prediction`
 
@@ -228,7 +247,7 @@ Source : `Maladies_chroniques_habitudes_de_vie_prototype2.xlsx` (Drive DATA SCOR
 **indice de comportement préventif (ICP, 0-100)** avec sa typologie. Fichier brut à placer dans `data/sources/`, colonnes
 intégrées par `scripts/build_ml_dataset.py` dans `data/ml/departements_2024.csv`.
 
-Utilisation : carte de France (groupe « Prévention »), fiche d'une ville (section Prévention, valeur de son département),
+Utilisation : carte de France (domaine « Santé », Prévention), fiche d'une ville (section Prévention, valeur de son département),
 comparaison (ICP, dépistage, vaccination). Les 14 villes reçoivent aussi la **prévalence du diabète de leur département**
 (enrichissement de la dimension résultat, poids 0). Les feuilles MRMI/ERMI et « Croisement territorial » du classeur
 reposent sur des valeurs fictives de démonstration : elles ne sont pas utilisées.
