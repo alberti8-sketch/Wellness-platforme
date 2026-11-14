@@ -1,16 +1,32 @@
 "use client";
 
-import { Activity, ArrowRight, GitCompareArrows, Map, Network } from "lucide-react";
+import { Activity, ArrowRight, Columns2, MapPin, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { FranceSilhouette } from "@/components/france-silhouette";
 import { useSession } from "@/components/session";
+import { BAND_META } from "@/lib/bands";
+import type { BandCode } from "@/lib/types";
 
 const FEATURES = [
-  { icon: Map, label: "Carte des villes" },
-  { icon: GitCompareArrows, label: "Comparer" },
-  { icon: Network, label: "Prédire les maladies" },
+  { icon: MapPin, title: "Situez chaque ville", text: "Sur une carte de France : marche, vélo, alimentation, sport et santé." },
+  { icon: Columns2, title: "Comparez-les", text: "Jusqu'à 4 villes côte à côte, thème par thème, et le podium des meilleures." },
+  { icon: TrendingUp, title: "Anticipez les maladies", text: "Estimez le diabète à partir du profil d'une ville." },
 ];
+
+// Static preview of a city sheet (demo values of Annecy, as shown in the app).
+const PREVIEW: { name: string; type: string; score: string; band: BandCode; rank: string; dims: [string, number, BandCode][] } = {
+  name: "Annecy",
+  type: "Ville",
+  score: "7,9",
+  band: "best",
+  rank: "2ᵉ sur 14 villes suivies",
+  dims: [
+    ["Sport", 9, "best"],
+    ["Environnement", 7.8, "best"],
+    ["Offre de soins", 8.7, "best"],
+    ["Social", 4.2, "middle"],
+  ],
+};
 
 /** Public landing page (signed-out). Signed-in users go straight to the app. */
 export default function LandingPage() {
@@ -25,64 +41,82 @@ export default function LandingPage() {
     login();
     router.push("/dashboard");
   };
+  const band = BAND_META[PREVIEW.band];
 
   return (
-    <div className="flex min-h-screen flex-col bg-plane">
-      <header className="flex items-center justify-between px-5 py-5 md:px-10">
-        <span className="flex items-center gap-3">
-          <span className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-primary text-white" aria-hidden>
+    <div className="flex min-h-screen flex-col bg-plane text-ink">
+      <header className="px-5 py-6 md:px-12">
+        <div className="mx-auto flex max-w-[1180px] items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-ink text-white" aria-hidden>
             <Activity className="h-[18px] w-[18px]" />
           </span>
-          <span className="text-base font-semibold tracking-[-0.01em] text-ink">Wellness</span>
-        </span>
-        <button onClick={signIn} className="secondary-btn h-10">
-          Se connecter
-        </button>
+          <span className="text-lg font-semibold">Wellness</span>
+        </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-10 px-5 pb-12 md:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div>
-          <span className="inline-flex h-7 items-center rounded-full border border-hairline bg-white px-3 text-xs font-medium text-ink-2">Santé populationnelle · démo</span>
-          <h1 className="mt-5 text-[40px] font-semibold leading-[1.05] tracking-[-0.035em] text-ink md:text-[56px]">
-            La santé de vos territoires, en un coup d'œil.
-          </h1>
-          <p className="mt-5 max-w-md text-[17px] leading-relaxed text-ink-muted">Comparez les villes et anticipez les maladies chroniques.</p>
+      <main className="flex-1 px-5 pb-12 pt-8 md:px-12">
+        <div className="mx-auto flex max-w-[1180px] flex-col gap-14">
+          <div className="flex flex-wrap items-center gap-12">
+            <div className="flex min-w-0 flex-[1_1_420px] flex-col items-start gap-6">
+              <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[13px] text-ink-muted">Démo · santé des territoires</span>
+              <h1 className="text-[40px] font-semibold leading-[1.05] tracking-[-0.025em] md:text-[56px]">La santé de vos villes, en un coup d&apos;œil.</h1>
+              <p className="max-w-[480px] text-[17px] text-ink-muted md:text-[19px]">
+                Un indice de bien-être de 1 à 10 pour chaque ville, pour la comparer aux autres et anticiper les maladies chroniques.
+              </p>
+              <button onClick={signIn} className="inline-flex h-[52px] items-center gap-2.5 rounded-xl bg-ink px-6 font-semibold text-white hover:bg-black">
+                Se connecter <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
+              </button>
+            </div>
 
-          <button onClick={signIn} className="mt-8 inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-6 text-[15px] font-semibold text-white hover:bg-brand-700">
-            Se connecter <ArrowRight className="h-4 w-4" aria-hidden />
-          </button>
+            <figure
+              aria-label="Aperçu de l'application"
+              className="flex min-w-0 flex-[1_1_420px] flex-col gap-5 rounded-[20px] border border-hairline bg-white p-7 shadow-[0_24px_48px_-32px_rgba(21,23,28,0.25)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[13px] text-ink-muted">
+                    {PREVIEW.name} · {PREVIEW.type}
+                  </span>
+                  <span className="flex items-baseline gap-2">
+                    <span className="num text-[44px] font-semibold leading-none">{PREVIEW.score}</span>
+                    <span className="text-ink-muted">/ 10</span>
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold" style={{ background: band.tint, color: band.text }}>
+                  <span className="h-[7px] w-[7px] rounded-full" style={{ background: band.color }} aria-hidden />
+                  {band.label}
+                </span>
+              </div>
+              <ul className="flex flex-col gap-3 text-sm">
+                {PREVIEW.dims.map(([label, v, b]) => (
+                  <li key={label} className="grid grid-cols-[120px_minmax(0,1fr)_32px] items-center gap-3">
+                    <span>{label}</span>
+                    <span className="h-2 rounded-full bg-[#EEEEE9]">
+                      <span className="block h-2 rounded-full" style={{ width: `${v * 10}%`, background: BAND_META[b].color }} />
+                    </span>
+                    <b className="num text-right font-semibold">{v.toLocaleString("fr-FR")}</b>
+                  </li>
+                ))}
+              </ul>
+              <figcaption className="text-[13px] text-ink-muted">{PREVIEW.rank}</figcaption>
+            </figure>
+          </div>
 
-          <ul className="mt-10 flex flex-wrap gap-2">
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <li key={label} className="inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-white pl-3 pr-4 text-sm text-ink">
-                <Icon className="h-4 w-4 text-ink-2" aria-hidden />
-                {label}
+          <ul className="grid gap-4 md:grid-cols-3">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <li key={title} className="flex flex-col gap-2 rounded-2xl border border-hairline bg-white p-6">
+                <Icon className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden />
+                <h2 className="text-[17px] font-semibold">{title}</h2>
+                <p className="text-[15px] text-ink-muted">{text}</p>
               </li>
             ))}
           </ul>
         </div>
-
-        <div className="relative mx-auto w-full max-w-[520px]">
-          <FranceSilhouette />
-          <div className="absolute bottom-0 left-0 hidden w-[200px] rounded-2xl border border-hairline bg-white p-4 shadow-[0_12px_32px_rgba(21,23,28,0.10)] sm:block" aria-hidden>
-            <p className="text-xs text-ink-muted">Indice de bien-être</p>
-            <div className="mt-3 flex h-2 overflow-hidden rounded-full">
-              <span className="flex-[3] bg-[#F6D3C8]" />
-              <span className="flex-[3] bg-[#F1E4BF]" />
-              <span className="flex-[3] bg-[#C6E4DA]" />
-            </div>
-            <div className="mt-3 space-y-2">
-              {[78, 62, 45].map((w, i) => (
-                <div key={i} className="h-1.5 rounded-full bg-[#EEEEE9]">
-                  <div className="h-full rounded-full bg-[#1F8A78]" style={{ width: `${w}%`, opacity: 1 - i * 0.25 }} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </main>
 
-      <footer className="px-5 pb-6 text-center text-xs text-ink-faint md:px-10">Données publiques agrégées · Assurance Maladie · INSEE · IGN · OpenStreetMap</footer>
+      <footer className="px-5 pb-7 pt-5 text-center text-[13px] text-ink-muted md:px-12">
+        Données publiques agrégées · Assurance Maladie · INSEE · SIRENE · Vélo &amp; Territoires · Baromètre des villes marchables
+      </footer>
     </div>
   );
 }

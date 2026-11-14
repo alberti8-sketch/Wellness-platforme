@@ -116,22 +116,3 @@ input[type="range"] {
   }
 }
 
-/* Landing: soft "ping" on decorative city pins */
-@keyframes landing-ping {
-  0% {
-    r: 7;
-    opacity: 0.35;
-  }
-  100% {
-    r: 22;
-    opacity: 0;
-  }
-}
-.landing-ping {
-  animation: landing-ping 2.4s ease-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .landing-ping {
-    animation: none;
-  }
-}
