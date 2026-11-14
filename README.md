@@ -153,6 +153,32 @@ données brutes (ignorés automatiquement sinon), télécharger localement :
 | `DATA SCORING/WP25 .xlsx` | `data/sources/WP25.xlsx` | `python -m scripts.import_wp25 data/sources/WP25.xlsx` |
 | `DATA & PONDERATION/2024_effectif-departemental-….xls` | `context/` | `scripts/build_reference_data.py` + tests CNAM réels |
 
+## Interface (refonte d'après la maquette « Wellness Platform »)
+
+| Page | Contenu |
+|---|---|
+| `/dashboard` | Indicateurs clés, scores moyens par dimension, répartition par niveau, pondération active, distribution, typologies, extrêmes, couverture, **évolution du diabète 2015 → 2024**, nuage **Sport × diabète / Fast-food × diabète** |
+| `/carte` | Carte où **seule la France ressort** (le reste est grisé), repères par ville avec aperçu au survol, filtres (indicateur, typologie, niveau), couche **Fast-food** (OpenStreetMap), mode comparaison, liste « Villes à comparer » validable |
+| `/classement` | Tableau triable, recherche, filtres ; **comparaison** (jusqu'à 4 villes) : radar + tableau d'écarts (dimensions, indicateurs, maladies, environnement alimentaire) |
+| `/ponderation` | Curseurs, impact sur le classement, méthode, catalogue des indicateurs, sources des poids |
+| `/villes`, `/sante` | Scores sources WP25 (/100) ; vue CNAM de l'équipe |
+| `/collect`, `/processing` | Dépôt et pipeline |
+
+Un clic sur un territoire, où qu'il soit, ouvre sa **fiche latérale** : note, dimensions, contexte, évolution des maladies,
+environnement alimentaire, indicateurs. Liens partageables : `?territoire=35238`, `?comparer=35238,44109`.
+Carte : `python -m scripts.build_france_mask` (dev, shapely) régénère le masque `frontend/public/geo/france-*.geojson`.
+
+## Données externes (mises en cache dans `backend/data/cache/`, non versionné)
+
+| Endpoint | Source | Contenu |
+|---|---|---|
+| `GET /api/trends/pathologies?territories=…&patho=diabete\|cardio\|respiratoire\|cancers\|risque_vasculaire` | Assurance Maladie, data.ameli.fr (`effectifs`) | Prévalence annuelle 2015 → 2024 **du département** |
+| `GET /api/food-environment?territories=…&include_points=true` | OpenStreetMap (Overpass, ODbL) | Fast-foods/snacks, restaurants, cafés par commune ; densité pour 10 000 hab. ; points pour la carte |
+
+Limites : **l'obésité n'a pas de série annuelle publique** (non suivie par l'Assurance Maladie) ; le diabète et la densité de
+fast-foods servent d'indicateurs indirects. Les ratios des petites communes (< 5 000 hab.) sont instables et signalés.
+Le recensement OSM est collaboratif (exhaustivité variable). Premier appel Overpass : ~30 s par grande ville.
+
 ## Méthode de scoring
 
 | Étape | Règle |
