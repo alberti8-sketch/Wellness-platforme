@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, Building2, Database, GitCompareArrows, HeartPulse, LayoutGrid, Map, SlidersHorizontal, Upload, Workflow, X } from "lucide-react";
+import { Activity, BarChart3, Building2, Database, GitCompareArrows, HeartPulse, LayoutGrid, Map, Network, SlidersHorizontal, Upload, Workflow, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -14,6 +14,7 @@ const SECTIONS = [
     title: "Analyse",
     items: [
       { href: "/dashboard", label: "Tableau de bord", icon: LayoutGrid },
+      { href: "/prediction", label: "Prédiction maladies", icon: Network },
       { href: "/carte", label: "Carte & graphique", icon: Map },
       { href: "/classement", label: "Classement", icon: BarChart3 },
       { href: "/ponderation", label: "Pondération & méthode", icon: SlidersHorizontal },

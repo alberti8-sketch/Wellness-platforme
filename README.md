@@ -168,6 +168,37 @@ Un clic sur un territoire, où qu'il soit, ouvre sa **fiche latérale** : note, 
 environnement alimentaire, indicateurs. Liens partageables : `?territoire=35238`, `?comparer=35238,44109`.
 Carte : `python -m scripts.build_france_mask` (dev, shapely) régénère le masque `frontend/public/geo/france-*.geojson`.
 
+## Prédiction des maladies (arbre de décision) — `/prediction`
+
+Un arbre de régression par maladie (diabète, maladies cardioneurovasculaires, respiratoires, cancers) prédit la
+prévalence à partir du profil d'un territoire. **Entraînement sur les 96 départements de métropole** (14 villes seraient
+bien trop peu), puis application aux communes.
+
+| Variable | Source | Échelle pour une commune |
+|---|---|---|
+| Part des 65 ans et plus | Assurance Maladie (population couverte par âge) | département |
+| Taux de pauvreté 2021 | INSEE (fichier `INSEE RPC_PAUVRETÉ.xlsx` du Drive) | département |
+| Densité | geo.api.gouv.fr | commune |
+| Restauration rapide / 10 000 hab. | SIRENE, NAF 56.10C, entreprises actives | commune |
+| Équipements sportifs / 10 000 hab. | Recensement des équipements sportifs (ministère des Sports) | commune |
+
+Cible : prévalence 2024 (data.ameli.fr). Arbre de 3 niveaux, ≥ 8 départements par feuille, validation croisée à 5 plis :
+
+| Maladie | Part expliquée (R², CV) | Erreur vs moyenne nationale | Variables dominantes |
+|---|---|---|---|
+| Maladies cardioneurovasculaires | 0,79 | −54 % | âge |
+| Cancers | 0,71 | −46 % | âge |
+| Diabète | 0,47 | −25 % | pauvreté, restauration rapide |
+| Respiratoires | 0,16 | −12 % | âge (faible capacité prédictive) |
+
+La page montre l'arbre (chemin de la ville surligné), l'explication de chaque prédiction, un simulateur « Et si… ? »
+et les prédictions des 14 villes. **Associations entre territoires, pas des causes** ; la prévalence observée est départementale.
+
+Données : `data/ml/departements_2024.csv` et `data/ml/communes_2024.csv` (versionnés). Pour les régénérer :
+`python -m scripts.build_ml_dataset --year 2024` (fichier INSEE dans `data/sources/`, ~3 min, API mises en cache).
+Note : la couche « Fast-food » de la carte utilise OpenStreetMap (points géolocalisés) ; le modèle utilise SIRENE
+(entreprises déclarées, source homogène) — les deux comptes ne sont pas comparables.
+
 ## Données externes (mises en cache dans `backend/data/cache/`, non versionné)
 
 | Endpoint | Source | Contenu |
