@@ -5,6 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        primary: "#10b981",
+        secondary: "#6366f1",
+        danger: "#ef4444",
+        warning: "#f59e0b",
+        success: "#22c55e",
         surface: "#fcfcfb",
         plane: "#f9f9f7",
         ink: { DEFAULT: "#0b0b0b", 2: "#52514e", muted: "#898781" },

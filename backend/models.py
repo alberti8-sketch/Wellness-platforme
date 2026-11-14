@@ -117,3 +117,15 @@ class TerritoryContext(Base):
     population: Mapped[float | None] = mapped_column(Float)
     density_km2: Mapped[float | None] = mapped_column(Float)
     source_global_score: Mapped[float | None] = mapped_column(Float)
+
+
+class DepartmentHealthDataset(Base):
+    """A CNAM reference snapshot, kept separate from scored/published indicators."""
+    __tablename__ = "department_health_datasets"
+
+    dataset_id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    source_name: Mapped[str] = mapped_column(String(255))
+    year: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

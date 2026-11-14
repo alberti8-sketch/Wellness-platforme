@@ -14,6 +14,7 @@ from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, Principal
 from db import init_db
 from routers import analytics, datasets, geo, ingest
 from security import get_principal
+from app.routers import department_health
 
 
 @asynccontextmanager
@@ -43,6 +44,7 @@ app.include_router(ingest.router)
 app.include_router(datasets.router)
 app.include_router(analytics.router)
 app.include_router(geo.router)
+app.include_router(department_health.router)
 
 
 @app.get("/api/health", tags=["system"])

@@ -31,15 +31,82 @@ npm run dev                                             # http://localhost:3000
 ```
 
 **Parcours de démo** (compte « B2G · Admin » sélectionné en haut à droite) :
-- `python -m scripts.seed_demo` publie directement les données WP25 : le tableau de bord est rempli dès le premier lancement.
-- Parcours complet : `/collect` (déposer `data/wp25_communes.xlsx`), puis `/processing` (**Approuver et publier**), puis `/dashboard`.
-- Carte : fond **Plan IGN** en couleur (mer, relief) par défaut. On peut passer en photo satellite IGN, OpenStreetMap ou sans fond via l'icône en haut à droite.
+1. `python -m scripts.seed_demo` (dans `backend/`) publie directement les 14 communes WP25 : l'onglet
+   **Published territorial analytics** est rempli dès le premier lancement. Parcours manuel équivalent :
+   `/collect` (déposer `data/wp25_communes.xlsx`), puis `/processing` (**Approuver et publier**).
+2. `/dashboard` : l'onglet **WP25 cities & CNAM counts** affiche les huit villes de référence et les effectifs CNAM.
+   L'onglet **Published territorial analytics** affiche la carte des territoires publiés (fond **Plan IGN** en couleur
+   par défaut, ou satellite IGN, OpenStreetMap ou sans fond), les curseurs de pondération, le filtre urbain /
+   semi-urbain / rural, le classement, le détail, la matrice et les exports CSV/PDF.
 
-**Mon coéquipier ne voit pas la carte ?** Le tableau de bord n'affiche la carte que si des données sont publiées
-(la base `wellness.db` n'est pas versionnée) : lancer `python -m scripts.seed_demo`. En développement, le backend
-accepte n'importe quel port `localhost` (désactiver avec `WELLNESS_CORS_DEV=0` en production).
+**La carte publiée est vide ?** Elle ne s'affiche que si des données sont publiées (la base `wellness.db` n'est pas
+versionnée) : lancer `python -m scripts.seed_demo`. En développement, le backend accepte n'importe quel port
+`localhost` (désactiver avec `WELLNESS_CORS_DEV=0` en production).
 
 Tests backend : `cd backend && .venv/Scripts/python -m pytest -q`
+
+Linux/macOS : `cd backend && .venv/bin/python -m pytest -q`.
+Frontend : `cd frontend && npm run typecheck && npm run build`.
+
+## WP25 et statistiques CNAM par département
+
+Le tableau de bord réunit deux vues complémentaires, sans mélanger leurs échelles :
+
+- **WP25 cities & CNAM counts** : Annecy (74), Rennes (35), Nantes (44), Brest (29),
+  Besançon (25), Montreuil (93), Nice (06) et Marseille (13). Les positions sont des
+  centres de villes approximatifs, pas des limites administratives. Les scores Sport,
+  Environnement, Health Care et Global de la feuille `CITY` restent sur leur échelle
+  source **0–100** ; Global n'est pas recalculé. Les codes postaux sont conservés comme
+  libellés de source, y compris les zéros initiaux. La carte de référence utilise
+  les tuiles OpenStreetMap ; la carte analytique publiée utilise les contours locaux.
+- **Published territorial analytics** : les données validées par le pipeline du MVP,
+  notées de **1 à 10**, publiées après approbation et pondérées selon le catalogue.
+
+Le fichier fourni `2024_effectif-departemental-par-pathologie-sexe-age_serie-annuelle.xls`
+alimente la vue CNAM, avec ses deux feuilles et 63 pathologies/traitements (hors ligne Total).
+Les valeurs sont des **effectifs départementaux**, pas des effectifs communaux ni des
+prévalences. Elles ne doivent pas être divisées par les populations communales de WP25.
+Le choix d'une ville, d'une pathologie et d'une cohorte met à jour carte, graphique et table.
+Les 65 ans et plus incluent les deux sexes et recoupent les colonnes Hommes/Femmes.
+Les pathologies peuvent également se recouper : aucun total entre cohortes ou maladies
+n'est calculé. Les blancs restent absents/non applicables et `<10` reste masqué.
+
+Pour les fichiers suivants, utiliser **French Department Health Workbook** sur `/collect`.
+Ce dépôt distinct accepte `.xls` et `.xlsx` au format CNAM Tableau 7 : titre contenant
+`en YYYY`, codes départementaux en ligne 2, `Hommes`, `Femmes`, `≥ 65 ans` en ligne 3,
+`top` en B4, et pathologies en colonne A à partir de la ligne 5. Les formats non reconnus
+sont rejetés. Chaque dépôt est un instantané persistant distinct : les dépôts répétés ne
+sont jamais additionnés et une couverture partielle reste manquante.
+
+Les instantanés CNAM sont des références, séparées des indicateurs normalisés et publiés
+du pipeline. Le dépôt utilise le compte courant (`X-API-Key`, rôle contributeur ou admin) ;
+le tenant vient de la clé API, jamais d'un champ de formulaire. Le périmètre départemental
+du tenant est contrôlé. Dans la vue WP25, choisir le fichier/année dans **Workbook / reporting year**
+(**Refresh Uploaded Datasets** pour rafraîchir la liste).
+
+API : `POST /api/department-health/upload` (multipart `file`),
+`GET /api/department-health`, `GET /api/department-health/{dataset_id}`.
+Toutes ces routes exigent `X-API-Key`. La référence fournie reste disponible sans
+chargement d'un instantané privé ; les dépôts exigent l'API et sa base de données.
+
+Fichiers principaux : `frontend/components/ReferenceDashboard.tsx`,
+`frontend/components/PublishedAnalyticsDashboard.tsx`, `frontend/data/wp25-territories.json`,
+`frontend/data/department-health-2024.json`, `backend/app/department_health.py`,
+`backend/app/routers/department_health.py`.
+
+Recréer la référence CNAM depuis la racine :
+`PYTHONPATH=backend python backend/scripts/build_reference_data.py`.
+Les tests backend vérifient les deux feuilles, les huit départements, les valeurs sources,
+les blancs et `<10`, la persistance, les rôles et l'isolation des tenants.
+Le contrôle WP25 (`python -m unittest discover -s frontend/tests`) est explicitement
+ignoré si le classeur WP25 original n'est plus présent dans `context` ; la matrice extraite
+est conservée. Les tests sont aussi installables via `backend/requirements-dev.txt`.
+
+Lancement Docker Compose v2 : `docker compose up --build` (ou `./start.sh`).
+La configuration utilise `WELLNESS_DATABASE_URL` et
+`WELLNESS_CORS_ORIGINS`. `uvicorn app.main:app` reste un alias compatible de `main:app` ;
+il ne démarre pas une deuxième API différente. Les anciens modules de démonstration
+dans `backend/app` sont conservés mais leurs routes ne sont pas montées.
 
 ## Arborescence
 

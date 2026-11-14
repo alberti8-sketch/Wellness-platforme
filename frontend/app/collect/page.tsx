@@ -1,4 +1,5 @@
 "use client";
+import DepartmentHealthUpload from "@/components/DepartmentHealthUpload";
 
 import { Download, FileSpreadsheet, Keyboard, Plus, Send, Trash2, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -119,6 +120,7 @@ export default function CollectPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      <DepartmentHealthUpload key={apiKey} />
       <div>
         <h1 className="text-xl font-semibold text-ink">Portail de collecte</h1>
         <p className="text-sm text-ink-2">

@@ -62,7 +62,7 @@ _DEMO_TENANTS = {
         "b2b-corp-wellness",
         "Groupe Industriel — Qualité de vie au travail (démo)",
         StakeholderType.B2B,
-        frozenset({"35238", "44109", "29019"}),  # Rennes, Nantes, Brest
+        frozenset({"75", "69", "13", "35238", "44109", "29019"}),  # depts + Rennes, Nantes, Brest
     ),
 }
 

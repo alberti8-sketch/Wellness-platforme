@@ -13,6 +13,22 @@ body {
   background: #f4f6f8;
 }
 
+.primary-btn {
+  @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition;
+}
+
+.secondary-btn {
+  @apply bg-secondary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition;
+}
+
+.danger-btn {
+  @apply bg-danger text-white px-4 py-2 rounded-lg hover:bg-red-600 transition;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow p-6 border border-gray-200;
+}
+
 @media print {
   .no-print {
     display: none !important;
