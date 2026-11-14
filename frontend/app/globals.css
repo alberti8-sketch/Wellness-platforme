@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background: #f9f9f7;
+  color: #0b0b0b;
+}
+
+.leaflet-container {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #f4f6f8;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  section {
+    break-inside: avoid;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-axis bg-white px-3 py-2 text-sm text-ink;
+  }
+  .input:focus {
+    @apply border-brand outline-none ring-2 ring-brand/20;
+  }
+}
