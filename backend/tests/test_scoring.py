@@ -31,12 +31,12 @@ def test_bands():
     assert band(None) is None
 
 
-def test_dimension_coverage_threshold():
-    # CLIN has 3 indicators; one present = 33 % < 50 % → no score
-    res = aggregate_dimension("CLIN", {"clin_diabetes_pct": 8.0})
-    assert res.score is None and res.coverage == 0.33
-    res = aggregate_dimension("CLIN", {"clin_diabetes_pct": 8.0, "clin_cardio_pct": 6.0})
-    assert res.score == 7.0 and res.band == "best" and res.coverage == 0.67
+def test_dimension_coverage():
+    # CLIN keeps diabetes only (the example disease): missing → no score, present → full coverage.
+    res = aggregate_dimension("CLIN", {})
+    assert res.score is None and res.coverage == 0.0
+    res = aggregate_dimension("CLIN", {"clin_diabetes_pct": 7.0})
+    assert res.score == 7.0 and res.band == "best" and res.coverage == 1.0
 
 
 def test_composite_renormalises_missing_dimensions():

@@ -137,6 +137,25 @@ def departements(_: Principal = Depends(get_principal)) -> dict[str, Any]:
             "source": "Modèle de Framingham (D'Agostino 2008), données Assurance Maladie",
             "direction": "lower_is_better",
         },
+        "icp": {
+            "label": "Indice de comportement préventif (ICP)",
+            "unit": "/100",
+            "source": "Santé publique France (Odissé) 2024-2025 — moyenne des sous-indices dépistage et vaccination "
+            "(rangs percentiles entre départements)",
+            "direction": "higher_is_better",
+        },
+        "prev_sub_depistage": {
+            "label": "Dépistage des cancers (sous-indice)",
+            "unit": "/100",
+            "source": "Santé publique France (Odissé) — dépistages sein, côlon-rectum, col de l'utérus, 2024-2025",
+            "direction": "higher_is_better",
+        },
+        "prev_sub_vaccination": {
+            "label": "Vaccination (sous-indice)",
+            "unit": "/100",
+            "source": "Santé publique France (Odissé) — grippe 65 ans et +, HPV, ROR, 2025",
+            "direction": "higher_is_better",
+        },
         "vet_per10k": {
             "label": "Cabinets vétérinaires pour 10 000 hab.",
             "unit": "/10k hab.",
@@ -149,7 +168,7 @@ def departements(_: Principal = Depends(get_principal)) -> dict[str, Any]:
         "year": ml_tree.YEAR,
         "indicators": indicators,
         "departements": [
-            {"code": r["code"], "name": r["name"],
+            {"code": r["code"], "name": r["name"], "prevention_type": r.get("prevention_type"),
              "values": {**r["features"], **r.get("extras", {}), **{f"prev_{p}": v for p, v in r["targets"].items()}}}
             for r in rows
         ],

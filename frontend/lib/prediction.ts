@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
-export type PredPatho = "diabete" | "cardio" | "respiratoire" | "cancers";
+export type PredPatho = "diabete";
 export type FeatureKey = "pct_65plus" | "density_km2" | "poverty_rate" | "fastfood_per10k" | "sport_per10k";
 
 export interface TreeNode {
@@ -100,6 +100,6 @@ export interface DeptIndicator {
 export interface DeptData {
   year: number;
   indicators: Record<string, DeptIndicator>;
-  departements: { code: string; name: string; values: Record<string, number | null> }[];
+  departements: { code: string; name: string; prevention_type?: string | null; values: Record<string, number | null> }[];
 }
 export const useDepartementData = () => useLoad<DeptData>("departements", () => api.get<DeptData>("/api/prediction/departements"));

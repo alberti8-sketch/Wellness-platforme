@@ -16,16 +16,17 @@ const TerritoryMap = dynamic(() => import("@/components/territory-map"), { ssr: 
 
 // Indicators offered on the map, in display order (department level, 96 metropolitan departments).
 const GROUPS: { label: string; keys: string[] }[] = [
-  { label: "Maladies chroniques (prévalence)", keys: ["prev_diabete", "prev_cardio", "prev_respiratoire", "prev_cancers"] },
+  { label: "Maladie (exemple)", keys: ["prev_diabete"] },
+  { label: "Prévention", keys: ["icp", "prev_sub_depistage", "prev_sub_vaccination"] },
   { label: "Risque estimé", keys: ["framingham_10y"] },
   { label: "Facteurs", keys: ["poverty_rate", "fastfood_per10k", "sport_per10k", "pct_65plus"] },
   { label: "Santé animale (One Health)", keys: ["vet_per10k"] },
 ];
 const SHORT: Record<string, string> = {
   prev_diabete: "Diabète",
-  prev_cardio: "Maladies cardioneurovasculaires",
-  prev_respiratoire: "Maladies respiratoires chroniques",
-  prev_cancers: "Cancers",
+  icp: "Comportement préventif (ICP)",
+  prev_sub_depistage: "Dépistage des cancers",
+  prev_sub_vaccination: "Vaccination",
   poverty_rate: "Taux de pauvreté",
   fastfood_per10k: "Restauration rapide pour 10 000 hab.",
   sport_per10k: "Équipements sportifs pour 10 000 hab.",
@@ -75,7 +76,8 @@ export default function CartePage() {
   const isBetter = focusV != null && avg != null && better != null && (better === "high" ? focusV > avg : focusV < avg);
   const label = SHORT[key] ?? ind?.label ?? key;
   // The poverty rate is the INSEE 2021 release; the other indicators are from the dataset year.
-  const year = key === "poverty_rate" ? 2021 : d?.year;
+  const isPrevention = key === "icp" || key.startsWith("prev_sub_");
+  const year = key === "poverty_rate" ? 2021 : isPrevention ? 2025 : d?.year;
 
   return (
     <div>
@@ -90,7 +92,7 @@ export default function CartePage() {
             </h2>
             <p className="mt-2 text-[13px] text-ink-2">
               <strong className="font-semibold text-ink">Source :</strong> {ind?.source ?? "…"}
-              {d && key !== "poverty_rate" ? `, ${year}` : ""}
+              {d && key !== "poverty_rate" && !isPrevention ? `, ${year}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -156,6 +158,12 @@ export default function CartePage() {
             </>
           )}
         </p>
+        {isPrevention && (
+          <p className="mt-4 rounded-xl bg-plane px-4 py-3 text-[13px] leading-relaxed text-ink-2">
+            <strong className="font-semibold text-ink">Comment lire :</strong> score de 0 à 100 = rang du département parmi les 100 départements renseignés (100 = le meilleur). Dépistage :
+            cancers du sein, colorectal et du col de l'utérus. Vaccination : grippe des 65 ans et plus, HPV, ROR. L'ICP est la moyenne des deux.
+          </p>
+        )}
         {key === "framingham_10y" && (
           <p className="mt-4 rounded-xl bg-plane px-4 py-3 text-[13px] leading-relaxed text-ink-2">
             <strong className="font-semibold text-ink">Estimation indicative.</strong> Risque moyen à 10 ans des 40–74 ans selon le modèle de Framingham. Varient selon le

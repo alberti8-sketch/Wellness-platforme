@@ -55,8 +55,8 @@ DIMENSIONS: dict[str, Dimension] = {
         Dimension("ENV", "Environnement", "Qualité de l'air, nature, cadre de vie", 25),
         Dimension("HEALTH", "Offre de soins", "Accès et offre de soins (health care)", 30),
         Dimension("SOCIAL", "Social", "Précarité et inégalités sociales", 15),
-        Dimension("CLIN", "Maladies chroniques",
-                  "Prévalence des maladies chroniques (indicateur de résultat)", 0, is_outcome=True),
+        Dimension("CLIN", "Diabète",
+                  "Prévalence du diabète (indicateur de résultat, maladie retenue comme exemple)", 0, is_outcome=True),
     ]
 }
 
@@ -74,12 +74,8 @@ INDICATORS: dict[str, Indicator] = {
         Indicator("social_qpv_pct", "Part de la population en quartier prioritaire (QPV)", "SOCIAL", "%", L,
                   0, 30, 0, 100,
                   source_hint="WP25 — population QPV / population ; ANCT pop_QPV24_2020"),
-        Indicator("clin_diabetes_pct", "Prévalence du diabète", "CLIN", "%", L, 3, 9, 0, 100,
-                  source_hint="Assurance Maladie — effectifs par pathologie (Drive : DATA & PONDERATION)"),
-        Indicator("clin_cardio_pct", "Prévalence des maladies cardio-neurovasculaires", "CLIN", "%", L, 4, 12, 0, 100,
-                  source_hint="Assurance Maladie — Data pathologies"),
-        Indicator("clin_obesity_pct", "Prévalence de l'obésité adulte", "CLIN", "%", L, 8, 25, 0, 100,
-                  source_hint="Santé publique France"),
+        Indicator("clin_diabetes_pct", "Prévalence du diabète (département)", "CLIN", "%", L, 3, 9, 0, 100,
+                  source_hint="Assurance Maladie — data.ameli.fr 2024, valeur du département de la commune"),
     ]
 }
 

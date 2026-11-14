@@ -44,17 +44,14 @@ FEATURES: dict[str, dict[str, str]] = {
 }
 # Map-only columns of the dataset (descriptive, not tree features): the veterinary density did not
 # improve any prediction in cross-validation, and the Framingham estimate is derived from diabetes.
-EXTRA_COLUMNS = ("framingham_10y", "vet_per10k")
+EXTRA_COLUMNS = ("framingham_10y", "vet_per10k", "icp", "prev_sub_depistage", "prev_sub_vaccination",
+                 "depistage_sein", "depistage_colorectal", "depistage_col", "vacc_grippe65", "vacc_hpv", "vacc_ror")
 
 # Only measured per department: a commune inherits its department's value.
 DEPARTMENT_ONLY = {"pct_65plus", "poverty_rate"}
 
-PATHOS: dict[str, str] = {
-    "diabete": "Diabète",
-    "cardio": "Maladies cardioneurovasculaires",
-    "respiratoire": "Maladies respiratoires chroniques",
-    "cancers": "Cancers",
-}
+# Diabetes is the single disease used as an example in the product (other pathologies removed).
+PATHOS: dict[str, str] = {"diabete": "Diabète"}
 
 
 class DatasetMissing(Exception):
@@ -94,6 +91,7 @@ def load_departements() -> tuple[dict[str, Any], ...]:
             "features": {k: _num(r.get(k)) for k in FEATURES},
             "targets": {p: _num(r.get(f"prev_{p}")) for p in PATHOS},
             "extras": {k: _num(r.get(k)) for k in EXTRA_COLUMNS},
+            "prevention_type": r.get("prevention_type") or None,
         })
     return tuple(rows)
 

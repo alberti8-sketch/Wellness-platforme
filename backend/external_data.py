@@ -42,10 +42,6 @@ MAX_POINTS = 1500
 PATHOLOGIES: dict[str, tuple[str, str]] = {
     # key: (ameli `top` code of the level-1 aggregate, French label)
     "diabete": ("DIA_CAT_CAT", "Diabète"),
-    "cardio": ("MCV_CAT_CAT", "Maladies cardioneurovasculaires"),
-    "respiratoire": ("RES_CAT_EXC", "Maladies respiratoires chroniques (hors mucoviscidose)"),
-    "cancers": ("CAN_CAT_CAT", "Cancers"),
-    "risque_vasculaire": ("TFC_CAT_EXC", "Traitements du risque vasculaire (hors pathologies)"),
 }
 
 OBESITY_NOTE = (

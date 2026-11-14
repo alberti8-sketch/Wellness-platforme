@@ -43,7 +43,7 @@ def ml_data(tmp_path, monkeypatch):
 
 
 def test_model_learns_the_main_driver(ml_data, client):
-    r = client.get("/api/prediction/model?patho=cardio", headers=ADMIN_B2G)
+    r = client.get("/api/prediction/model?patho=diabete", headers=ADMIN_B2G)
     assert r.status_code == 200, r.text
     m = r.json()
     assert max(m["importances"], key=m["importances"].get) == "pct_65plus"
@@ -70,7 +70,7 @@ def test_prediction_path_and_levels(ml_data, client):
 
 def test_simulation_is_monotonic_in_age(ml_data, client):
     def sim(age):
-        body = {"patho": "cardio", "pct_65plus": age, "density_km2": 300, "poverty_rate": 14, "fastfood_per10k": 5, "sport_per10k": 25}
+        body = {"patho": "diabete", "pct_65plus": age, "density_km2": 300, "poverty_rate": 14, "fastfood_per10k": 5, "sport_per10k": 25}
         return client.post("/api/prediction/simulate", json=body, headers=ADMIN_B2G).json()["prediction"]
 
     assert sim(16) < sim(33)
@@ -96,6 +96,8 @@ def test_departements_endpoint(ml_data, client):
     assert body["indicators"]["prev_diabete"]["direction"] == "lower_is_better"
     assert body["indicators"]["sport_per10k"]["direction"] == "higher_is_better"
     d35 = next(d for d in body["departements"] if d["code"] == "35")
-    assert set(d35["values"]) >= {"prev_diabete", "poverty_rate", "fastfood_per10k", "framingham_10y", "vet_per10k"}
+    assert set(d35["values"]) >= {"prev_diabete", "poverty_rate", "fastfood_per10k", "framingham_10y", "vet_per10k", "icp"}
+    assert "prev_cardio" not in body["indicators"]  # diabetes is the only disease kept
+    assert body["indicators"]["icp"]["direction"] == "higher_is_better"
     assert body["indicators"]["framingham_10y"]["direction"] == "lower_is_better"
     assert body["indicators"]["vet_per10k"]["direction"] is None

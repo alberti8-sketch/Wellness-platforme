@@ -172,11 +172,11 @@ Un clic sur un territoire, où qu'il soit, ouvre sa **fiche latérale** : note, 
 environnement alimentaire, indicateurs. Liens partageables : `?territoire=35238`, `?comparer=35238,44109`.
 Carte : `python -m scripts.build_france_mask` (dev, shapely) régénère le masque `frontend/public/geo/france-*.geojson`.
 
-## Prédiction des maladies (arbre de décision) — `/prediction`
+## Prédiction du diabète (arbre de décision) — `/prediction`
 
-Un arbre de régression par maladie (diabète, maladies cardioneurovasculaires, respiratoires, cancers) prédit la
-prévalence à partir du profil d'un territoire. **Entraînement sur les 96 départements de métropole** (14 villes seraient
-bien trop peu), puis application aux communes.
+Le **diabète est la seule maladie retenue, à titre d'exemple** (les autres pathologies ont été retirées de l'interface).
+Un arbre de régression prédit sa prévalence à partir du profil d'un territoire. **Entraînement sur les 96 départements de
+métropole** (14 villes seraient bien trop peu), puis application aux communes.
 
 | Variable | Source | Échelle pour une commune |
 |---|---|---|
@@ -187,13 +187,10 @@ bien trop peu), puis application aux communes.
 | Équipements sportifs / 10 000 hab. | Recensement des équipements sportifs (ministère des Sports) | commune |
 
 Cible : prévalence 2024 (data.ameli.fr). Arbre de 3 niveaux, ≥ 8 départements par feuille, validation croisée à 5 plis :
+**R² = 0,47**, erreur −25 % par rapport à la moyenne nationale ; variables dominantes : pauvreté (71 %), restauration rapide (29 %).
 
-| Maladie | Part expliquée (R², CV) | Erreur vs moyenne nationale | Variables dominantes |
-|---|---|---|---|
-| Maladies cardioneurovasculaires | 0,79 | −54 % | âge |
-| Cancers | 0,71 | −46 % | âge |
-| Diabète | 0,47 | −25 % | pauvreté, restauration rapide |
-| Respiratoires | 0,16 | −12 % | âge (faible capacité prédictive) |
+Variables testées et **non retenues** car elles n'améliorent pas (ou dégradent) la prédiction en validation croisée :
+densité de vétérinaires (R² inchangé), indicateurs de prévention / ICP (R² 0,47 → 0,37).
 
 La page montre l'arbre (chemin de la ville surligné), l'explication de chaque prédiction, un simulateur « Et si… ? »
 et les prédictions des 14 villes. **Associations entre territoires, pas des causes** ; la prévalence observée est départementale.
@@ -222,6 +219,19 @@ il n'est pas utilisé comme variable de l'arbre (il dépend du diabète, ce sera
 **Vétérinaires** : cabinets vétérinaires actifs (SIRENE, NAF 75.00Z) pour 10 000 hab., par département et par commune —
 indicateur « One Health » de présence animale, affiché sur la carte. Testé comme variable de l'arbre : il n'améliore aucune
 prédiction (R² identique en validation croisée), il n'y est donc pas inclus.
+
+## Enrichissement « prévention » (classeur prototype 2)
+
+Source : `Maladies_chroniques_habitudes_de_vie_prototype2.xlsx` (Drive DATA SCORING), feuille « Comportements préventifs »
+— données Santé publique France (Odissé) par département : dépistage des cancers du sein, colorectal et du col de l'utérus
+(2024-2025), vaccination grippe 65 ans +, HPV, ROR (2025), sous-indices dépistage et vaccination (rangs percentiles) et
+**indice de comportement préventif (ICP, 0-100)** avec sa typologie. Fichier brut à placer dans `data/sources/`, colonnes
+intégrées par `scripts/build_ml_dataset.py` dans `data/ml/departements_2024.csv`.
+
+Utilisation : carte de France (groupe « Prévention »), fiche d'une ville (section Prévention, valeur de son département),
+comparaison (ICP, dépistage, vaccination). Les 14 villes reçoivent aussi la **prévalence du diabète de leur département**
+(enrichissement de la dimension résultat, poids 0). Les feuilles MRMI/ERMI et « Croisement territorial » du classeur
+reposent sur des valeurs fictives de démonstration : elles ne sont pas utilisées.
 
 ## Données externes (mises en cache dans `backend/data/cache/`, non versionné)
 

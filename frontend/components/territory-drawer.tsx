@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { BAND_META, fmt } from "@/lib/bands";
 import type { BandCode, Catalog, Territory } from "@/lib/types";
 import { useAnalytics } from "./analytics";
-import { FoodPanel, TrendPanel } from "./territory-context-panels";
+import { FoodPanel, PreventionPanel, TrendPanel } from "./territory-context-panels";
 
 const TYPE_LABEL: Record<string, string> = { urbain: "Ville", "semi-urbain": "Ville moyenne", rural: "Commune rurale" };
 
@@ -171,6 +171,7 @@ export function TerritoryDrawer({
         </section>
 
         <TrendPanel code={t.code} />
+        <PreventionPanel code={t.code} />
         <FoodPanel code={t.code} />
 
         {/* Indicators */}

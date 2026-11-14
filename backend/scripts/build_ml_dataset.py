@@ -15,6 +15,12 @@ One row per department:
            sport_per10k      sport facilities per 10,000 inhab. — Recensement des équipements sportifs
                              (ministère des Sports, data-es)
 
+Prevention (map / context only, not tree features — they lowered the diabetes CV score):
+           icp, prev_sub_depistage, prev_sub_vaccination, depistage_sein, depistage_colorectal, depistage_col,
+           vacc_grippe65, vacc_hpv, vacc_ror, prevention_type — Santé publique France (Odissé) 2024-2025, via the
+           team file « Maladies_chroniques_habitudes_de_vie_prototype2.xlsx », sheet « Comportements préventifs »
+           (put it in data/sources/). ICP = mean of the screening and vaccination sub-indices (percentile ranks 0-100).
+
 Map-only column (not a tree feature):
            framingham_10y    estimated 10-year cardiovascular risk of the 40–74 year-olds (%), Framingham
                              office-based model averaged over the department population (see framingham.py)
@@ -56,6 +62,8 @@ AMELI = "https://data.ameli.fr/api/explore/v2.1/catalog/datasets/effectifs/expor
 SIRENE = "https://recherche-entreprises.api.gouv.fr/search"
 DATA_ES = "https://equipements.sports.gouv.fr/api/explore/v2.1/catalog/datasets/data-es/exports/json"
 POVERTY_FILE = ROOT / "data" / "sources" / "INSEE_RPC_PAUVRETE.xlsx"
+PREVENTION_FILE = ROOT / "data" / "sources" / "Maladies_chroniques_habitudes_de_vie_prototype2.xlsx"
+PREVENTION_COLS = ["depistage_sein", "depistage_colorectal", "depistage_col", "vacc_grippe65", "vacc_hpv", "vacc_ror"]
 ARRONDISSEMENTS = {
     "13055": [f"132{i:02d}" for i in range(1, 17)],  # Marseille
     "75056": [f"751{i:02d}" for i in range(1, 21)],  # Paris
@@ -158,6 +166,28 @@ def framingham_by_departement(year: int, depts: dict[str, str]) -> dict[str, flo
     return {code: population_risk({k: tuple(v) for k, v in c.items()}) for code, c in cells.items()}
 
 
+def prevention_by_departement() -> dict[str, dict[str, float | str]]:
+    """Screening / vaccination rates and the preventive-behaviour index (ICP) by department."""
+    if not PREVENTION_FILE.exists():
+        raise SystemExit(f"Fichier absent : {PREVENTION_FILE} (Drive DATA SCORING / Maladies_chroniques_habitudes_de_vie_prototype2.xlsx)")
+    ws = load_workbook(PREVENTION_FILE, read_only=True, data_only=True)["Comportements préventifs"]
+    out: dict[str, dict[str, float | str]] = {}
+    for row in ws.iter_rows(min_row=5, values_only=True):
+        row = list(row) + [None] * 25
+        code = row[1]
+        if not isinstance(code, str) or not code.strip():
+            continue
+        rates = dict(zip(PREVENTION_COLS, row[4:10], strict=True))
+        out[code.strip()] = {
+            **{k: round(float(v), 1) for k, v in rates.items() if isinstance(v, (int, float))},
+            "prev_sub_depistage": round(float(row[16]), 1) if isinstance(row[16], (int, float)) else "",
+            "prev_sub_vaccination": round(float(row[17]), 1) if isinstance(row[17], (int, float)) else "",
+            "icp": round(float(row[18]), 1) if isinstance(row[18], (int, float)) else "",
+            "prevention_type": row[20] or "",
+        }
+    return out
+
+
 def sport_counts_by_departement() -> dict[str, int]:
     def load() -> dict[str, int]:
         q = urllib.parse.urlencode({"select": "dep_code_filled,count(*) as n", "group_by": "dep_code_filled"})
@@ -220,6 +250,7 @@ def main() -> None:
     sport = sport_counts_by_departement()
     poverty = poverty_by_departement()
     framingham = framingham_by_departement(year, depts)
+    prevention = prevention_by_departement()
     out_rows = []
     for i, (code, name) in enumerate(sorted(depts.items()), 1):
         counts = {"fast_food": fastfood_count(departement=code), "sport": sport.get(code, 0), "vet": vet_count(departement=code)}
@@ -233,6 +264,8 @@ def main() -> None:
             "sport_per10k": round(10_000 * counts["sport"] / p, 2) if p else "",
             "vet_per10k": round(10_000 * counts["vet"] / p, 2) if p else "",
             "framingham_10y": framingham.get(code) or "",
+            **{k: prevention.get(code, {}).get(k, "") for k in
+               ["icp", "prev_sub_depistage", "prev_sub_vaccination", *PREVENTION_COLS, "prevention_type"]},
             **{f"prev_{k}": prev[code].get(k, "") for k in PATHOS},
         })
         print(f"[{i}/{len(depts)}] {code} {name}: {counts}", flush=True)
@@ -268,6 +301,7 @@ def main() -> None:
             "sport_per10k": round(10_000 * counts["sport"] / p, 2),
             "vet_per10k": round(10_000 * counts["vet"] / p, 2),
             "framingham_10y": d["framingham_10y"], "framingham_10y_level": "departement",
+            "icp": d["icp"], "prevention_type": d["prevention_type"], "icp_level": "departement",
         })
         print(f"commune {code}: {counts}", flush=True)
     path = OUT / f"communes_{year}.csv"

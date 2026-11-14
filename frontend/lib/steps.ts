@@ -6,5 +6,5 @@ export const STEPS = [
   { href: "/dashboard", label: "Vue d'ensemble" },
   { href: "/carte", label: "Carte de France" },
   { href: "/classement", label: "Comparer" },
-  { href: "/prediction", label: "Prédire" },
+  { href: "/prediction", label: "Prédire le diabète" },
 ];

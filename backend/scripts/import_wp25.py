@@ -18,10 +18,15 @@ Mapping
   Population            -> population   ("225 K / 370" = commune 225k / agglomeration 370k)
   Pop density           -> density_km2
   ZIP code Poverty quarter / population ("35238 21K") -> social_qpv_pct = QPV population / population
+
+Enrichment (not in WP25): clin_diabetes_pct = diabetes prevalence of the commune's department
+(Assurance Maladie 2024, from data/ml/departements_<year>.csv) — department-level value, weight 0
+in the index (outcome dimension).
 """
 
 from __future__ import annotations
 
+import csv
 import re
 import sys
 import unicodedata
@@ -93,6 +98,16 @@ def parse_qpv(raw: Any) -> tuple[str | None, float | None]:
     return code, value
 
 
+ML_DEPARTEMENTS = ROOT / "data" / "ml" / "departements_2024.csv"
+
+
+def diabetes_by_departement() -> dict[str, float]:
+    if not ML_DEPARTEMENTS.exists():
+        return {}
+    with ML_DEPARTEMENTS.open(encoding="utf-8") as f:
+        return {r["dept"]: float(r["prev_diabete"]) for r in csv.DictReader(f) if r.get("prev_diabete")}
+
+
 def convert(source: Path) -> tuple[list[dict[str, Any]], list[str]]:
     wb = load_workbook(source, data_only=True)
     rows: list[dict[str, Any]] = []
@@ -126,6 +141,15 @@ def convert(source: Path) -> tuple[list[dict[str, Any]], list[str]]:
                 "health_care_score": ws.cell(r, 5).value,
                 "social_qpv_pct": qpv_pct,
             })
+
+    # Enrichment: department diabetes prevalence (Assurance Maladie) for the outcome dimension.
+    diabetes = diabetes_by_departement()
+    for row in rows:
+        code = row["territory_code"]
+        dept = code[:3] if code.startswith("97") else code[:2]
+        row["clin_diabetes_pct"] = round(diabetes[dept], 2) if dept in diabetes else None
+    if not diabetes:
+        notes.append("data/ml/departements_2024.csv absent : prévalence du diabète non renseignée")
 
     # Data-quality notes for the team.
     seen: dict[tuple, str] = {}

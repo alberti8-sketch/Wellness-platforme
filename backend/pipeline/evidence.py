@@ -87,27 +87,13 @@ S_ESTEBAN = Source("Santé publique France — Esteban (étude nationale)",
 WEIGHT_BASIS: dict[str, WeightBasis] = {
     "SPORT": WeightBasis(
         "evidence",
-        "Seule dimension documentée par des méta-analyses dans le classeur : l'activité physique réduit le risque "
-        "de toutes les grandes maladies chroniques (niveau de preuve fort pour MCV, diabète T2, HTA, cancer "
-        "colorectal) et la sédentarité l'augmente. Cohérent avec son poids élevé (30 %) et avec le poids x2 de "
-        "l'activité physique dans le score individuel SMVR du même classeur.",
+        "Dimension documentée par une méta-analyse dans le classeur pour le diabète, la maladie retenue comme "
+        "exemple : l'activité physique régulière réduit le risque de diabète de type 2 (niveau de preuve fort). "
+        "Cohérent avec son poids élevé (30 %) et avec le poids x2 de l'activité physique dans le score individuel "
+        "SMVR du même classeur.",
         evidence=(
-            Evidence("Maladies cardiovasculaires (coronaropathie, AVC)", "Activité physique régulière",
-                     "RR ≈ 0,70-0,75 (réduction du risque de 25-30 %) ; effet dose-réponse", "Fort"),
             Evidence("Diabète de type 2", "Activité physique régulière",
                      "Réduction du risque de 14-28 % chez les actifs vs inactifs", "Fort", S_INACTIVITY),
-            Evidence("Hypertension artérielle", "Activité physique",
-                     "Baisse de PA ≈ 6 % par tranche de 600 MET-min/sem ; ≈ 19 % (actifs vs sédentaires)", "Fort",
-                     S_INACTIVITY),
-            Evidence("Cancer colorectal", "Activité physique", "RR ≈ 0,80 (réduction ≈ 20 %)", "Fort"),
-            Evidence("Maladies cardiovasculaires", "Sédentarité (> 8 h/j assis)",
-                     "RR mortalité CV ≈ 1,04 par heure au-delà de 8 h/j, après ajustement sur l'AP", "Moyen",
-                     S_SEDENTARY),
-            Evidence("Dépression / anxiété", "Activité physique régulière",
-                     "RR ≈ 0,78-0,83 (effet protecteur, cohérent dans les méta-analyses)", "Moyen"),
-            Evidence("Déclin cognitif / démence", "Activité physique", "RR ≈ 0,80 (réduction ≈ 20 %)", "Moyen"),
-            Evidence("Maladie rénale chronique", "Activité physique",
-                     "RR ≈ 0,91 (les plus actifs vs les moins actifs)", "Modéré", S_CKD),
         ),
         references=(S_SPF_PA, S_BEH_PA),
     ),
@@ -132,9 +118,9 @@ WEIGHT_BASIS: dict[str, WeightBasis] = {
     ),
     "CLIN": WeightBasis(
         "outcome",
-        "Indicateur de résultat (poids 0) : sert à calibrer et valider les poids des autres dimensions, pas à "
-        "les additionner. Les prévalences de référence françaises viennent des sources ci-dessous.",
-        references=(S_BAROMETRE, S_HTA, S_ESTEBAN),
+        "Indicateur de résultat (poids 0), limité au diabète : sert à calibrer et valider les poids des autres "
+        "dimensions, pas à les additionner. Prévalences de référence françaises : sources ci-dessous.",
+        references=(S_BAROMETRE, S_ESTEBAN),
     ),
 }
 

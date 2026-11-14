@@ -144,5 +144,6 @@ def test_commune_contours_from_cache(client):
 def test_catalog_exposes_weight_sources(client):
     cat = client.get("/api/analytics/catalog", headers=ADMIN_B2G).json()
     sport = next(d for d in cat["dimensions"] if d["code"] == "SPORT")
-    assert sport["weight_basis"]["basis"] == "evidence" and len(sport["weight_basis"]["evidence"]) == 8
+    assert sport["weight_basis"]["basis"] == "evidence" and len(sport["weight_basis"]["evidence"]) == 1
+    assert "Diabète" in sport["weight_basis"]["evidence"][0]["disease"]
     assert cat["composite_basis"]["source"]["url"].startswith("https://link.springer.com")

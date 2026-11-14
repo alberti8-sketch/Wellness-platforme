@@ -9,7 +9,6 @@ import { Card, ErrorBox, Kpi, PageHeader, Spinner, cx } from "@/components/ui";
 import { fmt } from "@/lib/bands";
 import { simulate, useModel, usePredictions, type FeatureKey, type PathStep, type PredPatho } from "@/lib/prediction";
 
-const PATHOS: PredPatho[] = ["diabete", "cardio", "respiratoire", "cancers"];
 const RANGES: Record<FeatureKey, [number, number, number]> = {
   pct_65plus: [10, 35, 0.5],
   poverty_rate: [5, 35, 0.5],
@@ -45,7 +44,8 @@ function PathSentences({ path }: { path: PathStep[] }) {
 
 export default function PredictionPage() {
   const { territories } = useAnalytics();
-  const [patho, setPatho] = useState<PredPatho>("diabete");
+  // Diabetes is the single disease kept as an example.
+  const patho: PredPatho = "diabete";
   const [selected, setSelected] = useState<string>("");
   const [openLeaf, setOpenLeaf] = useState<number | null>(null);
   const [sim, setSim] = useState<Record<FeatureKey, number> | null>(null);
@@ -100,24 +100,8 @@ export default function PredictionPage() {
   return (
     <div>
       <PageHeader
-        title="Prédire les maladies"
-        subtitle="Arbre de décision entraîné sur les 96 départements de métropole : à partir du profil d'un territoire, il prédit la prévalence d'une maladie chronique."
-        actions={
-          <div className="seg" role="group" aria-label="Maladie prédite">
-            {PATHOS.map((k) => (
-              <button
-                key={k}
-                aria-pressed={patho === k}
-                onClick={() => {
-                  setPatho(k);
-                  setOpenLeaf(null);
-                }}
-              >
-                {m?.pathologies[k] ?? k}
-              </button>
-            ))}
-          </div>
-        }
+        title="Prédire le diabète"
+        subtitle="Un arbre de décision, entraîné sur les 96 départements de métropole, estime la prévalence du diabète à partir du profil d'un territoire."
       />
 
       {model.error && <ErrorBox>{model.error}</ErrorBox>}

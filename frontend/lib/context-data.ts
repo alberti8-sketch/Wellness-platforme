@@ -4,14 +4,8 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 
 // ---- /api/trends/pathologies (Assurance Maladie, data.ameli.fr, department level) ----
-export type PathoKey = "diabete" | "cardio" | "respiratoire" | "cancers" | "risque_vasculaire";
-export const PATHO_LABEL: Record<PathoKey, string> = {
-  diabete: "Diabète",
-  cardio: "Maladies cardioneurovasculaires",
-  respiratoire: "Maladies respiratoires chroniques",
-  cancers: "Cancers",
-  risque_vasculaire: "Traitements du risque vasculaire",
-};
+export type PathoKey = "diabete"; // diabetes is the single disease kept as an example
+export const PATHO_LABEL: Record<PathoKey, string> = { diabete: "Diabète" };
 
 export interface TrendPoint {
   year: number;

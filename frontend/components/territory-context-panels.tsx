@@ -1,16 +1,15 @@
 "use client";
 
 import { ArrowUpRight, Info } from "lucide-react";
-import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fmt } from "@/lib/bands";
 import { PATHO_LABEL, SMALL_POPULATION, trendDelta, useFood, useTrends, type PathoKey } from "@/lib/context-data";
+import { useDepartementData } from "@/lib/prediction";
 
-const PATHOS: PathoKey[] = ["diabete", "cardio", "respiratoire"];
 
 /** Department prevalence 2015 → latest year (data.ameli.fr). Lower is better: a rise is shown as a worsening. */
 export function TrendPanel({ code }: { code: string }) {
-  const [patho, setPatho] = useState<PathoKey>("diabete");
+  const patho: PathoKey = "diabete"; // diabetes is the single disease kept as an example
   const { data, loading, error } = useTrends([code], patho);
   const s = data?.series[code];
   const d = trendDelta(s?.points);
@@ -18,15 +17,8 @@ export function TrendPanel({ code }: { code: string }) {
   return (
     <section className="rounded-2xl border border-[#E7E7E2] bg-white p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-[15px] font-semibold text-[#15171C]">Évolution des maladies</h3>
+        <h3 className="text-[15px] font-semibold text-[#15171C]">Évolution du diabète</h3>
         <span className="text-xs text-[#61656E]">{s?.departement ? `Département ${s.departement}` : "Département"}</span>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Pathologie">
-        {PATHOS.map((p) => (
-          <button key={p} className={patho === p ? "pill-on h-8 text-xs" : "pill h-8 text-xs"} aria-pressed={patho === p} onClick={() => setPatho(p)}>
-            {PATHO_LABEL[p]}
-          </button>
-        ))}
       </div>
 
       {loading && !data ? (
@@ -115,6 +107,70 @@ export function FoodPanel({ code }: { code: string }) {
             </p>
           )}
           <p className="mt-3 text-xs text-[#61656E]">{data?.note} Affichez les points sur la carte avec la couche « Fast-food ».</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+const RATES: [string, string][] = [
+  ["depistage_sein", "Dépistage cancer du sein"],
+  ["depistage_colorectal", "Dépistage cancer colorectal"],
+  ["depistage_col", "Dépistage col de l'utérus"],
+  ["vacc_grippe65", "Vaccination grippe 65 ans +"],
+  ["vacc_hpv", "Vaccination HPV (filles)"],
+  ["vacc_ror", "Vaccination ROR (nourrissons)"],
+];
+
+export const deptOf = (code: string) => (code.length === 5 ? (code.startsWith("97") ? code.slice(0, 3) : code.slice(0, 2)) : code);
+
+/** Preventive behaviour of the territory's department (Santé publique France, team workbook prototype 2). */
+export function PreventionPanel({ code }: { code: string }) {
+  const { data } = useDepartementData();
+  const dep = deptOf(code);
+  const row = data?.departements.find((d) => d.code === dep);
+  const v = row?.values;
+  return (
+    <section className="rounded-2xl border border-[#E7E7E2] bg-white p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-[15px] font-semibold text-[#15171C]">Prévention</h3>
+        <span className="text-xs text-[#61656E]">{row ? `${row.name} (${dep})` : "Département"}</span>
+      </div>
+      {!v || v.icp == null ? (
+        <p className="mt-3 text-sm text-[#61656E]">Données indisponibles pour ce département.</p>
+      ) : (
+        <>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+            <span className="num text-[28px] font-semibold leading-none tracking-[-0.03em] text-[#15171C]">{fmt(v.icp, 0)}</span>
+            <span className="text-xs text-[#61656E]">/100 · indice de comportement préventif</span>
+            {row?.prevention_type && <span className="rounded-full bg-[#F6F6F3] px-2.5 py-1 text-xs font-medium text-[#3A3D44]">{row.prevention_type}</span>}
+          </div>
+          {[
+            ["Dépistage des cancers", v.prev_sub_depistage],
+            ["Vaccination", v.prev_sub_vaccination],
+          ].map(([label, x]) => (
+            <div key={label as string} className="mt-3.5 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5">
+              <span className="text-sm text-[#15171C]">{label}</span>
+              <span className="num text-sm font-semibold text-[#15171C]">{x == null ? "—" : fmt(x as number, 0)}</span>
+              <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-[#EEEEE9]">
+                <div className="h-full rounded-full bg-[#3E63DD]" style={{ width: `${x ?? 0}%` }} />
+              </div>
+            </div>
+          ))}
+          <details className="mt-4 text-sm">
+            <summary className="cursor-pointer text-[13px] font-medium text-[#15171C]">Taux de participation et de couverture</summary>
+            <ul className="mt-2 divide-y divide-[#F2F2EE]">
+              {RATES.map(([k, label]) => (
+                <li key={k} className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
+                  <span className="text-[#3A3D44]">{label}</span>
+                  <span className="num font-semibold text-[#15171C]">{v[k] == null ? "—" : `${fmt(v[k] as number, 1)} %`}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <p className="mt-3 text-xs text-[#61656E]">
+            Valeurs du département (Santé publique France, 2024-2025). Scores = rang parmi les départements (100 = le meilleur).
+          </p>
         </>
       )}
     </section>

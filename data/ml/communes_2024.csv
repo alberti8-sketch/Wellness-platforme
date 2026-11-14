@@ -1,15 +1,15 @@
-code,dept,population,pct_65plus,pct_65plus_level,density_km2,poverty_rate,poverty_rate_level,fastfood_per10k,sport_per10k,vet_per10k,framingham_10y,framingham_10y_level
-74010,74,132117,19.23,departement,1891.0,9.5,departement,39.13,32.4,3.33,14.88,departement
-35238,35,230890,20.04,departement,4587.3,10.8,departement,30.97,17.15,1.91,15.14,departement
-44109,44,327734,20.5,departement,4986.4,10.5,departement,28.71,23.46,2.29,15.27,departement
-29019,29,142346,25.97,departement,2894.1,10.8,departement,23.89,37.37,1.41,16.27,departement
-25056,25,118489,22.05,departement,1819.1,13.1,departement,32.41,29.79,1.35,15.8,departement
-93048,93,111934,13.74,departement,12567.3,28.4,departement,46.28,12.78,0.98,15.31,departement
-06088,06,357737,25.27,departement,4847.1,16.4,departement,54.59,13.61,2.46,15.64,departement
-13055,13,886040,21.13,departement,3723.9,18.5,departement,54.11,16.68,2.23,15.56,departement
-78646,78,84095,17.46,departement,3215.8,10.5,departement,26.87,21.76,3.45,14.76,departement
-46042,46,20050,32.38,departement,309.0,15.3,departement,34.41,62.34,4.49,17.32,departement
-17300,17,79851,30.65,departement,2661.2,12.5,departement,47.21,45.96,1.88,16.99,departement
-66124,66,1762,27.78,departement,59.2,21.2,departement,130.53,584.56,22.7,16.5,departement
-63236,63,1163,24.41,departement,32.3,13.9,departement,120.38,593.29,17.2,16.23,departement
-13102,13,6730,21.13,departement,1434.2,18.5,departement,72.81,35.66,0.0,15.56,departement
+code,dept,population,pct_65plus,pct_65plus_level,density_km2,poverty_rate,poverty_rate_level,fastfood_per10k,sport_per10k,vet_per10k,framingham_10y,framingham_10y_level,icp,prevention_type,icp_level
+74010,74,132117,19.23,departement,1891.0,9.5,departement,39.13,32.4,3.33,14.88,departement,57.5,Dépistage > vaccination,departement
+35238,35,230890,20.04,departement,4587.3,10.8,departement,30.97,17.15,1.91,15.14,departement,91.2,Prévention active,departement
+44109,44,327734,20.5,departement,4986.4,10.5,departement,28.71,23.46,2.29,15.27,departement,77.6,Prévention active,departement
+29019,29,142346,25.97,departement,2894.1,10.8,departement,23.89,37.37,1.41,16.27,departement,91.8,Prévention active,departement
+25056,25,118489,22.05,departement,1819.1,13.1,departement,32.41,29.79,1.35,15.8,departement,59.5,Dépistage > vaccination,departement
+93048,93,111934,13.74,departement,12567.3,28.4,departement,46.28,12.78,0.98,15.31,departement,3.7,Prévention à renforcer,departement
+06088,06,357737,25.27,departement,4847.1,16.4,departement,54.59,13.61,2.46,15.64,departement,18.5,Prévention à renforcer,departement
+13055,13,886040,21.13,departement,3723.9,18.5,departement,54.11,16.68,2.23,15.56,departement,17.7,Prévention à renforcer,departement
+78646,78,84095,17.46,departement,3215.8,10.5,departement,26.87,21.76,3.45,14.76,departement,36.5,Vaccination > dépistage,departement
+46042,46,20050,32.38,departement,309.0,15.3,departement,34.41,62.34,4.49,17.32,departement,40.8,Prévention à renforcer,departement
+17300,17,79851,30.65,departement,2661.2,12.5,departement,47.21,45.96,1.88,16.99,departement,63.4,Vaccination > dépistage,departement
+66124,66,1762,27.78,departement,59.2,21.2,departement,130.53,584.56,22.7,16.5,departement,26.4,Prévention à renforcer,departement
+63236,63,1163,24.41,departement,32.3,13.9,departement,120.38,593.29,17.2,16.23,departement,62.0,Prévention active,departement
+13102,13,6730,21.13,departement,1434.2,18.5,departement,72.81,35.66,0.0,15.56,departement,17.7,Prévention à renforcer,departement

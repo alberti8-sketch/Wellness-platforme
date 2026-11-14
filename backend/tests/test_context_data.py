@@ -74,7 +74,7 @@ def test_trends_network_failure(client, ext, monkeypatch):
         raise OSError("down")
 
     monkeypatch.setattr(external_data, "fetch_ameli_series", boom)
-    body = client.get("/api/trends/pathologies?territories=29019&patho=cardio", headers=ADMIN_B2G).json()
+    body = client.get("/api/trends/pathologies?territories=29019&patho=diabete", headers=ADMIN_B2G).json()
     assert body["series"]["29019"]["points"] == [] and "indisponible" in body["series"]["29019"]["error"]
 
 

@@ -10,7 +10,9 @@ import { CompareTable, type ExtraRow } from "@/components/compare-table";
 import { useSession } from "@/components/session";
 import { BandBadge, Button, Card, Empty, PageHeader, Spinner, cx } from "@/components/ui";
 import { BAND_META, fmt } from "@/lib/bands";
+import { deptOf } from "@/components/territory-context-panels";
 import { trendDelta, useFood, useTrends } from "@/lib/context-data";
+import { useDepartementData } from "@/lib/prediction";
 import { SERIES, TYPE_LABEL } from "@/lib/metrics";
 import type { BandCode, Territory } from "@/lib/types";
 
@@ -25,7 +27,7 @@ export default function ClassementPage() {
   const [dir, setDir] = useState<1 | -1>(-1);
 
   const diab = useTrends(compare, "diabete");
-  const cardio = useTrends(compare, "cardio");
+  const depData = useDepartementData();
   const food = useFood(compare);
   const val = (t: Territory, k: SortKey) => (k === "IDX" ? t.composite.score : t.dimensions[k]?.score) ?? null;
   const rows = useMemo(() => {
@@ -61,19 +63,26 @@ export default function ClassementPage() {
   const pct = (v: number | null) => (v == null ? "—" : `${fmt(v, 2)} %`);
   const pts = (v: number | null) => (v == null ? "—" : `${v > 0 ? "+" : ""}${fmt(v, 2)} pt`);
   const extra: ExtraRow[] = [];
-  for (const [res, name] of [
-    [diab.data, "Diabète"],
-    [cardio.data, "Maladies cardioneurovasculaires"],
-  ] as const) {
+  for (const [res, name] of [[diab.data, "Diabète"]] as const) {
     if (!res) continue;
     const deltas = compared.map((t) => trendDelta(res.series[t.code]?.points));
     const y0 = deltas.find((d) => d)?.from.year;
     const y1 = deltas.find((d) => d)?.to.year;
-    const section = "Maladies chroniques (département, Assurance Maladie)";
+    const section = "Diabète (département, Assurance Maladie)";
     extra.push(
       { section, label: `${name} ${y0 ?? ""}`, values: deltas.map((d) => d?.from.prev ?? null), format: pct, better: "low" },
       { section, label: `${name} ${y1 ?? ""}`, values: deltas.map((d) => d?.to.prev ?? null), format: pct, better: "low" },
       { section, label: `Évolution ${name.toLowerCase()}`, values: deltas.map((d) => d?.abs ?? null), format: pts, better: "low" },
+    );
+  }
+  if (depData.data) {
+    const rows = compared.map((t) => depData.data!.departements.find((d) => d.code === deptOf(t.code))?.values);
+    const section = "Prévention (département, Santé publique France)";
+    const score = (v: number | null) => (v == null ? "—" : `${fmt(v, 0)} /100`);
+    extra.push(
+      { section, label: "Comportement préventif (ICP)", values: rows.map((v) => v?.icp ?? null), format: score, better: "high" },
+      { section, label: "Dépistage des cancers", values: rows.map((v) => v?.prev_sub_depistage ?? null), format: score, better: "high" },
+      { section, label: "Vaccination", values: rows.map((v) => v?.prev_sub_vaccination ?? null), format: score, better: "high" },
     );
   }
   if (food.data) {
