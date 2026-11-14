@@ -8,6 +8,7 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceLine, Responsiv
 import { useSession } from "@/components/session";
 import { BandBadge, BandLegend, Button, Card, Empty, ErrorBox, Spinner, cx } from "@/components/ui";
 import type { MapValue } from "@/components/territory-map";
+import { BasisBadge, WeightSources } from "@/components/weight-sources";
 import { api, download } from "@/lib/api";
 import { BAND_META, BAND_ORDER, NO_DATA_COLOR, bandOf, fmt } from "@/lib/bands";
 import { useTerritoryShapes } from "@/lib/geo";
@@ -253,6 +254,8 @@ export default function PublishedAnalyticsDashboard() {
           <Card title="Matrice territoires × dimensions">
             <Matrix territories={territories} catalog={catalog} selected={selected} onSelect={setSelected} />
           </Card>
+
+          <WeightSources catalog={catalog} />
         </>
       )}
     </div>
@@ -289,8 +292,10 @@ function WeightsPanel({ catalog, weights, onChange, onReset }: { catalog: Catalo
           const w = weights[d.code] ?? 0;
           return (
             <label key={d.code} className="block">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-ink">{d.label}</span>
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="flex flex-wrap items-center gap-1.5 font-medium text-ink">
+                  {d.label} <BasisBadge basis={d.weight_basis.basis} />
+                </span>
                 <span className="tabular-nums text-ink-2">{total ? Math.round((w / total) * 100) : 0} %</span>
               </div>
               <input

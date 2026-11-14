@@ -157,6 +157,23 @@ backend/geo.py                   référentiel communes/départements + contours
 Les **maladies chroniques** sont un indicateur de *résultat* : elles sont affichées mais exclues de l'indice
 par défaut. Elles serviront à calibrer les poids (quels comportements expliquent le mieux la prévalence).
 
+### Sources des pondérations
+
+Chaque poids indique sa base (`backend/pipeline/evidence.py`, visible dans le tableau de bord, carte « Sources des
+pondérations »). Elle provient du classeur `Maladies_chroniques_habitudes_de_vie_prototype2-2.xlsx`, feuilles
+« Liens maladies-habitudes » et « Sources ».
+
+| Dimension | Base du poids | Contenu |
+|---|---|---|
+| Sport (30 %) | **Fondé sur des preuves** | 8 associations chiffrées (MCV RR 0,70-0,75 ; diabète T2 −14-28 % ; HTA ; cancer colorectal ; sédentarité RR 1,04/h…) |
+| Environnement (25 %) | Poids d'expert | aucune association chiffrée dans le classeur (seulement l'indice ATMO comme source de données) |
+| Offre de soins (30 %) | Poids d'expert | aucune association chiffrée (MRMI/ERMI servent à prioriser les publics) |
+| Social (15 %) | Poids d'expert | aucune association chiffrée (FDep proposé en extension) |
+| Maladies chroniques (0 %) | Indicateur de résultat | prévalences de référence : Baromètre SpF 2024, BEH HTA, Esteban |
+
+L'indice additif lui-même s'appuie sur le cumul d'habitudes saines : −66 % de mortalité toutes causes (Springer 2022).
+Les poids d'expert restent à justifier par une méta-analyse avant usage réel.
+
 ### Données WP25 (réelles, fournies par l'équipe)
 
 | Colonne WP25 | Champ plateforme |

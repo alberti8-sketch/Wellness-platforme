@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+from dataclasses import asdict
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -16,6 +17,7 @@ from config import Principal
 from db import get_db
 from models import Dataset, DimensionScore, Observation, TerritoryContext
 from pipeline.catalog import BANDS, CONTEXT_COLUMNS, DIMENSIONS, INDICATORS, TERRITORY_TYPES, default_weights
+from pipeline.evidence import COMPOSITE_BASIS, WEIGHT_BASIS, WORKBOOK
 from pipeline.orchestrator import State
 from pipeline.scoring import composite
 from schemas import CellOut, DimensionOut
@@ -72,7 +74,9 @@ def parse_weights(raw: str | None) -> dict[str, float]:
 @router.get("/catalog")
 def catalog(_: Principal = Depends(get_principal)) -> dict:
     return {
-        "dimensions": [d.__dict__ for d in DIMENSIONS.values()],
+        "dimensions": [{**d.__dict__, "weight_basis": asdict(WEIGHT_BASIS[d.code])} for d in DIMENSIONS.values()],
+        "composite_basis": asdict(COMPOSITE_BASIS),
+        "evidence_workbook": WORKBOOK,
         "indicators": [{**i.__dict__, "direction": i.direction.value} for i in INDICATORS.values()],
         "bands": [{"code": c, "label": lbl, "min": lo} for c, lbl, lo in BANDS],
         "context_columns": CONTEXT_COLUMNS,

@@ -128,3 +128,10 @@ def test_tenant_geographic_scope(client, wp25_rows):
 def test_commune_contours_from_cache(client):
     fc = client.get("/api/geo/communes?codes=35238,44109,BAD", headers=ADMIN_B2G).json()
     assert sorted(f["properties"]["code"] for f in fc["features"]) == ["35238", "44109"]
+
+
+def test_catalog_exposes_weight_sources(client):
+    cat = client.get("/api/analytics/catalog", headers=ADMIN_B2G).json()
+    sport = next(d for d in cat["dimensions"] if d["code"] == "SPORT")
+    assert sport["weight_basis"]["basis"] == "evidence" and len(sport["weight_basis"]["evidence"]) == 8
+    assert cat["composite_basis"]["source"]["url"].startswith("https://link.springer.com")

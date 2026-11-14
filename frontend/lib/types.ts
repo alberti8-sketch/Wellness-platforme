@@ -7,12 +7,34 @@ export interface Me {
   tenant: { id: string; name: string; stakeholder_type: "B2B" | "B2G"; allowed_territories: string[] | null };
 }
 
+export interface Source {
+  title: string;
+  url: string;
+  documents: string;
+}
+
+export interface Evidence {
+  disease: string;
+  factor: string;
+  effect: string;
+  level: "Fort" | "Moyen" | "Modéré";
+  source: Source | null;
+}
+
+export interface WeightBasis {
+  basis: "evidence" | "expert" | "outcome";
+  rationale: string;
+  evidence: Evidence[];
+  references: Source[];
+}
+
 export interface Dimension {
   code: string;
   label: string;
   description: string;
   default_weight: number;
   is_outcome: boolean;
+  weight_basis: WeightBasis;
 }
 
 export interface Indicator {
@@ -35,6 +57,8 @@ export interface Catalog {
   bands: { code: BandCode; label: string; min: number }[];
   context_columns: Record<string, string>;
   territory_types: TerritoryType[];
+  composite_basis: Evidence;
+  evidence_workbook: string;
 }
 
 export type TerritoryType = "urbain" | "semi-urbain" | "rural";

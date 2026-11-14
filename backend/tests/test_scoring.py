@@ -49,3 +49,19 @@ def test_composite_renormalises_missing_dimensions():
 def test_determinism():
     ind = INDICATORS["env_score"]
     assert {normalize(37, ind) for _ in range(100)} == {normalize(37, ind)}
+
+
+def test_every_dimension_has_a_documented_weight_basis():
+    from pipeline.evidence import COMPOSITE_BASIS, WEIGHT_BASIS
+
+    assert set(WEIGHT_BASIS) == set(DIMENSIONS)
+    for code, basis in WEIGHT_BASIS.items():
+        assert basis.rationale
+        # Evidence-based ⇔ quantified associations listed; outcome only for outcome dimensions.
+        assert (basis.basis == "evidence") == bool(basis.evidence)
+        assert (basis.basis == "outcome") == DIMENSIONS[code].is_outcome
+        for src in [e.source for e in basis.evidence if e.source] + list(basis.references):
+            assert src.url.startswith("https://")
+    assert WEIGHT_BASIS["SPORT"].basis == "evidence"
+    assert {WEIGHT_BASIS[c].basis for c in ("ENV", "HEALTH", "SOCIAL")} == {"expert"}
+    assert COMPOSITE_BASIS.source is not None
