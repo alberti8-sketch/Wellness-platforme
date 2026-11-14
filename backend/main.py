@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, Principal
 from db import init_db
-from routers import analytics, datasets, geo, ingest
+from routers import analytics, context_data, datasets, geo, ingest
 from security import get_principal
 from app.routers import department_health
 
@@ -44,6 +44,7 @@ app.include_router(ingest.router)
 app.include_router(datasets.router)
 app.include_router(analytics.router)
 app.include_router(geo.router)
+app.include_router(context_data.router)
 app.include_router(department_health.router)
 
 

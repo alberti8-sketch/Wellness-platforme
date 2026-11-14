@@ -78,3 +78,6 @@ node_modules/
 # Les télécharger localement dans ces dossiers pour régénérer les données ou lancer les tests sur données brutes.
 /context/
 /data/sources/
+
+# Cache des API externes (data.ameli.fr, Overpass, geo.api.gouv.fr)
+/backend/data/cache/
