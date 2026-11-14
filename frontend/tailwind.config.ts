@@ -1,24 +1,30 @@
 import type { Config } from "tailwindcss";
 
+// Design tokens from the « Wellness Platform — Maquette » canvas.
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        primary: "#10b981",
-        secondary: "#6366f1",
-        danger: "#ef4444",
-        warning: "#f59e0b",
-        success: "#22c55e",
-        surface: "#fcfcfb",
-        plane: "#f9f9f7",
-        ink: { DEFAULT: "#0b0b0b", 2: "#52514e", muted: "#898781" },
-        hairline: "#e1e0d9",
-        axis: "#c3c2b7",
-        brand: { DEFAULT: "#1f3a5f", 50: "#eef3f9", 100: "#d9e4f2", 600: "#1f3a5f", 700: "#16304f" },
-        band: { best: "#0ca30c", middle: "#fab219", bad: "#d03b3b", none: "#e1e0d9" },
+        primary: "#15171C",
+        secondary: "#3E63DD",
+        danger: "#C8513A",
+        warning: "#D4A33A",
+        success: "#1F8A78",
+        surface: "#FFFFFF",
+        plane: "#F6F6F3",
+        hover: "#EDEDE8",
+        ink: { DEFAULT: "#15171C", 2: "#4A4E57", muted: "#61656E", faint: "#7A7E87" },
+        hairline: "#E7E7E2",
+        line: "#E0E0DA",
+        axis: "#CFCFC8",
+        brand: { DEFAULT: "#15171C", 50: "#EEF1FD", 100: "#DCE3FB", 600: "#3E63DD", 700: "#2B2E35" },
+        accent: { DEFAULT: "#3E63DD", text: "#2A3F9E", soft: "#EEF1FD" },
+        band: { best: "#1F8A78", middle: "#D4A33A", bad: "#C8513A", none: "#E2E2DC" },
+        dim: { SPORT: "#3E63DD", ENV: "#2F9E6E", HEALTH: "#8E4EC6", SOCIAL: "#E5741D", CLIN: "#80838D" },
       },
-      fontFamily: { sans: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"] },
+      fontFamily: { sans: ["Geist", "system-ui", "-apple-system", "Segoe UI", "sans-serif"] },
+      borderRadius: { card: "16px" },
     },
   },
   plugins: [],

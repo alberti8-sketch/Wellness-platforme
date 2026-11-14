@@ -23,13 +23,13 @@ export function ValidationPreview({ report, indicators }: { report: ValidationRe
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 text-sm">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e3f5e3] px-3 py-1 text-[#006300]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF0EA] px-3 py-1 text-[#0E5A50]">
           <CheckCircle2 className="h-4 w-4" /> {report.rows.length} ligne(s) valide(s) sur {report.raw_rows.length}
         </span>
-        <span className={cx("inline-flex items-center gap-1.5 rounded-full px-3 py-1", report.error_count ? "bg-[#fbe4e4] text-[#a12626]" : "bg-plane text-ink-2")}>
+        <span className={cx("inline-flex items-center gap-1.5 rounded-full px-3 py-1", report.error_count ? "bg-[#FBE6DF] text-[#9A2F1C]" : "bg-plane text-ink-2")}>
           <AlertCircle className="h-4 w-4" /> {report.error_count} erreur(s) bloquante(s)
         </span>
-        <span className={cx("inline-flex items-center gap-1.5 rounded-full px-3 py-1", report.warning_count ? "bg-[#fff3d6] text-[#7a5200]" : "bg-plane text-ink-2")}>
+        <span className={cx("inline-flex items-center gap-1.5 rounded-full px-3 py-1", report.warning_count ? "bg-[#F6EDD3] text-[#6E5110]" : "bg-plane text-ink-2")}>
           <AlertTriangle className="h-4 w-4" /> {report.warning_count} avertissement(s)
         </span>
       </div>
@@ -38,7 +38,7 @@ export function ValidationPreview({ report, indicators }: { report: ValidationRe
         <ul className="space-y-1 text-sm">
           {fileIssues.map((i, n) => (
             <li key={n} className="flex items-start gap-2">
-              {i.severity === "error" ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-band-bad" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#b07800]" />}
+              {i.severity === "error" ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-band-bad" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#9A7420]" />}
               <span className="text-ink-2">{i.message}</span>
             </li>
           ))}
@@ -65,7 +65,7 @@ export function ValidationPreview({ report, indicators }: { report: ValidationRe
                 const rowIssues = byRow.get(rowNum) ?? [];
                 const hasError = rowIssues.some((i) => i.severity === "error");
                 return (
-                  <tr key={rowNum} className={cx("border-t border-hairline", hasError && "bg-[#fdf3f3]")}>
+                  <tr key={rowNum} className={cx("border-t border-hairline", hasError && "bg-[#FDF4F1]")}>
                     <td className="px-2 py-1.5 tabular-nums text-ink-muted">{rowNum}</td>
                     {cols.map((c) => {
                       const issue = byCell.get(`${rowNum}:${c}`);
@@ -76,8 +76,8 @@ export function ValidationPreview({ report, indicators }: { report: ValidationRe
                           title={issue?.message}
                           className={cx(
                             "whitespace-nowrap px-2 py-1.5 tabular-nums",
-                            issue?.severity === "error" && "bg-[#fbe4e4] font-medium text-[#a12626] ring-1 ring-inset ring-band-bad",
-                            issue?.severity === "warning" && "bg-[#fff3d6] text-[#7a5200]",
+                            issue?.severity === "error" && "bg-[#FBE6DF] font-medium text-[#9A2F1C] ring-1 ring-inset ring-band-bad",
+                            issue?.severity === "warning" && "bg-[#F6EDD3] text-[#6E5110]",
                             (v === null || v === undefined || v === "") && !issue && "text-ink-muted",
                           )}
                         >
@@ -86,7 +86,7 @@ export function ValidationPreview({ report, indicators }: { report: ValidationRe
                       );
                     })}
                     <td className="min-w-[16rem] px-2 py-1.5 text-ink-2">
-                      {rowIssues.length === 0 ? <span className="text-[#006300]">OK</span> : rowIssues.map((i, n) => <div key={n}>{i.message}</div>)}
+                      {rowIssues.length === 0 ? <span className="text-[#0E5A50]">OK</span> : rowIssues.map((i, n) => <div key={n}>{i.message}</div>)}
                     </td>
                   </tr>
                 );
