@@ -18,6 +18,9 @@ BASE_DIR = Path(__file__).resolve().parent
 
 DATABASE_URL = os.getenv("WELLNESS_DATABASE_URL", f"sqlite:///{BASE_DIR / 'wellness.db'}")
 CORS_ORIGINS = [o.strip() for o in os.getenv("WELLNESS_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+# In development any localhost / 127.0.0.1 port is accepted (Next.js may fall back to 3001…).
+# Set WELLNESS_CORS_DEV=0 in production to only allow WELLNESS_CORS_ORIGINS.
+CORS_ORIGIN_REGEX = r"^http://(localhost|127\.0\.0\.1)(:\d+)?$" if os.getenv("WELLNESS_CORS_DEV", "1") == "1" else None
 MAX_UPLOAD_BYTES = int(os.getenv("WELLNESS_MAX_UPLOAD_BYTES", str(5 * 1024 * 1024)))
 MAX_ROWS = int(os.getenv("WELLNESS_MAX_ROWS", "5000"))
 
@@ -59,7 +62,7 @@ _DEMO_TENANTS = {
         "b2b-corp-wellness",
         "Groupe Industriel — Qualité de vie au travail (démo)",
         StakeholderType.B2B,
-        frozenset({"75", "69", "13"}),
+        frozenset({"35238", "44109", "29019"}),  # Rennes, Nantes, Brest
     ),
 }
 

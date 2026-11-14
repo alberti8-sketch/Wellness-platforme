@@ -28,7 +28,8 @@ from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from config import Principal, Tenant, tenant_by_id
-from models import Dataset, DatasetEvent, DimensionScore, Observation
+from geo import territory_level
+from models import Dataset, DatasetEvent, DimensionScore, Observation, TerritoryContext
 
 from .catalog import DIMENSIONS, INDICATORS
 from .scoring import aggregate_dimension, band, normalize
@@ -202,6 +203,8 @@ def make_persist_step(db: Session) -> Callable[[PipelineContext], str]:
                                              Observation.tenant_id == ctx.tenant.id))
         db.execute(delete(DimensionScore).where(DimensionScore.dataset_id == ctx.dataset_id,
                                                 DimensionScore.tenant_id == ctx.tenant.id))
+        db.execute(delete(TerritoryContext).where(TerritoryContext.dataset_id == ctx.dataset_id,
+                                                  TerritoryContext.tenant_id == ctx.tenant.id))
         db.add_all(
             Observation(dataset_id=ctx.dataset_id, tenant_id=r["tenant_id"], source_row=int(r["source_row"]),
                         territory_code=r["territory_code"], territory_name=r["territory_name"],
@@ -214,6 +217,14 @@ def make_persist_step(db: Session) -> Callable[[PipelineContext], str]:
                            territory_name=r["territory_name"], period=int(r["period"]), dimension=r["dimension"],
                            score=_none(r["score"]), band=r["band"], coverage=float(r["coverage"]))
             for r in ctx.dimension_frame.to_dict(orient="records")
+        )
+        db.add_all(
+            TerritoryContext(dataset_id=ctx.dataset_id, tenant_id=ctx.tenant.id, territory_code=r.territory_code,
+                             period=r.period, level=territory_level(r.territory_code) or "inconnu",
+                             territory_type=r.context.get("territory_type"), population=r.context.get("population"),
+                             density_km2=r.context.get("density_km2"),
+                             source_global_score=r.context.get("source_global_score"))
+            for r in ctx.rows
         )
         return "Résultats enregistrés, en attente de validation par un administrateur."
 

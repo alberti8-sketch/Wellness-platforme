@@ -10,17 +10,17 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from .catalog import DIMENSIONS, ID_COLUMNS, INDICATORS
+from .catalog import CONTEXT_COLUMNS, DIMENSIONS, ID_COLUMNS, INDICATORS
 
 HEADER_FILL = PatternFill("solid", fgColor="1F3A5F")
-DIM_FILLS = {"PA": "DCEBFA", "MOB": "E3F4EA", "ENV": "EAF5E1", "NUT": "FCEFD9", "CLIN": "F8E1E1"}
+DIM_FILLS = {"SPORT": "DCEBFA", "ENV": "EAF5E1", "HEALTH": "E8E4F8", "SOCIAL": "FCEFD9", "CLIN": "F8E1E1"}
 
 
 def build_workbook(rows: Sequence[dict[str, Any]] = ()) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "data"
-    headers = [*ID_COLUMNS, *INDICATORS]
+    headers = [*ID_COLUMNS, *CONTEXT_COLUMNS, *INDICATORS]
     ws.append(headers)
     for col, name in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col)
@@ -42,9 +42,12 @@ def build_workbook(rows: Sequence[dict[str, Any]] = ()) -> bytes:
     for c in dico[1]:
         c.font = Font(bold=True, color="FFFFFF")
         c.fill = HEADER_FILL
-    dico.append(["territory_code", "", "Code INSEE du département (ex. 01, 2A, 75)", "", "", "", "", "", "", "INSEE"])
-    dico.append(["territory_name", "", "Nom du département", "", "", "", "", "", "", "INSEE"])
+    dico.append(["territory_code", "", "Code INSEE : commune (5 car., ex. 35238) ou département (ex. 35, 2A)",
+                 "", "", "", "", "", "", "INSEE — Code officiel géographique"])
+    dico.append(["territory_name", "", "Nom du territoire", "", "", "", "", "", "", "INSEE"])
     dico.append(["period", "", "Année de référence (AAAA)", "", "", "", "", "", "", ""])
+    for col, label in CONTEXT_COLUMNS.items():
+        dico.append([col, "Contexte (non noté)", label, "", "", "", "", "", "", ""])
     for ind in INDICATORS.values():
         dico.append([ind.code, DIMENSIONS[ind.dimension].label, ind.label, ind.unit,
                      "↑ plus haut = mieux" if ind.direction == "higher_is_better" else "↓ plus bas = mieux",

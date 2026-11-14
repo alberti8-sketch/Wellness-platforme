@@ -15,9 +15,10 @@ from typing import Annotated, Any, Literal
 import pandas as pd
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, create_model
 
-from config import MAX_ROWS, Tenant, departements
+from config import MAX_ROWS, Tenant
+from geo import territory_level, territory_name
 
-from .catalog import ID_COLUMNS, INDICATORS
+from .catalog import CONTEXT_COLUMNS, ID_COLUMNS, INDICATORS, TERRITORY_TYPES
 
 MISSING_TOKENS = {"", "na", "n/a", "nan", "nd", "n.d.", "-", "--", "null", "none", "?"}
 
@@ -56,14 +57,30 @@ def coerce_code(v: Any) -> str:
         raise ValueError("code territoire manquant")
     s = v.strip().upper()
     if s.isdigit() and len(s) == 1:
-        s = s.zfill(2)  # Excel turns "01" into 1
+        s = s.zfill(2)  # Excel turns département "01" into 1
+    if s.isdigit() and len(s) == 4:
+        s = s.zfill(5)  # Excel turns commune "06088" into 6088
     return s
 
 
-def check_departement(code: str) -> str:
-    if code not in departements():
-        raise ValueError(f"code département inconnu « {code} »")
+def check_territory(code: str) -> str:
+    if territory_level(code) is None:
+        raise ValueError(f"code INSEE inconnu « {code} » (département ou commune attendu)")
     return code
+
+
+def coerce_type(v: Any) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip().lower().replace(" ", "-").replace("_", "-")
+    if s in ("", "na", "-"):
+        return None
+    aliases = {"urban": "urbain", "city": "urbain", "middle-city": "semi-urbain", "semi-urban": "semi-urbain",
+               "countryside": "rural", "country-side": "rural"}
+    s = aliases.get(s, s)
+    if s not in TERRITORY_TYPES:
+        raise ValueError(f"typologie inconnue « {v} » (attendu : {', '.join(TERRITORY_TYPES)})")
+    return s
 
 
 def coerce_period(v: Any) -> int:
@@ -82,9 +99,14 @@ Number = Annotated[float | None, BeforeValidator(coerce_number)]
 class _RowBase(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    territory_code: Annotated[str, BeforeValidator(coerce_code), AfterValidator(check_departement)]
+    territory_code: Annotated[str, BeforeValidator(coerce_code), AfterValidator(check_territory)]
     territory_name: Annotated[str, Field(min_length=1, max_length=255)]
     period: Annotated[int, BeforeValidator(coerce_period), Field(ge=2000, le=2100)]
+    # Context (validated, displayed, never scored)
+    territory_type: Annotated[str | None, BeforeValidator(coerce_type)] = None
+    population: Annotated[Number, Field(ge=0, le=50_000_000)] = None
+    density_km2: Annotated[Number, Field(ge=0, le=100_000)] = None
+    source_global_score: Annotated[Number, Field(ge=0, le=100)] = None
 
 
 # Strict row schema generated from the catalog: one optional, bounded float per indicator.
@@ -115,6 +137,7 @@ class ParsedRow(BaseModel):
     territory_name: str
     period: int
     values: dict[str, float | None]
+    context: dict[str, Any] = {}
 
 
 class ValidationReport(BaseModel):
@@ -181,7 +204,7 @@ def validate_rows(raw_rows: list[dict[str, Any]], tenant: Tenant) -> ValidationR
     issues: list[Issue] = []
     columns = sorted({k for r in raw_rows for k in r if k != "_row"})
 
-    known = set(ID_COLUMNS) | set(INDICATORS)
+    known = set(ID_COLUMNS) | set(INDICATORS) | set(CONTEXT_COLUMNS)
     indicator_columns = [c for c in INDICATORS if c in columns]
     unknown = [c for c in columns if c not in known]
     missing_ind = [c for c in INDICATORS if c not in columns]
@@ -234,7 +257,7 @@ def validate_rows(raw_rows: list[dict[str, Any]], tenant: Tenant) -> ValidationR
                 continue
             seen[key] = rownum
 
-            ref_name = departements()[code]
+            ref_name = territory_name(code) or data["territory_name"]
             if _norm(ref_name) != _norm(data["territory_name"]):
                 issues.append(Issue(row=rownum, column="territory_name", severity="warning", code="name_mismatch",
                                     message=f"Nom « {data['territory_name']} » ≠ référentiel « {ref_name} » "
@@ -245,6 +268,7 @@ def validate_rows(raw_rows: list[dict[str, Any]], tenant: Tenant) -> ValidationR
                 territory_name=ref_name,
                 period=data["period"],
                 values={c: data[c] for c in INDICATORS},
+                context={c: data[c] for c in CONTEXT_COLUMNS},
             ))
 
     errors = sum(1 for i in issues if i.severity == "error")
