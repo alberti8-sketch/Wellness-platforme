@@ -1,12 +1,14 @@
 "use client";
 
 import { NextStep } from "@/components/next-step";
-import { ArrowDown, ArrowUp, GitCompareArrows, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { GitCompareArrows, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import { MAX_COMPARE, useAnalytics } from "@/components/analytics";
 import { CityPicker } from "@/components/city-picker";
 import { CompareTable, type ExtraRow } from "@/components/compare-table";
+import { Pagination } from "@/components/pagination";
+import { MedalRank, Podium } from "@/components/podium";
 import { useSession } from "@/components/session";
 import { BandBadge, Button, Card, Empty, PageHeader, Spinner, cx } from "@/components/ui";
 import { BAND_META, fmt } from "@/lib/bands";
@@ -20,43 +22,57 @@ type SortKey = "IDX" | string;
 
 export default function ClassementPage() {
   const { catalog } = useSession();
-  const { territories, overview, open, compare, toggleCompare, clearCompare, rankOf } = useAnalytics();
+  const { territories, overview, open, compare, clearCompare } = useAnalytics();
   const [q, setQ] = useState("");
   const [band, setBand] = useState<BandCode | "all">("all");
   const [sortKey, setSortKey] = useState<SortKey>("IDX");
-  const [dir, setDir] = useState<1 | -1>(-1);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const diab = useTrends(compare, "diabete");
   const depData = useDepartementData();
   const food = useFood(compare);
   const val = (t: Territory, k: SortKey) => (k === "IDX" ? t.composite.score : t.dimensions[k]?.score) ?? null;
+  // Ranking on the chosen criterion (best first) over all territories: drives the podium and the « Rang » column.
+  const ranked = useMemo(
+    () => [...territories].sort((a, b) => (val(b, sortKey) ?? -99) - (val(a, sortKey) ?? -99) || a.name.localeCompare(b.name)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [territories, sortKey],
+  );
+  const rankIn = useMemo(
+    () => Object.fromEntries(ranked.map((t, i) => [t.code, val(t, sortKey) == null ? null : i + 1])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ranked, sortKey],
+  );
   const rows = useMemo(() => {
     const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-    return territories
+    return ranked
       .filter((t) => !q || norm(t.name).includes(norm(q)) || t.code.includes(q))
-      .filter((t) => band === "all" || t.composite.band === band)
-      .sort((a, b) => dir * ((val(a, sortKey) ?? -99) - (val(b, sortKey) ?? -99)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [territories, q, band, sortKey, dir]);
+      .filter((t) => band === "all" || t.composite.band === band);
+  }, [ranked, q, band]);
+  // Back to the first page whenever the list changes.
+  useEffect(() => setPage(1), [q, band, sortKey, pageSize]);
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const current = Math.min(page, pages);
+  const pageRows = rows.slice((current - 1) * pageSize, current * pageSize);
 
   if (!catalog) return <Spinner />;
-  const sortBy = (k: SortKey) => {
-    if (k === sortKey) setDir((d) => (d === 1 ? -1 : 1));
-    else {
-      setSortKey(k);
-      setDir(-1);
-    }
-  };
-  const SortHead = ({ k, children }: { k: SortKey; children: React.ReactNode }) => (
-    <th className="px-2 py-2 text-left font-medium" aria-sort={sortKey === k ? (dir === 1 ? "ascending" : "descending") : "none"}>
-      <button onClick={() => sortBy(k)} className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-hover">
-        {children}
-        {sortKey === k && (dir === 1 ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />)}
-      </button>
-    </th>
-  );
 
   const shownDims = catalog.dimensions.filter((d) => territories.some((t) => t.dimensions[d.code]?.score != null));
+  const criteria: { key: SortKey; label: string }[] = [{ key: "IDX", label: "Indice global" }, ...shownDims.map((d) => ({ key: d.code, label: d.label }))];
+  const criterion = criteria.find((c) => c.key === sortKey) ?? criteria[0];
+  const podium = ranked
+    .filter((t) => val(t, sortKey) != null)
+    .slice(0, 3)
+    .map((t) => {
+      const d = sortKey === "IDX" ? t.composite : t.dimensions[sortKey];
+      return { code: t.code, name: t.name, sub: t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : null, score: d?.score ?? null, band: d?.band ?? null };
+    });
+  const Head = ({ k, children }: { k: SortKey; children: React.ReactNode }) => (
+    <th className={cx("px-2 py-2 text-left font-medium", sortKey === k && "text-ink")} aria-sort={sortKey === k ? "descending" : "none"}>
+      {children}
+    </th>
+  );
   const compared = compare.map((c) => territories.find((t) => t.code === c)).filter((t): t is Territory => !!t);
   const showComparison = () =>
     requestAnimationFrame(() => document.getElementById("comparaison")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -158,8 +174,8 @@ export default function ClassementPage() {
         </Card>
       </div>
       <Card
-        title="Tableau de classement"
-        subtitle={`${rows.length} villes · cliquez un nom pour ouvrir sa fiche`}
+        title="Classement"
+        subtitle={`Selon : ${criterion.label} · cliquez une ville pour ouvrir sa fiche`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <label className="relative">
@@ -178,6 +194,18 @@ export default function ClassementPage() {
           </div>
         }
       >
+        <div className="mb-6 flex flex-wrap gap-1.5" role="group" aria-label="Classer selon">
+          {criteria.map((c) => (
+            <button key={c.key} className={sortKey === c.key ? "pill-on" : "pill"} aria-pressed={sortKey === c.key} onClick={() => setSortKey(c.key)}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+        {podium.length === 3 && (
+          <div className="mx-auto mb-8 max-w-[640px]">
+            <Podium entries={podium} onOpen={open} />
+          </div>
+        )}
         {!overview ? (
           <Spinner />
         ) : rows.length === 0 ? (
@@ -189,20 +217,23 @@ export default function ClassementPage() {
                 <tr className="border-b border-hairline">
                   <th className="px-2 py-2 text-left font-medium">Rang</th>
                   <th className="px-2 py-2 text-left font-medium">Territoire</th>
-                  <SortHead k="IDX">Indice</SortHead>
+                  <Head k="IDX">Indice</Head>
                   {shownDims.map((d) => (
-                    <SortHead key={d.code} k={d.code}>
+                    <Head key={d.code} k={d.code}>
                       {d.label}
-                    </SortHead>
+                    </Head>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {rows.map((t) => {
+                {pageRows.map((t) => {
                   const on = compare.includes(t.code);
+                  const r = rankIn[t.code];
                   return (
                     <tr key={t.code} className={cx("border-b border-[#F2F2EE] hover:bg-[#FAFAF7]", on && "bg-[#FAFAF7]")}>
-                      <td className="num px-2 py-2.5 text-ink-muted">{rankOf(t.code)}</td>
+                      <td className="num px-2 py-2.5">
+                        {r != null && r <= 3 ? <MedalRank rank={r} /> : <span className="pl-1.5 text-ink-muted">{r ?? "—"}</span>}
+                      </td>
                       <td className="px-2 py-2.5">
                         <button onClick={() => open(t.code)} className="text-left font-medium text-ink hover:underline">
                           {t.name}
@@ -232,6 +263,9 @@ export default function ClassementPage() {
                 })}
               </tbody>
             </table>
+            <div className="px-2">
+              <Pagination page={current} pageSize={pageSize} total={rows.length} onPage={setPage} onPageSize={setPageSize} noun="villes" />
+            </div>
           </div>
         )}
       </Card>
