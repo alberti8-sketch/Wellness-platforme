@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, Building2, Database, GitCompareArrows, HeartPulse, LayoutGrid, Map, Network, SlidersHorizontal, Upload, Workflow, X } from "lucide-react";
+import { Activity, BarChart3, Building2, Database, GitCompareArrows, HeartPulse, Home, LayoutGrid, Map, Network, SlidersHorizontal, Upload, Workflow, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -10,6 +10,10 @@ import { TerritoryDrawer } from "./territory-drawer";
 import { ErrorBox, cx } from "./ui";
 
 const SECTIONS = [
+  {
+    title: "Démarrer",
+    items: [{ href: "/", label: "Accueil", icon: Home }],
+  },
   {
     title: "Analyse",
     items: [
@@ -90,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-wrap bg-plane">
       <aside aria-label="Navigation principale" className="no-print flex max-w-full flex-[1_1_240px] flex-col gap-7 border-b border-hairline bg-white px-4 py-6 md:sticky md:top-0 md:h-screen md:max-w-[260px] md:border-b-0 md:border-r">
-        <Link href="/dashboard" className="flex items-center gap-3 px-2">
+        <Link href="/" className="flex items-center gap-3 px-2">
           <span className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-primary text-white" aria-hidden>
             <Activity className="h-[18px] w-[18px]" />
           </span>
@@ -105,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div key={s.title} className="flex flex-wrap gap-1 md:flex-col">
               <p className="mb-1.5 w-full px-3 text-xs font-medium text-ink-muted">{s.title}</p>
               {s.items.map(({ href, label, icon: Icon }) => {
-                const on = pathname?.startsWith(href);
+                const on = href === "/" ? pathname === "/" : pathname?.startsWith(href);
                 return (
                   <Link
                     key={href}
