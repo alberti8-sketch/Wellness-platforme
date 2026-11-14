@@ -17,7 +17,7 @@ from db import SessionLocal, init_db
 from models import Dataset
 from pipeline.orchestrator import State, create_dataset, review
 from pipeline.validation import validate_rows
-from scripts.import_wp25 import DEFAULT_SOURCE, convert
+from scripts.import_wp25 import load_converted
 
 DEMO_KEY = "demo-b2g-admin"
 
@@ -32,7 +32,7 @@ def main() -> None:
         if already and "--force" not in sys.argv:
             print("Des données publiées existent déjà pour le tenant de démo (utiliser --force pour recharger).")
             return
-        rows, _ = convert(DEFAULT_SOURCE)
+        rows = load_converted()
         raw = [{**r, "_row": i + 2} for i, r in enumerate(rows)]
         report = validate_rows(raw, principal.tenant)
         if not report.is_valid:

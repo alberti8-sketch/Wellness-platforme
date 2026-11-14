@@ -1,7 +1,11 @@
 """Convert the team workbook WP25.xlsx (Drive « HACKATHON 13/11/26 / DATA SCORING ») into the
 platform template.
 
-Usage (from backend/):  python -m scripts.import_wp25 [path/to/WP25.xlsx]
+Usage (from backend/):  python -m scripts.import_wp25 path/to/WP25.xlsx
+
+The raw workbook is NOT versioned (it lives on the team Drive): download it, then pass its path
+(or put it in data/sources/, which is git-ignored). The converted output data/wp25_communes.xlsx
+IS versioned and is what the demo seed and the tests use.
 
 Mapping
   sheet "CITY"          -> territory_type = urbain
@@ -30,7 +34,8 @@ from geo import communes
 from pipeline.template import build_workbook
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SOURCE = ROOT / "data" / "sources" / "WP25.xlsx"
+DEFAULT_SOURCE = ROOT / "data" / "sources" / "WP25.xlsx"  # git-ignored local copy of the Drive file
+CONVERTED = ROOT / "data" / "wp25_communes.xlsx"  # versioned output
 OUT = ROOT / "data"
 PERIOD = 2025  # « WP25 »
 
@@ -134,9 +139,19 @@ def convert(source: Path) -> tuple[list[dict[str, Any]], list[str]]:
     return rows, notes
 
 
+def load_converted() -> list[dict[str, Any]]:
+    """Rows of the versioned converted file (no dependency on the raw Drive workbook)."""
+    from pipeline.validation import parse_excel
+
+    return [{k: v for k, v in r.items() if k != "_row"} for r in parse_excel(CONVERTED.read_bytes())]
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     source = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SOURCE
+    if not source.exists():
+        raise SystemExit(f"Classeur WP25 introuvable : {source}. "
+                         "Télécharge-le depuis le Drive (HACKATHON 13/11/26 / DATA SCORING) et passe son chemin.")
     rows, notes = convert(source)
     target = OUT / "wp25_communes.xlsx"
     target.write_bytes(build_workbook(rows))

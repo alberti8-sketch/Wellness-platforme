@@ -73,3 +73,8 @@ Thumbs.db
 node_modules/
 .next/
 .pytest_cache/
+
+# Fichiers bruts du Drive de l'équipe (HACKATHON 13/11/26) : non versionnés.
+# Les télécharger localement dans ces dossiers pour régénérer les données ou lancer les tests sur données brutes.
+/context/
+/data/sources/

@@ -19,7 +19,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "wellness_template.xlsx").write_bytes(build_workbook())
     print(f"Modèle vierge → {OUT / 'wellness_template.xlsx'}")
-    import_wp25.main()
+    if import_wp25.DEFAULT_SOURCE.exists() or len(sys.argv) > 1:
+        import_wp25.main()
+    else:
+        print("WP25 brut absent (fichier du Drive) : data/wp25_communes.xlsx versionné conservé tel quel.")
 
 
 if __name__ == "__main__":
