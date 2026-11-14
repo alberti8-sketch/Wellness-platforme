@@ -19,7 +19,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "@/components/session";
-import { Button, Card, Empty, ErrorBox, Spinner, StatusBadge, cx } from "@/components/ui";
+import { Button, Card, Empty, ErrorBox, Spinner, StatusBadge, cx, PageHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { BAND_META, FLAG_LABEL, STATUS_LABEL, fmt } from "@/lib/bands";
 import type { Cell, DatasetDetail, DatasetSummary, Indicator } from "@/lib/types";
@@ -68,13 +68,8 @@ function ProcessingHub() {
   if (!ready) return <Spinner />;
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-ink">Traitement et nettoyage</h1>
-        <p className="text-sm text-ink-2">
-          Suivi du pipeline déterministe, inspection des valeurs, corrections et validation avant publication dans le tableau de bord.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader title="Traitement" subtitle="Suivi du pipeline déterministe, inspection des valeurs, corrections et validation avant publication." />
       {error && <ErrorBox>{error}</ErrorBox>}
       <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <Card title="Jeux de données" actions={<Button variant="ghost" icon={RefreshCw} onClick={loadList} aria-label="Rafraîchir" />} className="h-fit">
@@ -184,7 +179,7 @@ function DatasetPanel({ id, onChanged }: { id: string; onChanged: () => void }) 
           <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
             {[...errors, ...warnings].map((i, n) => (
               <li key={n} className="flex items-start gap-2">
-                {i.severity === "error" ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-band-bad" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#b07800]" />}
+                {i.severity === "error" ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-band-bad" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#9A7420]" />}
                 <span className="text-ink-2">
                   {i.row !== null && <span className="font-medium text-ink">Ligne {i.row} · </span>}
                   {i.message}
@@ -305,7 +300,7 @@ function Stepper({ ds }: { ds: DatasetDetail }) {
             title={ev?.message ?? undefined}
             className={cx(
               "rounded-lg border px-3 py-2 text-xs",
-              ev ? (failed ? "border-[#f3c4c4] bg-[#fbe4e4]" : isCurrent ? "border-brand/40 bg-brand-50" : "border-hairline bg-white") : "border-dashed border-hairline text-ink-muted",
+              ev ? (failed ? "border-[#F0C9BD] bg-[#FBE6DF]" : isCurrent ? "border-brand/40 bg-brand-50" : "border-hairline bg-white") : "border-dashed border-hairline text-ink-muted",
             )}
           >
             <div className="flex items-center gap-1.5 font-medium">
@@ -335,7 +330,7 @@ function FlagLegend({ canEdit }: { canEdit: boolean }) {
         <ArrowUpDown className="h-3 w-3" /> {FLAG_LABEL.out_of_reference}
       </span>
       <span className="inline-flex items-center gap-1">
-        <span className="h-3 w-3 rounded-sm ring-2 ring-[#fab219]" /> {FLAG_LABEL.outlier}
+        <span className="h-3 w-3 rounded-sm ring-2 ring-[#D4A33A]" /> {FLAG_LABEL.outlier}
       </span>
       <span className="inline-flex items-center gap-1">
         <PenLine className="h-3 w-3 text-brand" /> {FLAG_LABEL.overridden}
@@ -462,7 +457,7 @@ function ValueCell({ cell, mode, indicator, canEdit, onClick }: { cell?: Cell; m
       onClick={onClick}
       className={cx(
         "flex w-full items-center gap-1 rounded px-1.5 py-1 text-left",
-        flags.has("outlier") && "ring-2 ring-inset ring-[#fab219]",
+        flags.has("outlier") && "ring-2 ring-inset ring-[#D4A33A]",
         canEdit ? "cursor-pointer hover:bg-brand-50" : "cursor-default",
       )}
     >

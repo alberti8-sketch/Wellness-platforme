@@ -5,7 +5,7 @@ import { Download, FileSpreadsheet, Keyboard, Plus, Send, Trash2, UploadCloud } 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { useSession } from "@/components/session";
-import { Button, Card, ErrorBox, Spinner, cx } from "@/components/ui";
+import { Button, Card, ErrorBox, Spinner, cx, PageHeader } from "@/components/ui";
 import { ValidationPreview } from "@/components/validation-preview";
 import { ApiError, api, download } from "@/lib/api";
 import { useDepartements } from "@/lib/geo";
@@ -119,14 +119,17 @@ export default function CollectPage() {
   const isB2G = me.tenant.stakeholder_type === "B2G";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-4">
       <DepartmentHealthUpload key={apiKey} />
-      <div>
-        <h1 className="text-xl font-semibold text-ink">Portail de collecte</h1>
-        <p className="text-sm text-ink-2">
-          Déposez des indicateurs <strong>agrégés par territoire</strong>. Les données sont validées avant envoi, puis traitées par le pipeline et soumises à validation d'un administrateur.
-        </p>
-      </div>
+      <PageHeader
+        title="Collecte"
+        subtitle={
+          <>
+            Déposez des indicateurs <strong className="font-medium text-ink">agrégés par territoire</strong>. Les données sont validées avant envoi, puis traitées par le pipeline et
+            soumises à validation d'un administrateur.
+          </>
+        }
+      />
 
       {me.role === "viewer" && <ErrorBox>Votre rôle ne permet pas de déposer des données.</ErrorBox>}
 

@@ -4,29 +4,149 @@
 
 html,
 body {
-  background: #f9f9f7;
-  color: #0b0b0b;
+  background: #f6f6f3;
+  color: #15171c;
+  -webkit-font-smoothing: antialiased;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #3e63dd;
+  outline-offset: 2px;
+}
+input[type="range"] {
+  accent-color: #15171c;
 }
 
 .leaflet-container {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #f4f6f8;
+  font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #e9e9e4;
 }
 
+/* ---- City pins (maquette « Wellness Platform ») ---- */
+.city-pin {
+  background: transparent;
+  border: 0;
+}
+.city-pin__hit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+.city-pin__dot {
+  display: block;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(21, 23, 28, 0.35);
+  transition: transform 0.15s ease;
+}
+.city-pin__hit:hover .city-pin__dot {
+  transform: scale(1.25);
+}
+.city-pin--on .city-pin__dot {
+  box-shadow: 0 0 0 3px #15171c;
+}
+.city-pin--cmp .city-pin__dot {
+  box-shadow: 0 0 0 2px #15171c, 0 1px 4px rgba(21, 23, 28, 0.35);
+}
+.city-pin__cmp {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #15171c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.city-pin__label {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #15171c;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.leaflet-tooltip.pin-tip {
+  padding: 10px 12px;
+  border: 1px solid #e7e7e2;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(21, 23, 28, 0.12);
+  color: #15171c;
+}
+.leaflet-tooltip.pin-tip::before {
+  display: none;
+}
+
+/* ---- Side panel ---- */
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.drawer-in {
+  animation: drawer-in 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in {
+    animation: none;
+  }
+  .city-pin__dot {
+    transition: none;
+  }
+}
+
+/* Shared classes (also used by the CNAM view), restyled to the mockup. */
 .primary-btn {
-  @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 transition;
+  @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-white transition hover:bg-brand-700;
 }
-
 .secondary-btn {
-  @apply bg-secondary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition;
+  @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition hover:bg-[#F0F0EB];
 }
-
 .danger-btn {
-  @apply bg-danger text-white px-4 py-2 rounded-lg hover:bg-red-600 transition;
+  @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-danger px-4 text-sm font-medium text-white transition hover:brightness-95;
 }
-
 .card {
-  @apply bg-white rounded-lg shadow p-6 border border-gray-200;
+  @apply rounded-card border border-hairline bg-white p-5;
+}
+.pill {
+  @apply inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-white px-3.5 text-[13px] font-medium text-[#3A3D44] transition hover:border-[#A9AAA3] hover:text-ink;
+}
+.pill-on {
+  @apply inline-flex h-9 items-center gap-1.5 rounded-full border border-primary bg-primary px-3.5 text-[13px] font-medium text-white;
+}
+.seg {
+  @apply inline-flex gap-0.5 rounded-xl bg-[#EBEBE6] p-[3px];
+}
+.seg > button {
+  @apply h-9 rounded-[9px] px-3 text-[13px] font-medium text-ink-2;
+}
+.seg > button[aria-pressed="true"] {
+  @apply bg-white text-ink shadow-[0_1px_2px_rgba(21,23,28,0.08)];
 }
 
 @media print {
@@ -43,9 +163,12 @@ body {
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-axis bg-white px-3 py-2 text-sm text-ink;
+    @apply h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink placeholder:text-ink-faint;
+  }
+  textarea.input {
+    @apply h-auto py-2.5;
   }
   .input:focus {
-    @apply border-brand outline-none ring-2 ring-brand/20;
+    @apply border-ink outline-none ring-2 ring-ink/10;
   }
 }
