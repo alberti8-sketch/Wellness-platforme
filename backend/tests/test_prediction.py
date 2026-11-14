@@ -38,6 +38,12 @@ def ml_data(tmp_path, monkeypatch):
         w.writeheader()
         w.writerow({"code": "35238", "dept": "35", "population": 230000, "pct_65plus": 20, "pct_65plus_level": "departement",
                     "density_km2": 4500, "poverty_rate": 12, "poverty_rate_level": "departement", "fastfood_per10k": 6.7, "sport_per10k": 25})
+    with (tmp_path / "departements_mobilite_2024.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["dept", "bike_share", "bike_parking_1000", "walk_score", "walk_communes"])
+        w.writeheader()
+        for i, r in enumerate(rows):  # cycling falls with age; walkability rated for half of the departments
+            w.writerow({"dept": r["dept"], "bike_share": 40 - r["pct_65plus"], "bike_parking_1000": 5 + i % 7,
+                        "walk_score": 8 + i % 5 if i % 2 else "", "walk_communes": 1 if i % 2 else 0})
     monkeypatch.setenv("WELLNESS_ML_DIR", str(tmp_path))
     return rows
 
@@ -101,3 +107,16 @@ def test_departements_endpoint(ml_data, client):
     assert body["indicators"]["icp"]["direction"] == "higher_is_better"
     assert body["indicators"]["framingham_10y"]["direction"] == "lower_is_better"
     assert body["indicators"]["vet_per10k"]["direction"] is None
+
+
+def test_etudes_endpoint(client, ml_data):
+    r = client.get("/api/prediction/etudes?patho=diabete", headers=ADMIN_B2G)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["n"] == 96 and "r2_base" in body
+    assert [f["key"] for f in body["factors"]] == ["bike_share", "bike_parking_1000", "walk_score"]
+    assert body["factors"][0]["r"] < -0.5  # bike_share mirrors age, which drives the synthetic prevalence
+    assert body["factors"][2]["n"] == 48
+    for f in body["factors"]:
+        assert -1 <= f["r"] <= 1 and -1 <= f["r_partial"] <= 1
+        assert isinstance(f["helps_prediction"], bool)

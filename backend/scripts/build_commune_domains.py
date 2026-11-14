@@ -34,6 +34,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "data" / "sources"
 CACHE = Path(__file__).resolve().parents[1] / "data" / "cache" / "commune_domains"
 OUT = ROOT / "data" / "ml" / "communes_domaines_2024.csv"
+OUT_DEPT = ROOT / "data" / "ml" / "departements_mobilite_2024.csv"
 WALK_FILE = SOURCES / "barometre_villes_marchables_2023.xlsx"
 BIKE_FILE = SOURCES / "VT_2024_cyclabilite_stationnement_commune.csv"
 MIN_POP = 2000
@@ -160,6 +161,29 @@ def bike_by_commune() -> tuple[dict[str, dict], dict[str, str]]:
     return out, size
 
 
+def mobility_by_departement(walk: dict[str, dict], geo: list[dict]) -> pd.DataFrame:
+    """Department aggregates of the walking and cycling studies (for the diabetes statistics).
+
+    Cycling: all communes (km with a cycling facility / km of roads; parking spaces per 1,000 inhabitants).
+    Walking: population-weighted mean of the communes rated by the barometer (missing when none).
+    """
+    v = pd.read_csv(BIKE_FILE, dtype={"INSEE_COM": str, "INSEE_DEP": str, "INSEE_EPCI": str}, encoding="utf-8-sig")
+    g = v.groupby("INSEE_DEP").agg(road=("Voirie_reference_km", "sum"), bike=("Amenagement_cyclable_km", "sum"),
+                                   park=("Stationnement", "sum"), people=("Pop", "sum"))
+    out = pd.DataFrame({"bike_share": (100 * g.bike / g.road).round(2), "bike_parking_1000": (1000 * g.park / g.people).round(2)})
+    pop = {c["code"]: c.get("population") or 0 for c in geo}
+    w = pd.DataFrame([{"dept": (code[:3] if code.startswith("97") else code[:2]), "score": r["walk_score"], "pop": pop.get(code, 0)}
+                      for code, r in walk.items()])
+    agg = w.groupby("dept").apply(lambda d: pd.Series({
+        "walk_score": round(float((d.score * d["pop"]).sum() / d["pop"].sum()), 2) if d["pop"].sum() else None,
+        "walk_communes": len(d),
+    }), include_groups=False)
+    out = out.join(agg, how="left")
+    out["walk_communes"] = out["walk_communes"].fillna(0).astype(int)
+    out.index.name = "dept"
+    return out[out.index.str.len() == 2].reset_index()
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     for f in (WALK_FILE, BIKE_FILE):
@@ -207,6 +231,9 @@ def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT, index=False, encoding="utf-8")
     print(f"{len(df)} communes → {OUT.relative_to(ROOT)}")
+    mob = mobility_by_departement(walk, geo)
+    mob.to_csv(OUT_DEPT, index=False, encoding="utf-8")
+    print(f"{len(mob)} départements → {OUT_DEPT.relative_to(ROOT)}")
     print(df.describe().T[["mean", "50%", "max"]].round(2))
 
 

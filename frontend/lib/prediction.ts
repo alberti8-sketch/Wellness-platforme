@@ -103,3 +103,4 @@ export interface DeptData {
   departements: { code: string; name: string; prevention_type?: string | null; values: Record<string, number | null> }[];
 }
 export const useDepartementData = () => useLoad<DeptData>("departements", () => api.get<DeptData>("/api/prediction/departements"));
+

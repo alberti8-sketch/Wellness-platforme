@@ -4,9 +4,9 @@ import { NextStep } from "@/components/next-step";
 import { Info, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
-import { DecisionTree, FEATURE_SHORT, fmtFeature, rampColor } from "@/components/decision-tree";
 import { Card, ErrorBox, Kpi, PageHeader, Spinner, cx } from "@/components/ui";
 import { fmt } from "@/lib/bands";
+import { FEATURE_SHORT, fmtFeature, rampColor } from "@/lib/feature-format";
 import { simulate, useModel, usePredictions, type FeatureKey, type PathStep, type PredPatho } from "@/lib/prediction";
 
 const RANGES: Record<FeatureKey, [number, number, number]> = {
@@ -26,28 +26,11 @@ function LevelTag({ level }: { level: "commune" | "departement" }) {
   );
 }
 
-function PathSentences({ path }: { path: PathStep[] }) {
-  return (
-    <ol className="space-y-1.5">
-      {path.map((s, i) => (
-        <li key={s.node} className="flex gap-2 text-sm text-ink-2">
-          <span className="num mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-semibold text-white">{i + 1}</span>
-          <span>
-            {FEATURE_SHORT[s.feature]} = <strong className="num text-ink">{fmtFeature(s.feature, s.value)}</strong>{" "}
-            {s.condition === "<=" ? "≤" : ">"} {fmtFeature(s.feature, s.threshold)} → branche « {s.condition === "<=" ? "oui" : "non"} »
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 export default function PredictionPage() {
   const { territories } = useAnalytics();
   // Diabetes is the single disease kept as an example.
   const patho: PredPatho = "diabete";
   const [selected, setSelected] = useState<string>("");
-  const [openLeaf, setOpenLeaf] = useState<number | null>(null);
   const [sim, setSim] = useState<Record<FeatureKey, number> | null>(null);
   const [simRes, setSimRes] = useState<{ prediction: number; leaf: number; path: PathStep[] } | null>(null);
 
@@ -92,21 +75,18 @@ export default function PredictionPage() {
     [territories, preds.data],
   );
 
-  const activePath = (simRes ?? p)?.path.map((s) => s.node) ?? [];
-  const activeLeaf = (simRes ?? p)?.leaf ?? null;
-  const leafNode = openLeaf != null ? m?.nodes.find((n) => n.id === openLeaf) : null;
   const importances = m ? (Object.entries(m.importances) as [FeatureKey, number][]).sort((a, b) => b[1] - a[1]) : [];
 
   return (
     <div>
       <PageHeader
         title="Prédire le diabète"
-        subtitle="Un arbre de décision, entraîné sur les 96 départements de métropole, estime la prévalence du diabète à partir du profil d'un territoire."
+        subtitle="Estime la prévalence du diabète d'un territoire à partir de son profil. Modèle entraîné sur les 96 départements de métropole."
       />
 
       {model.error && <ErrorBox>{model.error}</ErrorBox>}
       {!m ? (
-        !model.error && <Spinner label="Entraînement de l'arbre…" />
+        !model.error && <Spinner label="Calcul du modèle…" />
       ) : (
         <>
           <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -122,7 +102,7 @@ export default function PredictionPage() {
             />
             <Kpi label="Prévalence observée" value={`${fmt(m.metrics.target_mean, 2)} %`} sub={`moyenne des départements · de ${fmt(m.metrics.target_min, 1)} à ${fmt(m.metrics.target_max, 1)} % (${m.year})`} />
             <div className="rounded-card border border-hairline bg-white p-5">
-              <p className="text-[13px] text-ink-muted">Ce qui pèse dans l'arbre</p>
+              <p className="text-[13px] text-ink-muted">Ce qui pèse dans la prédiction</p>
               <ul className="mt-2 space-y-1.5">
                 {importances.map(([k, v]) => (
                   <li key={k} className="grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-2 text-xs">
@@ -137,41 +117,20 @@ export default function PredictionPage() {
             </div>
           </div>
 
-          <Card
-            title={`Arbre de décision · ${m.label}`}
-            subtitle={`${m.params.max_depth} niveaux, au moins ${m.params.min_samples_leaf} départements par feuille. Chemin surligné : ${simRes ? "simulation en cours" : p?.name ?? "—"}. Cliquez une feuille pour voir ses départements.`}
-            actions={
-              <label className="flex items-center gap-2 text-[13px] text-ink-muted">
-                Territoire
-                <select className="input h-10 w-auto min-w-[200px]" value={selected} onChange={(e) => setSelected(e.target.value)}>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <Card
+              title="Prédiction"
+              subtitle="Prévalence estimée et profil utilisé"
+              actions={
+                <select className="input h-10 w-auto min-w-[200px]" value={selected} onChange={(e) => setSelected(e.target.value)} aria-label="Territoire">
                   {territories.map((t) => (
                     <option key={t.code} value={t.code}>
                       {t.name}
                     </option>
                   ))}
                 </select>
-              </label>
-            }
-          >
-            <DecisionTree model={m} activePath={activePath} activeLeaf={activeLeaf} openLeaf={openLeaf} onLeafClick={(id) => setOpenLeaf((o) => (o === id ? null : id))} />
-            {leafNode?.departements && (
-              <div className="mt-4 rounded-xl bg-plane p-4">
-                <p className="text-sm font-semibold text-ink">
-                  Feuille à {fmt(leafNode.value, 2)} % · {leafNode.samples} départements
-                </p>
-                <p className="mt-2 flex flex-wrap gap-1.5">
-                  {leafNode.departements.map((d) => (
-                    <span key={d.code} className="num rounded-full border border-hairline bg-white px-2.5 py-1 text-xs text-ink-2">
-                      {d.name} ({d.code}) · {fmt(d.prev, 1)} %
-                    </span>
-                  ))}
-                </p>
-              </div>
-            )}
-          </Card>
-
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            <Card title={`Prédiction · ${p?.name ?? "—"}`} subtitle="Comment l'arbre arrive à ce résultat">
+              }
+            >
               {preds.loading ? (
                 <Spinner />
               ) : !p || p.error ? (
@@ -196,8 +155,6 @@ export default function PredictionPage() {
                       </div>
                     )}
                   </div>
-                  <h3 className="mb-2 mt-5 text-[13px] font-semibold text-ink">Chemin dans l'arbre</h3>
-                  <PathSentences path={p.path} />
                   <h3 className="mb-2 mt-5 text-[13px] font-semibold text-ink">Profil utilisé</h3>
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {ORDER.map((k) => (
@@ -216,7 +173,7 @@ export default function PredictionPage() {
 
             <Card
               title="Et si… ?"
-              subtitle="Modifiez le profil pour voir comment la prédiction évolue (le chemin se met à jour dans l'arbre)."
+              subtitle="Modifiez le profil pour voir comment la prédiction évolue."
               actions={
                 dirty && p && !p.error ? (
                   <button className="secondary-btn h-9 text-[13px]" onClick={() => setSim({ ...p.features })}>
@@ -261,13 +218,13 @@ export default function PredictionPage() {
                       );
                     })}
                   </div>
-                  <p className="mt-4 text-xs text-ink-muted">L'arbre ne change de prédiction que lorsqu'une valeur franchit un seuil de l'arbre : la réponse est en paliers.</p>
+                  <p className="mt-4 text-xs text-ink-muted">La prédiction évolue par paliers : elle ne change que lorsqu'une valeur franchit un seuil du modèle.</p>
                 </>
               )}
             </Card>
           </div>
 
-          <Card className="mt-4" title={`Prédictions par territoire · ${m.label}`} subtitle="Trié par prévalence prédite. Cliquez une ligne pour suivre son chemin dans l'arbre.">
+          <Card className="mt-4" title={`Prédictions par territoire · ${m.label}`} subtitle="Trié par prévalence prédite. Cliquez une ligne pour voir son détail.">
             {preds.loading ? (
               <Spinner />
             ) : (
@@ -279,7 +236,6 @@ export default function PredictionPage() {
                       <th className="px-2 py-2 text-right font-medium">Prédiction</th>
                       <th className="px-2 py-2 text-right font-medium">Observé (département)</th>
                       <th className="px-2 py-2 text-right font-medium">Écart</th>
-                      <th className="px-2 py-2 text-left font-medium">Premier critère</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -302,9 +258,6 @@ export default function PredictionPage() {
                           <td className="num px-2 py-2.5 text-right text-ink-muted">
                             {r!.gap! > 0 ? "+" : ""}
                             {fmt(r!.gap, 2)}
-                          </td>
-                          <td className="px-2 py-2.5 text-ink-2">
-                            {r!.path[0] && `${FEATURE_SHORT[r!.path[0].feature]} ${r!.path[0].condition === "<=" ? "≤" : ">"} ${fmtFeature(r!.path[0].feature, r!.path[0].threshold)}`}
                           </td>
                         </tr>
                       );

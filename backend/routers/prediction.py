@@ -173,3 +173,14 @@ def departements(_: Principal = Depends(get_principal)) -> dict[str, Any]:
             for r in rows
         ],
     }
+
+
+@router.get("/etudes")
+def etudes(patho: str = "diabete", _: Principal = Depends(get_principal)) -> dict[str, Any]:
+    """Walking and cycling studies vs the disease: correlations and effect on the prediction (96 departments)."""
+    _tree(patho)  # validates the pathology and the dataset
+    return {
+        **ml_tree.factor_study(patho),
+        "note": ("Corrélation partielle : lien qui reste une fois la pauvreté et l'âge pris en compte. "
+                 "Gain de prédiction : variation de la part expliquée (R², validation croisée) quand le facteur est ajouté au modèle."),
+    }

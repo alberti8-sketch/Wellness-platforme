@@ -211,8 +211,22 @@ Cible : prévalence 2024 (data.ameli.fr). Arbre de 3 niveaux, ≥ 8 département
 Variables testées et **non retenues** car elles n'améliorent pas (ou dégradent) la prédiction en validation croisée :
 densité de vétérinaires (R² inchangé), indicateurs de prévention / ICP (R² 0,47 → 0,37).
 
-La page montre l'arbre (chemin de la ville surligné), l'explication de chaque prédiction, un simulateur « Et si… ? »
-et les prédictions des 14 villes. **Associations entre territoires, pas des causes** ; la prévalence observée est départementale.
+La page montre la prédiction d'une ville et son profil, un simulateur « Et si… ? » et les prédictions des 14 villes
+(l'arbre lui-même n'est plus dessiné dans l'interface : trop technique ; il reste exposé par `/api/prediction/model`).
+
+**Études marche et vélo** (`GET /api/prediction/etudes`, agrégats `data/ml/departements_mobilite_2024.csv` produits par
+`scripts/build_commune_domains.py`) : pour chaque facteur, corrélation avec le diabète, corrélation à pauvreté et âge égaux,
+et effet sur la part expliquée quand on l'ajoute à l'arbre (validation croisée répétée 10 fois).
+
+| Facteur (département) | Corrélation | À pauvreté et âge égaux | Effet sur R² |
+|---|---|---|---|
+| Voirie avec aménagement cyclable | −0,35 | −0,16 | −1,9 pt |
+| Stationnement vélo / 1 000 hab. | −0,43 | −0,20 | −7,5 pts |
+| Indice de marchabilité (70 départements notés) | −0,23 | +0,09 | −0,4 pt |
+
+Lecture : plus de vélo va avec moins de diabète, mais surtout parce que ces territoires sont plus jeunes et moins pauvres ;
+ces facteurs n'améliorent pas la prédiction. Analyse disponible par l'API seulement (non affichée) ; les données
+marche et vélo restent visibles sur la carte et dans la fiche des villes. **Associations entre territoires, pas des causes** ; la prévalence observée est départementale.
 
 Données : `data/ml/departements_2024.csv` et `data/ml/communes_2024.csv` (versionnés). Pour les régénérer :
 `python -m scripts.build_ml_dataset --year 2024` (fichier INSEE dans `data/sources/`, ~3 min, API mises en cache).

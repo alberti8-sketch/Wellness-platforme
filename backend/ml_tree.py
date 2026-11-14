@@ -187,3 +187,65 @@ def predict(t: TrainedTree, features: dict[str, float]) -> dict[str, Any]:
         path.append({"node": node, "feature": k, "threshold": round(thr, 2), "value": features[k], "condition": "<=" if go_left else ">"})
         node = int(tr.children_left[node] if go_left else tr.children_right[node])
     return {"prediction": round(float(tr.value[node][0][0]), 3), "leaf": node, "path": path}
+
+
+# ---- Walking and cycling studies: do they help predict the disease? ----
+STUDY_FACTORS: dict[str, dict[str, str]] = {
+    "bike_share": {"label": "Voirie avec aménagement cyclable", "unit": "%", "source": "Vélo & Territoires 2024 (toutes les communes)"},
+    "bike_parking_1000": {"label": "Stationnement vélo pour 1 000 hab.", "unit": "/1 000 hab.", "source": "Vélo & Territoires 2024"},
+    "walk_score": {"label": "Indice de marchabilité", "unit": "/20", "source": "Baromètre des villes marchables 2023 (communes notées, moyenne pondérée)"},
+}
+CV_REPEATS = 10
+
+
+def load_mobility() -> dict[str, dict[str, float | None]]:
+    path = ml_dir() / f"departements_mobilite_{YEAR}.csv"
+    if not path.exists():
+        return {}
+    return {r["dept"]: {k: _num(r.get(k)) for k in STUDY_FACTORS} for r in _read_csv(path)}
+
+
+def _cv_r2(X: np.ndarray, y: np.ndarray) -> float:
+    """Cross-validated R², averaged over several fold splits (small sample: one split is noisy)."""
+    scores = []
+    for seed in range(CV_REPEATS):
+        cv = KFold(n_splits=5, shuffle=True, random_state=seed)
+        p = cross_val_predict(DecisionTreeRegressor(max_depth=MAX_DEPTH, min_samples_leaf=MIN_SAMPLES_LEAF, random_state=SEED), X, y, cv=cv)
+        scores.append(1 - float(np.sum((p - y) ** 2)) / float(np.sum((y - y.mean()) ** 2)))
+    return float(np.mean(scores))
+
+
+@lru_cache(maxsize=None)
+def factor_study(patho: str) -> dict[str, Any]:
+    """For each walking / cycling factor: raw correlation with the prevalence, correlation once poverty and
+    age are accounted for (partial), and the change of cross-validated R² when the factor is added to the tree."""
+    mob = load_mobility()
+    rows = [r for r in load_departements()
+            if r["targets"][patho] is not None and all(v is not None for v in r["features"].values())]
+    base_X = np.array([[r["features"][k] for k in FEATURES] for r in rows])
+    y = np.array([r["targets"][patho] for r in rows])
+    r2_base = _cv_r2(base_X, y)
+    out = []
+    for key, meta in STUDY_FACTORS.items():
+        vals = np.array([mob.get(r["code"], {}).get(key) for r in rows], dtype=float)
+        ok = ~np.isnan(vals)
+        n = int(ok.sum())
+        if n < 20:
+            continue
+        x, yy = vals[ok], y[ok]
+        controls = np.c_[np.ones(n), base_X[ok][:, list(FEATURES).index("poverty_rate")], base_X[ok][:, list(FEATURES).index("pct_65plus")]]
+
+        def resid(z: np.ndarray, c: np.ndarray = controls) -> np.ndarray:
+            return z - c @ np.linalg.lstsq(c, z, rcond=None)[0]
+
+        r_raw = float(np.corrcoef(x, yy)[0, 1])
+        r_partial = float(np.corrcoef(resid(x), resid(yy))[0, 1])
+        # The tree handles missing values (scikit-learn ≥ 1.3): departments without a rated commune stay in.
+        r2_with = _cv_r2(np.c_[base_X, vals], y)
+        out.append({
+            "key": key, **meta, "n": n,
+            "r": round(r_raw, 2), "r_partial": round(r_partial, 2),
+            "r2_with": round(r2_with, 3), "r2_gain": round(r2_with - r2_base, 3),
+            "helps_prediction": r2_with - r2_base >= 0.02,
+        })
+    return {"patho": patho, "n": len(rows), "r2_base": round(r2_base, 3), "controls": ["poverty_rate", "pct_65plus"], "factors": out}
