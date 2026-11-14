@@ -33,6 +33,18 @@ export interface Catalog {
   dimensions: Dimension[];
   indicators: Indicator[];
   bands: { code: BandCode; label: string; min: number }[];
+  context_columns: Record<string, string>;
+  territory_types: TerritoryType[];
+}
+
+export type TerritoryType = "urbain" | "semi-urbain" | "rural";
+
+export interface TerritoryContext {
+  level: "commune" | "departement" | null;
+  territory_type: TerritoryType | null;
+  population: number | null;
+  density_km2: number | null;
+  source_global_score: number | null;
 }
 
 export interface Issue {
@@ -105,6 +117,7 @@ export interface Territory {
   code: string;
   name: string;
   period: number;
+  context: TerritoryContext;
   dataset_id: string;
   published_at: string | null;
   composite: DimensionScore;

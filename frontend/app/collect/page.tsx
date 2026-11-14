@@ -282,7 +282,8 @@ function ManualEntry({ rows, allowed, onChange }: { rows: ManualRow[]; allowed: 
   const [draft, setDraft] = useState<ManualRow>({ period: String(new Date().getFullYear() - 1) });
   if (!catalog) return null;
 
-  const setCode = (code: string) => setDraft({ ...draft, territory_code: code, territory_name: depts.find((d) => d.code === code)?.nom ?? "" });
+  const setCode = (code: string) =>
+    setDraft({ ...draft, territory_code: code, territory_name: depts.find((d) => d.code === code)?.nom ?? draft.territory_name ?? "" });
   const add = () => {
     onChange([...rows, Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== ""))]);
     setDraft({ period: draft.period });
@@ -290,15 +291,34 @@ function ManualEntry({ rows, allowed, onChange }: { rows: ManualRow[]; allowed: 
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className="space-y-1 text-sm md:col-span-2">
-          <span className="font-medium">Territoire (département)</span>
-          <select className="input" value={draft.territory_code ?? ""} onChange={(e) => setCode(e.target.value)}>
-            <option value="">— Choisir —</option>
+      <div className="grid gap-3 md:grid-cols-4">
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Code INSEE</span>
+          <input
+            className="input"
+            list="territory-codes"
+            placeholder="ex. 35238 ou 35"
+            value={draft.territory_code ?? ""}
+            onChange={(e) => setCode(e.target.value.trim().toUpperCase())}
+          />
+          <datalist id="territory-codes">
             {depts.map((d) => (
               <option key={d.code} value={d.code}>
-                {d.code} · {d.nom}
+                {d.nom}
               </option>
+            ))}
+          </datalist>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Nom</span>
+          <input className="input" placeholder="ex. Rennes" value={draft.territory_name ?? ""} onChange={(e) => setDraft({ ...draft, territory_name: e.target.value })} />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Typologie</span>
+          <select className="input" value={draft.territory_type ?? ""} onChange={(e) => setDraft({ ...draft, territory_type: e.target.value })}>
+            <option value="">—</option>
+            {catalog.territory_types.map((t) => (
+              <option key={t}>{t}</option>
             ))}
           </select>
         </label>
@@ -307,6 +327,20 @@ function ManualEntry({ rows, allowed, onChange }: { rows: ManualRow[]; allowed: 
           <input className="input" inputMode="numeric" value={draft.period ?? ""} onChange={(e) => setDraft({ ...draft, period: e.target.value })} />
         </label>
       </div>
+
+      <fieldset className="rounded-lg border border-hairline p-3">
+        <legend className="px-1 text-sm font-medium text-ink">
+          Contexte <span className="text-xs font-normal text-ink-muted">(affiché, non noté)</span>
+        </legend>
+        <div className="grid gap-3 md:grid-cols-3">
+          {(["population", "density_km2", "source_global_score"] as const).map((k) => (
+            <label key={k} className="space-y-1 text-xs">
+              <span className="block text-ink-2">{catalog.context_columns[k]}</span>
+              <input className="input" inputMode="decimal" value={draft[k] ?? ""} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })} />
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {catalog.dimensions.map((dim) => (
         <fieldset key={dim.code} className="rounded-lg border border-hairline p-3">
