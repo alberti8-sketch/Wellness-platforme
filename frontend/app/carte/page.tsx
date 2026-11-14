@@ -1,18 +1,20 @@
 "use client";
 
-import { GitCompareArrows, Map as MapIcon, Utensils } from "lucide-react";
+import { NextStep } from "@/components/next-step";
+import { Check, GitCompareArrows, Map as MapIcon, PanelRight, SlidersHorizontal, Utensils } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
 import { CityPicker } from "@/components/city-picker";
+import { ScaleBar, ScaleLegend, seqColor } from "@/components/scale-bar";
 import { useSession } from "@/components/session";
 import type { MapValue } from "@/components/territory-map";
 import { BandLegend, Card, Empty, PageHeader, Spinner, cx } from "@/components/ui";
 import { BAND_META, NO_DATA_COLOR, fmt } from "@/lib/bands";
 import { useFood } from "@/lib/context-data";
 import { useTerritoryShapes } from "@/lib/geo";
-import { TYPE_LABEL, metricKey, metricLabel, metricValue, parseMetric, type Metric } from "@/lib/metrics";
+import { TYPE_LABEL, mean, metricKey, metricLabel, metricValue, parseMetric, type Metric } from "@/lib/metrics";
 import type { BandCode, TerritoryType } from "@/lib/types";
 
 const TerritoryMap = dynamic(() => import("@/components/territory-map"), { ssr: false, loading: () => <Spinner label="Chargement de la carte…" /> });
@@ -25,6 +27,17 @@ export default function CartePage() {
   const [bandFilter, setBandFilter] = useState<BandCode | "all">("all");
   const [compareMode, setCompareMode] = useState(false);
   const [showFood, setShowFood] = useState(false);
+  const [focus, setFocus] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // Shareable city view: /carte?ville=35238
+  useEffect(() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get("ville");
+      if (v) setFocus(v.toUpperCase());
+    } catch {
+      /* no URL access */
+    }
+  }, []);
   const router = useRouter();
 
   const visible = useMemo(
@@ -42,30 +55,47 @@ export default function CartePage() {
   const label = metricLabel(metric, catalog);
   const ind = metric.kind === "ind" ? catalog.indicators.find((i) => i.code === metric.code) : undefined;
 
+  // Displayed value: the raw value for an indicator (its own unit), the 1–10 score otherwise.
+  const shown = (t: (typeof visible)[number]) => (ind ? t.indicators[ind.code]?.raw_value ?? null : metricValue(t, metric).score);
+  const unit = ind ? (ind.unit.startsWith("%") || ind.unit === "%" ? " %" : ` ${ind.unit}`) : "";
+  const format = (v: number) => `${fmt(v, 1)}${unit}`;
+  const nums = visible.map(shown).filter((v): v is number => v != null);
+  const lo = nums.length ? Math.floor(Math.min(...nums)) : 0;
+  const hi = nums.length ? Math.ceil(Math.max(...nums)) : 10;
+  const [dmin, dmax] = lo === hi ? [lo - 1, hi + 1] : [lo, hi];
+  const avg = mean(nums);
+  const better: "low" | "high" = ind && ind.direction === "lower_is_better" ? "low" : "high";
+  const focusT = focus ? visible.find((t) => t.code === focus) ?? null : null;
+  const focusV = focusT ? shown(focusT) : null;
+  const isBetter = focusV != null && avg != null && (better === "high" ? focusV > avg : focusV < avg);
+  const source = ind ? ind.source_hint : `Plateforme Wellness — indice calculé à partir des données publiées (${overview?.period ?? ""})`;
+
   const mapValues: Record<string, MapValue> = Object.fromEntries(
     visible.map((t) => {
       const v = metricValue(t, metric);
+      const x = shown(t);
       return [
         t.code,
         {
           name: t.name,
           score: v.score,
           band: v.band,
-          detail: ind ? `Valeur brute : ${fmt(v.raw, 2)} ${ind.unit}` : undefined,
+          fill: seqColor(x, dmin, dmax),
+          display: x == null ? "—" : format(x),
           typeLabel: t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : null,
           population: t.context.population,
         },
       ];
     }),
   );
-  const onPick = (code: string) => (compareMode ? toggleCompare(code) : open(code));
+  const onPick = (code: string) => (compareMode ? toggleCompare(code) : setFocus((f) => (f === code ? null : code)));
   const sorted = [...visible].sort((a, b) => (metricValue(b, metric).score ?? -1) - (metricValue(a, metric).score ?? -1));
 
   return (
     <div>
       <PageHeader
-        title="Carte & graphique"
-        subtitle={`Explorez un indicateur sur la carte ou en graphique, puis ouvrez la fiche d'un territoire · ${overview?.period ?? ""}`}
+        title="Carte des villes"
+        subtitle="Cliquez une ville pour zoomer et la situer par rapport aux autres."
         actions={
           <div className="seg" role="group" aria-label="Mode d'affichage">
             <button aria-pressed={view === "map"} onClick={() => setView("map")}>
@@ -79,9 +109,10 @@ export default function CartePage() {
       />
 
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-card border border-hairline bg-white px-4 py-3">
+      <div className="mb-4 rounded-card border border-hairline bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <label className="flex items-center gap-2 text-[13px] text-ink-muted">
-          Couche affichée
+          Indicateur
           <select className="input h-10 w-auto min-w-[240px]" value={metricKey(metric)} onChange={(e) => setMetric(parseMetric(e.target.value))}>
             <option value="composite">Indice de bien-être (pondéré)</option>
             <optgroup label="Dimensions">
@@ -104,6 +135,19 @@ export default function CartePage() {
             ))}
           </select>
         </label>
+        <CityPicker onValidate={(codes) => codes.length > 1 && router.push("/classement#comparaison")} />
+        {(() => {
+          const active = (ttype ? 1 : 0) + (bandFilter !== "all" ? 1 : 0) + (showFood ? 1 : 0) + (compareMode ? 1 : 0);
+          return (
+            <button onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} className={cx(moreOpen ? "pill-on" : "pill", "ml-auto")}>
+              <SlidersHorizontal className="h-4 w-4" aria-hidden />
+              Filtres{active ? ` · ${active}` : ""}
+            </button>
+          );
+        })()}
+      </div>
+      {moreOpen && (
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-hairline pt-3">
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Typologie">
           {(["", ...catalog.territory_types] as (TerritoryType | "")[]).map((t) => (
             <button key={t || "all"} className={ttype === t ? "pill-on" : "pill"} aria-pressed={ttype === t} onClick={() => setTtype(t)}>
@@ -119,11 +163,10 @@ export default function CartePage() {
             </button>
           ))}
         </div>
-        <CityPicker onValidate={(codes) => codes.length > 1 && router.push("/classement#comparaison")} />
         <button
           onClick={() => setShowFood((v) => !v)}
           aria-pressed={showFood}
-          className={cx(showFood ? "pill-on" : "pill", "ml-auto")}
+          className={showFood ? "pill-on" : "pill"}
           title="Afficher les fast-foods et snacks recensés dans OpenStreetMap"
         >
           <Utensils className="h-4 w-4" aria-hidden />
@@ -139,6 +182,8 @@ export default function CartePage() {
           Mode comparaison {compare.length ? `· ${compare.length}` : ""}
         </button>
       </div>
+      )}
+      </div>
 
       {!overview ? (
         <Spinner />
@@ -149,25 +194,47 @@ export default function CartePage() {
           </Empty>
         </Card>
       ) : view === "map" ? (
-        <Card title={label} subtitle={compareMode ? "Mode comparaison : cliquez les villes à comparer (4 max)." : "Survolez une ville pour un aperçu, cliquez pour sa fiche détaillée."} actions={<BandLegend />}>
-          <div className="h-[620px]">
+        <section className="rounded-card border border-hairline bg-white p-5 md:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#14285A] md:text-[28px]">
+                {label} {focusT ? `à ${focusT.name}` : "en France"}
+              </h2>
+              <p className="mt-2 text-[13px] text-ink-2">
+                <strong className="font-semibold text-ink">Source :</strong> {source}
+              </p>
+            </div>
+            {focusT && (
+              <div className="flex flex-wrap gap-2">
+                <button className="secondary-btn h-10" onClick={() => setFocus(null)}>
+                  Vue France
+                </button>
+                <button className="primary-btn h-10" onClick={() => open(focusT.code)}>
+                  <PanelRight className="h-4 w-4" aria-hidden /> Fiche détaillée
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-5 h-[600px]">
             {shapes ? (
               <TerritoryMap
                 departements={departements}
                 shapes={shapes}
                 values={mapValues}
-                selected={selected}
+                selected={focus}
                 compared={compare}
                 onSelect={onPick}
                 metricLabel={label}
                 foodPoints={foodPoints}
+                focus={focus}
               />
             ) : (
               <Spinner />
             )}
           </div>
-          <p className="mt-3 text-xs text-ink-muted">
-            Hors de France, le fond est grisé. Fond de carte modifiable via l'icône en haut à droite.
+          <p className="mt-2 text-xs text-ink-muted">
+            {compareMode ? "Mode comparaison : cliquez les villes à comparer (4 max)." : "Cliquez une ville pour zoomer et la situer par rapport à la moyenne."}
             {showFood && (
               <>
                 {" "}
@@ -179,7 +246,33 @@ export default function CartePage() {
               </>
             )}
           </p>
-        </Card>
+
+          <div className="mt-8">
+            <ScaleBar min={dmin} max={dmax} value={focusV} average={avg} better={better} format={format} />
+          </div>
+          <p className="mt-2 text-[15px] leading-relaxed text-[#1B5E86]">
+            {focusT && focusV != null && avg != null ? (
+              <>
+                <strong className="font-bold">{focusT.name}</strong> {ind ? "a une valeur de" : "a un score de"} <strong className="font-bold">{format(focusV)}</strong>
+                {ind ? ` pour « ${label.toLowerCase()} »` : ""} en <strong className="font-bold">{overview?.period}</strong>, contre une moyenne de{" "}
+                <strong className="font-bold">{format(avg)}</strong> pour les villes du tableau de bord.
+                {isBetter && (
+                  <span className="ml-1.5 inline-flex items-center gap-1 align-middle text-[#2E9F48]">
+                    <Check className="h-4 w-4" strokeWidth={3} aria-hidden />
+                    <span className="text-[13px] font-semibold">meilleur que la moyenne</span>
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                Moyenne des villes du tableau de bord : <strong className="font-bold">{avg != null ? format(avg) : "—"}</strong>. Cliquez une ville sur la carte pour la situer.
+              </>
+            )}
+          </p>
+          <div className="mt-8">
+            <ScaleLegend />
+          </div>
+        </section>
       ) : (
         <Card title={label} subtitle="Classement sur l'échelle 1–10 · repères Middle (4) et Best (7)" actions={<BandLegend />}>
           <ol className="space-y-1.5">
@@ -207,6 +300,7 @@ export default function CartePage() {
           </ol>
         </Card>
       )}
+      <NextStep step={1} />
     </div>
   );
 }

@@ -16,6 +16,10 @@ export interface MapValue {
   detail?: string;
   typeLabel?: string | null;
   population?: number | null;
+  /** Sequential colour of the displayed value (overrides the band colour). */
+  fill?: string | null;
+  /** Formatted displayed value (e.g. "12,3 %"); defaults to the 1–10 score. */
+  display?: string;
 }
 
 type Props = {
@@ -29,12 +33,18 @@ type Props = {
   metricLabel: string;
   /** Optional OpenStreetMap fast-food outlets layer. */
   foodPoints?: FoodPoint[];
+  /** Territory to zoom on (city view); null = whole France. */
+  focus?: string | null;
 };
 
 /** Géoplateforme IGN (WMTS, open licence, no key) — French official basemaps. */
 const ign = (layer: string, format: "png" | "jpeg") =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/${format}&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`;
 const IGN_ATTRIBUTION = '&copy; <a href="https://geoservices.ign.fr/">IGN</a> – Géoplateforme';
+/** Esri Light Gray Canvas (no key, no watermark): neutral background so the data colours stand out. */
+const ESRI_GRAY = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const ESRI_GRAY_LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+const ESRI_ATTRIBUTION = "Fond &copy; Esri, HERE, Garmin, &copy; contributeurs OpenStreetMap";
 
 // Metropolitan France + margin: panning stays around France.
 const FRANCE_BOUNDS = L.latLngBounds([39.8, -7.5], [52.6, 11.8]);
@@ -48,22 +58,30 @@ function loadFranceAssets() {
   return maskCache;
 }
 
-function FitFrance({ outline }: { outline: FeatureCollection | null }) {
+/** Whole France by default; zooms on the focused territory (city view) when one is selected. */
+function FitView({ outline, shapes, focus }: { outline: FeatureCollection | null; shapes: TerritoryCollection; focus?: string | null }) {
   const map = useMap();
+  const feature = focus ? shapes.features.find((f) => f.properties.code === focus) : undefined;
   useEffect(() => {
+    if (feature) {
+      const b = L.geoJSON(feature).getBounds();
+      if (b.isValid()) map.flyToBounds(b, { padding: [48, 48], maxZoom: 12.5, duration: 0.8 });
+      return;
+    }
     if (!outline) return;
     const b = L.geoJSON(outline).getBounds();
-    if (b.isValid()) map.fitBounds(b, { padding: [16, 16] });
-  }, [map, outline]);
+    if (b.isValid()) map.flyToBounds(b, { padding: [16, 16], duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, outline, feature?.properties.code]);
   return null;
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 function pinIcon(v: MapValue, on: boolean, cmpIndex: number) {
-  const color = v.band ? BAND_META[v.band].color : NO_DATA_COLOR;
+  const color = v.fill ?? (v.band ? BAND_META[v.band].color : NO_DATA_COLOR);
   const size = on ? 20 : cmpIndex >= 0 ? 18 : 14;
-  const label = on ? `<span class="city-pin__label">${escapeHtml(v.name)} · ${fmt(v.score)}</span>` : "";
+  const label = on ? `<span class="city-pin__label">${escapeHtml(v.name)} · ${escapeHtml(v.display ?? fmt(v.score))}</span>` : "";
   const badge = cmpIndex >= 0 ? `<span class="city-pin__cmp">${cmpIndex + 1}</span>` : "";
   return L.divIcon({
     className: "city-pin",
@@ -73,7 +91,7 @@ function pinIcon(v: MapValue, on: boolean, cmpIndex: number) {
   });
 }
 
-export default function TerritoryMap({ departements, shapes, values, selected, compared = [], onSelect, metricLabel, foodPoints = [] }: Props) {
+export default function TerritoryMap({ departements, shapes, values, selected, compared = [], onSelect, metricLabel, foodPoints = [], focus = null }: Props) {
   const [mask, setMask] = useState<FeatureCollection | null>(null);
   const [outline, setOutline] = useState<FeatureCollection | null>(null);
   useEffect(() => {
@@ -87,7 +105,7 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
 
   // GeoJSON layers are not reactive in react-leaflet: remount when the styling inputs change.
   const layerKey = useMemo(
-    () => JSON.stringify([selected, compared, metricLabel, shapes.features.length, Object.entries(values).map(([k, v]) => [k, v.score])]),
+    () => JSON.stringify([selected, compared, metricLabel, shapes.features.length, Object.entries(values).map(([k, v]) => [k, v.score, v.fill])]),
     [values, selected, compared, metricLabel, shapes],
   );
 
@@ -95,10 +113,10 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
     const v = f ? values[f.properties.code] : undefined;
     const isSel = f?.properties.code === selected;
     return {
-      fillColor: v?.band ? BAND_META[v.band].color : NO_DATA_COLOR,
-      fillOpacity: isSel ? 0.7 : 0.5,
+      fillColor: v?.fill ?? (v?.band ? BAND_META[v.band].color : NO_DATA_COLOR),
+      fillOpacity: v?.fill ? 0.9 : isSel ? 0.7 : 0.5,
       color: isSel ? "#15171C" : "#ffffff",
-      weight: isSel ? 2.5 : 1.2,
+      weight: isSel ? 2.5 : 1,
     };
   };
 
@@ -128,7 +146,13 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
       attributionControl
     >
       <LayersControl position="topright">
-        <LayersControl.BaseLayer checked name="Plan IGN (couleurs)">
+        <LayersControl.BaseLayer checked name="Gris clair">
+          <LayerGroup>
+            <TileLayer url={ESRI_GRAY} attribution={ESRI_ATTRIBUTION} maxZoom={16} />
+            <TileLayer url={ESRI_GRAY_LABELS} maxZoom={16} />
+          </LayerGroup>
+        </LayersControl.BaseLayer>
+        <LayersControl.BaseLayer name="Plan IGN (couleurs)">
           <TileLayer url={ign("GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2", "png")} attribution={IGN_ATTRIBUTION} maxZoom={19} />
         </LayersControl.BaseLayer>
         <LayersControl.BaseLayer name="Photo satellite (IGN)">
@@ -149,8 +173,8 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
 
       {/* Everything outside France greyed out (above tiles, below data layers). */}
       <Pane name="france-mask" style={{ zIndex: 350 }}>
-        {mask && <GeoJSON data={mask} interactive={false} style={{ stroke: false, fillColor: "#E9E9E4", fillOpacity: 0.93 }} />}
-        {outline && <GeoJSON data={outline} interactive={false} style={{ color: "#15171C", weight: 1.2, opacity: 0.55, fill: false }} />}
+        {mask && <GeoJSON data={mask} interactive={false} style={{ stroke: false, fillColor: "#E4E4E0", fillOpacity: 0.7 }} />}
+        {outline && <GeoJSON data={outline} interactive={false} style={{ color: "#8A8D94", weight: 1, opacity: 0.8, fill: false }} />}
       </Pane>
 
       <GeoJSON key={layerKey} data={shapes} style={style as L.StyleFunction} onEachFeature={onEach as (f: Feature, l: Layer) => void} />
@@ -183,7 +207,7 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
             position={center}
             icon={pinIcon(v, on, compared.indexOf(code))}
             zIndexOffset={on ? 1000 : 0}
-            title={`${v.name} — ${metricLabel} ${fmt(v.score)} sur 10`}
+            title={`${v.name} — ${metricLabel} ${v.display ?? `${fmt(v.score)} sur 10`}`}
             eventHandlers={{ click: () => onSelect(code) }}
           >
             {!on && (
@@ -198,7 +222,11 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-xs text-[#61656E]">{metricLabel}</span>
                     <span className="tabular-nums text-sm font-semibold">
-                      {fmt(v.score)} <span className="text-xs font-normal text-[#61656E]">/10</span>
+                      {v.display ?? (
+                        <>
+                          {fmt(v.score)} <span className="text-xs font-normal text-[#61656E]">/10</span>
+                        </>
+                      )}
                     </span>
                   </div>
                   {v.band && (
@@ -211,14 +239,14 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
                     </span>
                   )}
                   {v.detail && <p className="mt-1.5 text-xs text-[#61656E]">{v.detail}</p>}
-                  <p className="mt-2 text-[11px] text-[#7A7E87]">Cliquer pour la fiche détaillée</p>
+                  <p className="mt-2 text-[11px] text-[#7A7E87]">Cliquer pour zoomer et comparer à la moyenne</p>
                 </div>
               </Tooltip>
             )}
           </Marker>
         );
       })}
-      <FitFrance outline={outline} />
+      <FitView outline={outline} shapes={shapes} focus={focus} />
     </MapContainer>
   );
 }
