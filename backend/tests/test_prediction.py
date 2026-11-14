@@ -96,4 +96,6 @@ def test_departements_endpoint(ml_data, client):
     assert body["indicators"]["prev_diabete"]["direction"] == "lower_is_better"
     assert body["indicators"]["sport_per10k"]["direction"] == "higher_is_better"
     d35 = next(d for d in body["departements"] if d["code"] == "35")
-    assert set(d35["values"]) >= {"prev_diabete", "poverty_rate", "fastfood_per10k"}
+    assert set(d35["values"]) >= {"prev_diabete", "poverty_rate", "fastfood_per10k", "framingham_10y", "vet_per10k"}
+    assert body["indicators"]["framingham_10y"]["direction"] == "lower_is_better"
+    assert body["indicators"]["vet_per10k"]["direction"] is None

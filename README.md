@@ -203,6 +203,26 @@ Données : `data/ml/departements_2024.csv` et `data/ml/communes_2024.csv` (versi
 Note : la couche « Fast-food » de la carte utilise OpenStreetMap (points géolocalisés) ; le modèle utilise SIRENE
 (entreprises déclarées, source homogène) — les deux comptes ne sont pas comparables.
 
+## Risque cardiovasculaire Framingham (estimation par département) et données vétérinaires
+
+**Framingham** (`backend/framingham.py`) : modèle « non-laboratoire » de D'Agostino et al., *Circulation* 2008
+(âge, sexe, IMC, tension traitée ou non, tabac, diabète ; pas de cholestérol). Ce score est individuel ; pour un
+territoire, on calcule le **risque moyen à 10 ans des 40–74 ans** : moyenne pondérée par sexe et tranche d'âge de 5 ans,
+en mélangeant les états diabétique / traité / fumeur avec leurs probabilités.
+
+| Entrée | Source | Varie par département ? |
+|---|---|---|
+| Population par âge et sexe, prévalence du diabète, traitements antihypertenseurs | Assurance Maladie (data.ameli.fr) | oui |
+| Tension artérielle, IMC, tabagisme | valeurs nationales approximatives (Esteban, Baromètre SpF) | non (à remplacer par des données régionales) |
+
+Validation : sur les 96 départements, l'estimation est corrélée à **r = 0,90** avec la prévalence observée des maladies
+cardioneurovasculaires. Résultat : de 14,3 % à 18,2 % (Creuse, la plus âgée). Affiché sur la carte comme **estimation indicative** ;
+il n'est pas utilisé comme variable de l'arbre (il dépend du diabète, ce serait circulaire).
+
+**Vétérinaires** : cabinets vétérinaires actifs (SIRENE, NAF 75.00Z) pour 10 000 hab., par département et par commune —
+indicateur « One Health » de présence animale, affiché sur la carte. Testé comme variable de l'arbre : il n'améliore aucune
+prédiction (R² identique en validation croisée), il n'y est donc pas inclus.
+
 ## Données externes (mises en cache dans `backend/data/cache/`, non versionné)
 
 | Endpoint | Source | Contenu |

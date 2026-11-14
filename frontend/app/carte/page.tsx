@@ -17,7 +17,9 @@ const TerritoryMap = dynamic(() => import("@/components/territory-map"), { ssr: 
 // Indicators offered on the map, in display order (department level, 96 metropolitan departments).
 const GROUPS: { label: string; keys: string[] }[] = [
   { label: "Maladies chroniques (prévalence)", keys: ["prev_diabete", "prev_cardio", "prev_respiratoire", "prev_cancers"] },
+  { label: "Risque estimé", keys: ["framingham_10y"] },
   { label: "Facteurs", keys: ["poverty_rate", "fastfood_per10k", "sport_per10k", "pct_65plus"] },
+  { label: "Santé animale (One Health)", keys: ["vet_per10k"] },
 ];
 const SHORT: Record<string, string> = {
   prev_diabete: "Diabète",
@@ -28,6 +30,8 @@ const SHORT: Record<string, string> = {
   fastfood_per10k: "Restauration rapide pour 10 000 hab.",
   sport_per10k: "Équipements sportifs pour 10 000 hab.",
   pct_65plus: "Part des 65 ans et plus",
+  framingham_10y: "Risque cardiovasculaire à 10 ans (Framingham)",
+  vet_per10k: "Cabinets vétérinaires pour 10 000 hab.",
 };
 
 export default function CartePage() {
@@ -137,7 +141,7 @@ export default function CartePage() {
         <p className="mt-2 text-[15px] leading-relaxed text-[#1B5E86]">
           {focusRow && focusV != null && avg != null ? (
             <>
-              <strong className="font-bold">{focusRow.name}</strong> : <strong className="font-bold">{format(focusV)}</strong> ({label.toLowerCase()}) en{" "}
+              <strong className="font-bold">{focusRow.name}</strong> : <strong className="font-bold">{format(focusV)}</strong> en{" "}
               <strong className="font-bold">{year}</strong>, contre une moyenne de <strong className="font-bold">{format(avg)}</strong> pour les départements de métropole.
               {isBetter && (
                 <span className="ml-1.5 inline-flex items-center gap-1 align-middle text-[#2E9F48]">
@@ -152,6 +156,13 @@ export default function CartePage() {
             </>
           )}
         </p>
+        {key === "framingham_10y" && (
+          <p className="mt-4 rounded-xl bg-plane px-4 py-3 text-[13px] leading-relaxed text-ink-2">
+            <strong className="font-semibold text-ink">Estimation indicative.</strong> Risque moyen à 10 ans des 40–74 ans selon le modèle de Framingham. Varient selon le
+            département : l'âge, le sexe, le diabète et les traitements contre l'hypertension. Valeurs nationales par défaut : tension, IMC et tabac (non publiés par
+            département). L'estimation suit de près la prévalence cardiovasculaire observée (corrélation 0,90).
+          </p>
+        )}
         <div className="mt-8">
           <ScaleLegend item="Valeur du département" average="Moyenne des départements de métropole" />
         </div>

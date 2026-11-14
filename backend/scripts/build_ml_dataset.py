@@ -10,8 +10,14 @@ One row per department:
                              inhab. — base SIRENE via l'API Recherche d'entreprises (api.gouv.fr)
            poverty_rate      poverty rate 2021 (%) — INSEE, team file « INSEE RPC_PAUVRETÉ.xlsx »
                              (Drive DATA & PONDERATION; put it in data/sources/INSEE_RPC_PAUVRETE.xlsx)
+           vet_per10k        active veterinary practices (NAF 75.00Z) per 10,000 inhab. — SIRENE
+                             (« One Health » proxy of animal presence)
            sport_per10k      sport facilities per 10,000 inhab. — Recensement des équipements sportifs
                              (ministère des Sports, data-es)
+
+Map-only column (not a tree feature):
+           framingham_10y    estimated 10-year cardiovascular risk of the 40–74 year-olds (%), Framingham
+                             office-based model averaged over the department population (see framingham.py)
 
 Official, nationally homogeneous sources (OpenStreetMap is kept for the map layer only: its coverage
 varies between places and whole-department Overpass queries are too slow).
@@ -39,6 +45,8 @@ from openpyxl import load_workbook
 from pathlib import Path
 
 from config import departements
+from framingham import BANDS as FRAMINGHAM_BANDS
+from framingham import population_risk
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "data" / "ml"
@@ -90,14 +98,14 @@ def _cached(key: str, load):
     return value
 
 
-def fastfood_count(*, departement: str | None = None, commune: str | None = None) -> int:
-    """Active businesses with NAF 56.10C having an establishment in the area (SIRENE)."""
+def sirene_count(naf: str, *, departement: str | None = None, commune: str | None = None) -> int:
+    """Active businesses with the given NAF code having an establishment in the area (SIRENE)."""
     if commune in ARRONDISSEMENTS:
-        return sum(fastfood_count(commune=c) for c in ARRONDISSEMENTS[commune])
-    key = f"sirene_5610C_{'d' + departement if departement else 'c' + str(commune)}"
+        return sum(sirene_count(naf, commune=c) for c in ARRONDISSEMENTS[commune])
+    key = f"sirene_{naf.replace('.', '')}_{'d' + departement if departement else 'c' + str(commune)}"
 
     def load() -> int:
-        params = {"activite_principale": "56.10C", "etat_administratif": "A", "per_page": 1}
+        params = {"activite_principale": naf, "etat_administratif": "A", "per_page": 1}
         params["departement" if departement else "code_commune"] = departement or commune
         for attempt in range(5):
             try:
@@ -123,6 +131,31 @@ def poverty_by_departement() -> dict[str, float]:
         if isinstance(code, str) and isinstance(rate, (int, float)) and len(code.strip()) in (2, 3):
             out[code.strip()] = float(rate)
     return out
+
+
+def fastfood_count(*, departement: str | None = None, commune: str | None = None) -> int:
+    return sirene_count("56.10C", departement=departement, commune=commune)
+
+
+def vet_count(*, departement: str | None = None, commune: str | None = None) -> int:
+    return sirene_count("75.00Z", departement=departement, commune=commune)
+
+
+def framingham_by_departement(year: int, depts: dict[str, str]) -> dict[str, float | None]:
+    """Population-averaged Framingham risk (40–74 y) from age-sex bands, diabetes and BP treatment."""
+    bands = ",".join(f'"{b}"' for b in FRAMINGHAM_BANDS)
+    rows = ameli(
+        f"annee=date'{year}' and sexe in (\"1\",\"2\") and cla_age_5 in ({bands}) and top in (\"DIA_CAT_CAT\",\"TFC_HTA_EXC\")",
+        "dept,sexe,cla_age_5,top,prev,npop",
+    )
+    cells: dict[str, dict[tuple[str, str], list[float]]] = defaultdict(dict)
+    for r in rows:
+        if r["dept"] not in depts:
+            continue
+        k = ("M" if str(r["sexe"]) == "1" else "F", r["cla_age_5"])
+        cell = cells[r["dept"]].setdefault(k, [r["npop"], 0.0, 0.0])
+        cell[1 if r["top"] == "DIA_CAT_CAT" else 2] = r["prev"]
+    return {code: population_risk({k: tuple(v) for k, v in c.items()}) for code, c in cells.items()}
 
 
 def sport_counts_by_departement() -> dict[str, int]:
@@ -186,9 +219,10 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     sport = sport_counts_by_departement()
     poverty = poverty_by_departement()
+    framingham = framingham_by_departement(year, depts)
     out_rows = []
     for i, (code, name) in enumerate(sorted(depts.items()), 1):
-        counts = {"fast_food": fastfood_count(departement=code), "sport": sport.get(code, 0)}
+        counts = {"fast_food": fastfood_count(departement=code), "sport": sport.get(code, 0), "vet": vet_count(departement=code)}
         p = dpop[code]
         out_rows.append({
             "dept": code, "name": name, "population": int(p),
@@ -197,9 +231,19 @@ def main() -> None:
             "poverty_rate": poverty.get(code, ""),
             "fastfood_per10k": round(10_000 * counts["fast_food"] / p, 2) if p else "",
             "sport_per10k": round(10_000 * counts["sport"] / p, 2) if p else "",
+            "vet_per10k": round(10_000 * counts["vet"] / p, 2) if p else "",
+            "framingham_10y": framingham.get(code) or "",
             **{f"prev_{k}": prev[code].get(k, "") for k in PATHOS},
         })
         print(f"[{i}/{len(depts)}] {code} {name}: {counts}", flush=True)
+    # Sanity check of the territorial Framingham estimate against observed cardio prevalence.
+    pairs = [(r["framingham_10y"], r["prev_cardio"]) for r in out_rows if r["framingham_10y"] != "" and r["prev_cardio"] != ""]
+    if len(pairs) > 2:
+        xs, ys = zip(*pairs, strict=True)
+        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+        cov = sum((x - mx) * (y - my) for x, y in pairs)
+        r = cov / ((sum((x - mx) ** 2 for x in xs) * sum((y - my) ** 2 for y in ys)) ** 0.5)
+        print(f"Corrélation Framingham estimé × prévalence cardio observée : r = {r:.2f} ({len(pairs)} départements)", flush=True)
     path = OUT / f"departements_{year}.csv"
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(out_rows[0]))
@@ -213,7 +257,7 @@ def main() -> None:
     for code in WP25_COMMUNES:
         info = cinfo[code]
         d = by_dept[info["codeDepartement"]]
-        counts = {"fast_food": fastfood_count(commune=code), "sport": sport_count_commune(code)}
+        counts = {"fast_food": fastfood_count(commune=code), "sport": sport_count_commune(code), "vet": vet_count(commune=code)}
         p = info["population"]
         crow.append({
             "code": code, "dept": info["codeDepartement"], "population": p,
@@ -222,6 +266,8 @@ def main() -> None:
             "poverty_rate": d["poverty_rate"], "poverty_rate_level": "departement",
             "fastfood_per10k": round(10_000 * counts["fast_food"] / p, 2),
             "sport_per10k": round(10_000 * counts["sport"] / p, 2),
+            "vet_per10k": round(10_000 * counts["vet"] / p, 2),
+            "framingham_10y": d["framingham_10y"], "framingham_10y_level": "departement",
         })
         print(f"commune {code}: {counts}", flush=True)
     path = OUT / f"communes_{year}.csv"

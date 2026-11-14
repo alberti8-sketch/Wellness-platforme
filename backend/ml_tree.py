@@ -42,6 +42,10 @@ FEATURES: dict[str, dict[str, str]] = {
     "fastfood_per10k": {"label": "Restauration rapide pour 10 000 hab.", "unit": "/10k hab.", "source": "SIRENE — NAF 56.10C, entreprises actives"},
     "sport_per10k": {"label": "Équipements sportifs pour 10 000 hab.", "unit": "/10k hab.", "source": "Recensement des équipements sportifs (ministère des Sports)"},
 }
+# Map-only columns of the dataset (descriptive, not tree features): the veterinary density did not
+# improve any prediction in cross-validation, and the Framingham estimate is derived from diabetes.
+EXTRA_COLUMNS = ("framingham_10y", "vet_per10k")
+
 # Only measured per department: a commune inherits its department's value.
 DEPARTMENT_ONLY = {"pct_65plus", "poverty_rate"}
 
@@ -89,6 +93,7 @@ def load_departements() -> tuple[dict[str, Any], ...]:
             "code": r["dept"], "name": r["name"],
             "features": {k: _num(r.get(k)) for k in FEATURES},
             "targets": {p: _num(r.get(f"prev_{p}")) for p in PATHOS},
+            "extras": {k: _num(r.get(k)) for k in EXTRA_COLUMNS},
         })
     return tuple(rows)
 

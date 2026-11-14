@@ -131,13 +131,26 @@ def departements(_: Principal = Depends(get_principal)) -> dict[str, Any]:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     indicators = {
         **DEPARTEMENT_TARGETS,
+        "framingham_10y": {
+            "label": "Risque cardiovasculaire à 10 ans (Framingham, estimé)",
+            "unit": "%",
+            "source": "Modèle de Framingham (D'Agostino 2008), données Assurance Maladie",
+            "direction": "lower_is_better",
+        },
+        "vet_per10k": {
+            "label": "Cabinets vétérinaires pour 10 000 hab.",
+            "unit": "/10k hab.",
+            "source": "SIRENE — NAF 75.00Z, entreprises actives (indicateur « One Health » de présence animale)",
+            "direction": None,
+        },
         **{k: {**v, "direction": DEPARTEMENT_FEATURE_DIRECTION[k]} for k, v in ml_tree.FEATURES.items()},
     }
     return {
         "year": ml_tree.YEAR,
         "indicators": indicators,
         "departements": [
-            {"code": r["code"], "name": r["name"], "values": {**r["features"], **{f"prev_{p}": v for p, v in r["targets"].items()}}}
+            {"code": r["code"], "name": r["name"],
+             "values": {**r["features"], **r.get("extras", {}), **{f"prev_{p}": v for p, v in r["targets"].items()}}}
             for r in rows
         ],
     }
