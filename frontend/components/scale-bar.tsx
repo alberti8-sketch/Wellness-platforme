@@ -79,16 +79,16 @@ export function ScaleBar({
   );
 }
 
-export function ScaleLegend() {
+export function ScaleLegend({ item = "Valeur de la ville", average = "Moyenne des villes du tableau de bord" }: { item?: string; average?: string }) {
   return (
     <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-[#3A3D44] pt-4 text-[13px] text-ink-2">
       <span className="inline-flex items-center gap-2.5">
         <span className="h-6 w-[7px] rounded-[2px]" style={{ background: CITY }} aria-hidden />
-        Valeur de la ville
+        {item}
       </span>
       <span className="inline-flex items-center gap-2.5">
         <span className="h-0 w-0 border-x-[7px] border-b-[11px] border-x-transparent" style={{ borderBottomColor: AVG }} aria-hidden />
-        Moyenne des villes du tableau de bord
+        {average}
       </span>
       <span className="inline-flex items-center gap-2.5">
         <Check className="h-4 w-4 text-[#2E9F48]" strokeWidth={3} aria-hidden />

@@ -89,3 +89,17 @@ export function usePredictions(codes: string[], patho: PredPatho) {
 
 export const simulate = (patho: PredPatho, features: Record<FeatureKey, number>) =>
   api.post<{ prediction: number; leaf: number; path: PathStep[] }>("/api/prediction/simulate", { patho, ...features });
+
+// ---- Department-level indicators (map) ----
+export interface DeptIndicator {
+  label: string;
+  unit: string;
+  source: string;
+  direction: "lower_is_better" | "higher_is_better" | null;
+}
+export interface DeptData {
+  year: number;
+  indicators: Record<string, DeptIndicator>;
+  departements: { code: string; name: string; values: Record<string, number | null> }[];
+}
+export const useDepartementData = () => useLoad<DeptData>("departements", () => api.get<DeptData>("/api/prediction/departements"));

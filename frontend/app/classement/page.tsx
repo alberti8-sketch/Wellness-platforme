@@ -54,6 +54,7 @@ export default function ClassementPage() {
     </th>
   );
 
+  const shownDims = catalog.dimensions.filter((d) => territories.some((t) => t.dimensions[d.code]?.score != null));
   const compared = compare.map((c) => territories.find((t) => t.code === c)).filter((t): t is Territory => !!t);
   const showComparison = () =>
     requestAnimationFrame(() => document.getElementById("comparaison")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -92,102 +93,16 @@ export default function ClassementPage() {
     <div>
       <PageHeader
         title="Comparer les villes"
-        subtitle={`Triez, filtrez et comparez les territoires dimension par dimension · ${overview?.period ?? ""}`}
+        subtitle="Choisissez des villes pour les mettre côte à côte, ou parcourez le classement."
         actions={<CityPicker align="right" onValidate={showComparison} />}
       />
 
-      <Card
-        title="Tableau de classement"
-        subtitle={`${rows.length} territoire(s) · cochez jusqu'à ${MAX_COMPARE} territoires pour les comparer`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="relative">
-              <span className="sr-only">Rechercher un territoire</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" aria-hidden />
-              <input className="input h-10 w-56 pl-9" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
-            </label>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par niveau">
-              {(["all", "best", "middle", "bad"] as const).map((b) => (
-                <button key={b} className={band === b ? "pill-on" : "pill"} aria-pressed={band === b} onClick={() => setBand(b)}>
-                  {b !== "all" && <span className="h-2 w-2 rounded-full" style={{ background: BAND_META[b].color }} aria-hidden />}
-                  {b === "all" ? "Tous" : BAND_META[b].label}
-                </button>
-              ))}
-            </div>
-          </div>
-        }
-      >
-        {!overview ? (
-          <Spinner />
-        ) : rows.length === 0 ? (
-          <Empty icon={Search} title="Aucun territoire ne correspond aux filtres" />
-        ) : (
-          <div className="-mx-2 overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-xs text-ink-muted">
-                <tr className="border-b border-hairline">
-                  <th className="w-10 px-2 py-2 text-left font-medium">
-                    <span className="sr-only">Comparer</span>
-                  </th>
-                  <th className="px-2 py-2 text-left font-medium">Rang</th>
-                  <th className="px-2 py-2 text-left font-medium">Territoire</th>
-                  <SortHead k="IDX">Indice</SortHead>
-                  {catalog.dimensions.map((d) => (
-                    <SortHead key={d.code} k={d.code}>
-                      {d.label}
-                    </SortHead>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((t) => {
-                  const on = compare.includes(t.code);
-                  return (
-                    <tr key={t.code} className={cx("border-b border-[#F2F2EE] hover:bg-[#FAFAF7]", on && "bg-[#FAFAF7]")}>
-                      <td className="px-2 py-2.5">
-                        <input type="checkbox" checked={on} onChange={() => toggleCompare(t.code)} aria-label={`Comparer ${t.name}`} className="h-[18px] w-[18px] accent-[#15171C]" />
-                      </td>
-                      <td className="num px-2 py-2.5 text-ink-muted">{rankOf(t.code)}</td>
-                      <td className="px-2 py-2.5">
-                        <button onClick={() => open(t.code)} className="text-left font-medium text-ink hover:underline">
-                          {t.name}
-                        </button>
-                        <span className="block text-xs text-ink-muted">{t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : t.code}</span>
-                      </td>
-                      <td className="px-2 py-2.5">
-                        <BandBadge band={t.composite.band} score={t.composite.score} />
-                      </td>
-                      {catalog.dimensions.map((d) => {
-                        const s = t.dimensions[d.code];
-                        return (
-                          <td key={d.code} className="num px-2 py-2.5">
-                            {s?.score != null ? (
-                              <span className="inline-flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full" style={{ background: s.band ? BAND_META[s.band].color : "#B9B9B2" }} aria-hidden />
-                                {fmt(s.score)}
-                              </span>
-                            ) : (
-                              <span className="text-ink-faint">—</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      <div id="comparaison" className="mt-4 scroll-mt-6">
+      <div id="comparaison" className="mb-4 scroll-mt-6">
         <Card
           title="Comparaison"
-          subtitle={compared.length < 2 ? "Sélectionnez au moins deux territoires (cases à cocher, carte ou fiche)." : `${compared.length} territoires comparés`}
+          subtitle={compared.length < 2 ? "Choisissez 2 à 4 villes avec « Villes à comparer », en haut de la page." : `${compared.length} villes comparées`}
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <CityPicker align="right" onValidate={showComparison} />
               {compared.length > 0 && (
                 <Button variant="secondary" onClick={clearCompare} className="min-h-[40px]">
                   Vider
@@ -198,7 +113,7 @@ export default function ClassementPage() {
         >
           {compared.length < 2 ? (
             <Empty icon={GitCompareArrows} title="Comparaison vide">
-              Choisissez des villes dans la liste « Villes à comparer » puis validez, cochez-les dans le tableau, ou activez le mode comparaison sur la carte.
+              Ouvrez « Villes à comparer » en haut de la page, cochez 2 à 4 villes puis validez.
             </Empty>
           ) : (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
@@ -233,6 +148,85 @@ export default function ClassementPage() {
           )}
         </Card>
       </div>
+      <Card
+        title="Tableau de classement"
+        subtitle={`${rows.length} villes · cliquez un nom pour ouvrir sa fiche`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="relative">
+              <span className="sr-only">Rechercher un territoire</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" aria-hidden />
+              <input className="input h-10 w-56 pl-9" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
+            </label>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par niveau">
+              {(["all", "best", "middle", "bad"] as const).map((b) => (
+                <button key={b} className={band === b ? "pill-on" : "pill"} aria-pressed={band === b} onClick={() => setBand(b)}>
+                  {b !== "all" && <span className="h-2 w-2 rounded-full" style={{ background: BAND_META[b].color }} aria-hidden />}
+                  {b === "all" ? "Tous" : BAND_META[b].label}
+                </button>
+              ))}
+            </div>
+          </div>
+        }
+      >
+        {!overview ? (
+          <Spinner />
+        ) : rows.length === 0 ? (
+          <Empty icon={Search} title="Aucun territoire ne correspond aux filtres" />
+        ) : (
+          <div className="-mx-2 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-xs text-ink-muted">
+                <tr className="border-b border-hairline">
+                  <th className="px-2 py-2 text-left font-medium">Rang</th>
+                  <th className="px-2 py-2 text-left font-medium">Territoire</th>
+                  <SortHead k="IDX">Indice</SortHead>
+                  {shownDims.map((d) => (
+                    <SortHead key={d.code} k={d.code}>
+                      {d.label}
+                    </SortHead>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((t) => {
+                  const on = compare.includes(t.code);
+                  return (
+                    <tr key={t.code} className={cx("border-b border-[#F2F2EE] hover:bg-[#FAFAF7]", on && "bg-[#FAFAF7]")}>
+                      <td className="num px-2 py-2.5 text-ink-muted">{rankOf(t.code)}</td>
+                      <td className="px-2 py-2.5">
+                        <button onClick={() => open(t.code)} className="text-left font-medium text-ink hover:underline">
+                          {t.name}
+                        </button>
+                        <span className="block text-xs text-ink-muted">{t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : t.code}</span>
+                      </td>
+                      <td className="px-2 py-2.5">
+                        <BandBadge band={t.composite.band} score={t.composite.score} />
+                      </td>
+                      {shownDims.map((d) => {
+                        const s = t.dimensions[d.code];
+                        return (
+                          <td key={d.code} className="num px-2 py-2.5">
+                            {s?.score != null ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full" style={{ background: s.band ? BAND_META[s.band].color : "#B9B9B2" }} aria-hidden />
+                                {fmt(s.score)}
+                              </span>
+                            ) : (
+                              <span className="text-ink-faint">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
       <NextStep step={2} />
     </div>
   );

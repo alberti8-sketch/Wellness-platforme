@@ -101,6 +101,7 @@ export function CompareTable({
                 </tr>
               );
             }
+            if (r.values.every((v) => v == null)) return null; // nothing to compare on this row
             const nums = r.values.filter((v): v is number => v != null);
             const best = r.better && nums.length > 1 ? (r.better === "high" ? Math.max(...nums) : Math.min(...nums)) : null;
             const spread = r.better && nums.length > 1 ? Math.max(...nums) - Math.min(...nums) : null;

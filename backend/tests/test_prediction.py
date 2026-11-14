@@ -86,3 +86,14 @@ def test_errors(ml_data, client):
 def test_missing_dataset_returns_503(tmp_path, monkeypatch, client):
     monkeypatch.setenv("WELLNESS_ML_DIR", str(tmp_path / "nothing"))
     assert client.get("/api/prediction/model", headers=ADMIN_B2G).status_code == 503
+
+
+def test_departements_endpoint(ml_data, client):
+    r = client.get("/api/prediction/departements", headers=ADMIN_B2G)
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["departements"]) == 96
+    assert body["indicators"]["prev_diabete"]["direction"] == "lower_is_better"
+    assert body["indicators"]["sport_per10k"]["direction"] == "higher_is_better"
+    d35 = next(d for d in body["departements"] if d["code"] == "35")
+    assert set(d35["values"]) >= {"prev_diabete", "poverty_rate", "fastfood_per10k"}

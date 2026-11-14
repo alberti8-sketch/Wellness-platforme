@@ -156,14 +156,14 @@ données brutes (ignorés automatiquement sinon), télécharger localement :
 ## Interface
 
 Landing publique (`/`) : un titre, une phrase, un bouton « Se connecter » (connexion de démo en un clic).
-Une fois connecté, l'application est un **parcours en 4 étapes** (barre latérale numérotée, bouton « Étape suivante ») :
+Une fois connecté, la barre latérale ne propose que **4 entrées**, dans l'ordre de découverte (lien « Continuer » en bas de chaque page) :
 
-| Étape | Page | Contenu |
+| Entrée | Page | Contenu |
 |---|---|---|
-| 1. Vue d'ensemble | `/dashboard` | Indice moyen, villes Best / Middle / Bad, scores par dimension, extrêmes, évolution du diabète |
-| 2. Carte | `/carte` | Fond gris clair (Esri, sans clé ni filigrane), France mise en avant ; clic sur une ville : zoom, couleur sur 10 classes, échelle « valeur de la ville / moyenne », phrase de synthèse (style City Health Dashboard). Filtres secondaires repliés (typologie, niveau, fast-food, mode comparaison) |
-| 3. Comparer | `/classement` | Tableau triable, liste « Villes à comparer » validable, radar et tableau d'écarts |
-| 4. Prédire | `/prediction` | Arbre de décision, chemin d'une ville, simulateur « Et si… ? » |
+| Vue d'ensemble | `/dashboard` | Indice moyen, villes Best / Middle / Bad, scores par dimension, extrêmes, évolution du diabète |
+| Carte de France | `/carte` | **Carte choroplèthe des 96 départements** (diabète, maladies cardioneurovasculaires, respiratoires, cancers, pauvreté, restauration rapide, équipements sportifs, 65 ans et +), fond gris clair Esri sans clé ni filigrane ; clic sur un département : zoom, échelle « valeur / moyenne des départements », phrase de synthèse (style City Health Dashboard) |
+| Comparer | `/classement` | Un seul sélecteur « Villes à comparer » (2 à 4 villes), radar et tableau d'écarts, puis le classement complet |
+| Prédire | `/prediction` | Arbre de décision, chemin d'une ville, simulateur « Et si… ? » |
 
 Hors du menu, accessibles par des liens : `/ponderation` (« Comment l'indice est calculé »), `/collect` et `/processing`
 (« Gérer les données », comptes autorisés), `/sante` (vue CNAM de l'équipe).

@@ -2,6 +2,7 @@
 
 import { GitCompareArrows, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { BAND_META, fmt } from "@/lib/bands";
 import type { BandCode, Catalog, Territory } from "@/lib/types";
@@ -41,7 +42,8 @@ export function TerritoryDrawer({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const { compare, toggleCompare } = useAnalytics();
+  const { compare, toggleCompare, open } = useAnalytics();
+  const router = useRouter();
   const inCompare = compare.includes(t.code);
   useEffect(() => {
     closeRef.current?.focus();
@@ -129,7 +131,15 @@ export function TerritoryDrawer({
           })}
           <div className="mt-6 flex flex-wrap gap-2">
             <button
-              onClick={() => toggleCompare(t.code)}
+              onClick={() => {
+                if (inCompare) {
+                  toggleCompare(t.code);
+                  return;
+                }
+                toggleCompare(t.code);
+                open(null);
+                router.push("/classement#comparaison");
+              }}
               aria-pressed={inCompare}
               className={`inline-flex h-11 flex-[1_1_140px] items-center justify-center gap-2 rounded-xl text-sm font-medium ${inCompare ? "border border-[#15171C] bg-white text-[#15171C]" : "bg-[#15171C] text-white hover:bg-[#2B2E35]"}`}
             >

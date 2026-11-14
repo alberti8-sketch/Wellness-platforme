@@ -107,3 +107,37 @@ class SimulateIn(BaseModel):
 def simulate(body: SimulateIn, _: Principal = Depends(get_principal)) -> dict[str, Any]:
     t = _tree(body.patho)
     return {"patho": body.patho, **ml_tree.predict(t, body.model_dump(exclude={"patho"}))}
+
+
+DEPARTEMENT_TARGETS: dict[str, dict[str, str]] = {
+    f"prev_{k}": {"label": f"Prévalence — {v}", "unit": "%", "source": "Assurance Maladie — data.ameli.fr", "direction": "lower_is_better"}
+    for k, v in ml_tree.PATHOS.items()
+}
+DEPARTEMENT_FEATURE_DIRECTION = {
+    "pct_65plus": None,  # descriptive, neither better nor worse
+    "density_km2": None,
+    "poverty_rate": "lower_is_better",
+    "fastfood_per10k": "lower_is_better",
+    "sport_per10k": "higher_is_better",
+}
+
+
+@router.get("/departements")
+def departements(_: Principal = Depends(get_principal)) -> dict[str, Any]:
+    """Department-level indicators of the training set (96 metropolitan departments), for the map."""
+    try:
+        rows = ml_tree.load_departements()
+    except ml_tree.DatasetMissing as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+    indicators = {
+        **DEPARTEMENT_TARGETS,
+        **{k: {**v, "direction": DEPARTEMENT_FEATURE_DIRECTION[k]} for k, v in ml_tree.FEATURES.items()},
+    }
+    return {
+        "year": ml_tree.YEAR,
+        "indicators": indicators,
+        "departements": [
+            {"code": r["code"], "name": r["name"], "values": {**r["features"], **{f"prev_{p}": v for p, v in r["targets"].items()}}}
+            for r in rows
+        ],
+    }

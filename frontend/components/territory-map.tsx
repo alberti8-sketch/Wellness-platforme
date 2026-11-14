@@ -35,6 +35,12 @@ type Props = {
   foodPoints?: FoodPoint[];
   /** Territory to zoom on (city view); null = whole France. */
   focus?: string | null;
+  /** Max zoom when focusing a territory (12.5 for a city, lower for a department). */
+  focusMaxZoom?: number;
+  /** City pins (off for a department choropleth). */
+  showPins?: boolean;
+  /** Department outline overlay (off when the shapes already are departments). */
+  showDeptOverlay?: boolean;
 };
 
 /** Géoplateforme IGN (WMTS, open licence, no key) — French official basemaps. */
@@ -59,18 +65,18 @@ function loadFranceAssets() {
 }
 
 /** Whole France by default; zooms on the focused territory (city view) when one is selected. */
-function FitView({ outline, shapes, focus }: { outline: FeatureCollection | null; shapes: TerritoryCollection; focus?: string | null }) {
+function FitView({ outline, shapes, focus, focusMaxZoom }: { outline: FeatureCollection | null; shapes: TerritoryCollection; focus?: string | null; focusMaxZoom: number }) {
   const map = useMap();
   const feature = focus ? shapes.features.find((f) => f.properties.code === focus) : undefined;
   useEffect(() => {
     if (feature) {
       const b = L.geoJSON(feature).getBounds();
-      if (b.isValid()) map.flyToBounds(b, { padding: [48, 48], maxZoom: 12.5, duration: 0.8 });
+      if (b.isValid()) map.fitBounds(b, { padding: [72, 72], maxZoom: focusMaxZoom });
       return;
     }
     if (!outline) return;
     const b = L.geoJSON(outline).getBounds();
-    if (b.isValid()) map.flyToBounds(b, { padding: [16, 16], duration: 0.6 });
+    if (b.isValid()) map.fitBounds(b, { padding: [16, 16] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, outline, feature?.properties.code]);
   return null;
@@ -91,7 +97,20 @@ function pinIcon(v: MapValue, on: boolean, cmpIndex: number) {
   });
 }
 
-export default function TerritoryMap({ departements, shapes, values, selected, compared = [], onSelect, metricLabel, foodPoints = [], focus = null }: Props) {
+export default function TerritoryMap({
+  departements,
+  shapes,
+  values,
+  selected,
+  compared = [],
+  onSelect,
+  metricLabel,
+  foodPoints = [],
+  focus = null,
+  showPins = true,
+  showDeptOverlay = true,
+  focusMaxZoom = 12.5,
+}: Props) {
   const [mask, setMask] = useState<FeatureCollection | null>(null);
   const [outline, setOutline] = useState<FeatureCollection | null>(null);
   useEffect(() => {
@@ -121,7 +140,16 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
   };
 
   const onEach = (f: Feature<Geometry, TerritoryProps>, layer: Layer) => {
-    layer.on({ click: () => onSelect(f.properties.code) });
+    const v = values[f.properties.code];
+    layer.bindTooltip(
+      `<strong>${escapeHtml(f.properties.nom)}</strong><br/>${escapeHtml(metricLabel)} : <strong>${escapeHtml(v?.display ?? (v ? fmt(v.score) : "—"))}</strong>`,
+      { sticky: true, direction: "top", className: "pin-tip", opacity: 1 },
+    );
+    layer.on({
+      click: () => onSelect(f.properties.code),
+      mouseover: (e) => (e.target as L.Path).setStyle({ weight: 2.5, color: "#15171C" }),
+      mouseout: (e) => (e.target as L.Path).setStyle(style(f)),
+    });
   };
 
   const pins = useMemo(
@@ -140,7 +168,6 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
       zoomSnap={0.25}
       maxBounds={FRANCE_BOUNDS}
       maxBoundsViscosity={0.9}
-      preferCanvas
       scrollWheelZoom
       className="h-full w-full rounded-xl"
       attributionControl
@@ -164,7 +191,7 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
         <LayersControl.BaseLayer name="Sans fond">
           <LayerGroup />
         </LayersControl.BaseLayer>
-        {departements && (
+        {departements && showDeptOverlay && (
           <LayersControl.Overlay checked name="Limites départementales">
             <GeoJSON data={departements} interactive={false} style={{ color: "#61656E", weight: 0.5, opacity: 0.45, fill: false }} />
           </LayersControl.Overlay>
@@ -198,7 +225,7 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
         </Pane>
       )}
 
-      {pins.map(({ code, center }) => {
+      {showPins && pins.map(({ code, center }) => {
         const v = values[code];
         const on = code === selected;
         return (
@@ -246,7 +273,7 @@ export default function TerritoryMap({ departements, shapes, values, selected, c
           </Marker>
         );
       })}
-      <FitView outline={outline} shapes={shapes} focus={focus} />
+      <FitView outline={outline} shapes={shapes} focus={focus} focusMaxZoom={focusMaxZoom} />
     </MapContainer>
   );
 }

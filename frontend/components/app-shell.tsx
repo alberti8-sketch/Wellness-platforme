@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Database, GitCompareArrows, LogOut, X } from "lucide-react";
+import { Activity, Database, GitCompareArrows, LayoutGrid, LogOut, Map, Network, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
@@ -10,6 +10,8 @@ import { DEMO_ACCOUNTS, useSession } from "./session";
 import { TerritoryDrawer } from "./territory-drawer";
 import { ErrorBox, cx } from "./ui";
 
+const ICONS: Record<string, LucideIcon> = { "/dashboard": LayoutGrid, "/carte": Map, "/classement": GitCompareArrows, "/prediction": Network };
+
 function initials(name: string) {
   return name
     .replace(/\(.*?\)/g, "")
@@ -18,34 +20,6 @@ function initials(name: string) {
     .slice(0, 2)
     .map((w) => w[0]!.toUpperCase())
     .join("");
-}
-
-function CompareTray() {
-  const { compare, byCode, toggleCompare, clearCompare } = useAnalytics();
-  const pathname = usePathname();
-  if (!compare.length || pathname?.startsWith("/classement")) return null;
-  return (
-    <div className="no-print fixed inset-x-0 bottom-4 z-[1050] flex justify-center px-4">
-      <div className="flex max-w-full flex-wrap items-center gap-2 rounded-2xl bg-primary px-3 py-2.5 text-white shadow-[0_8px_30px_rgba(21,23,28,0.25)]">
-        <GitCompareArrows className="ml-1 h-4 w-4 text-white/70" aria-hidden />
-        <span className="text-[13px] text-white/80">Comparaison</span>
-        {compare.map((c) => (
-          <span key={c} className="inline-flex h-8 items-center gap-1 rounded-full bg-white/10 pl-3 pr-1 text-[13px] font-medium">
-            {byCode[c]?.name ?? c}
-            <button onClick={() => toggleCompare(c)} aria-label={`Retirer ${byCode[c]?.name ?? c} de la comparaison`} className="grid h-6 w-6 place-items-center rounded-full hover:bg-white/15">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </span>
-        ))}
-        <Link href="/classement#comparaison" className="inline-flex h-9 items-center rounded-xl bg-white px-3.5 text-[13px] font-semibold text-ink hover:bg-[#F0F0EB]">
-          Comparer {compare.length > 1 ? `(${compare.length})` : ""}
-        </Link>
-        <button onClick={clearCompare} className="h-9 rounded-xl px-2.5 text-[13px] text-white/75 hover:bg-white/10">
-          Vider
-        </button>
-      </div>
-    </div>
-  );
 }
 
 function GlobalDrawer() {
@@ -83,26 +57,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        <nav aria-label="Étapes" className="flex flex-wrap gap-1 md:flex-col">
-          {STEPS.map(({ href, label, hint }, i) => {
+        <nav aria-label="Navigation" className="flex flex-wrap gap-1 md:flex-col">
+          {STEPS.map(({ href, label }) => {
             const on = pathname?.startsWith(href);
+            const Icon = ICONS[href];
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={on ? "page" : undefined}
-                className={cx("flex min-h-[52px] items-center gap-3 rounded-xl px-3 transition", on ? "bg-primary text-white" : "text-ink hover:bg-hover")}
+                className={cx("flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-sm transition", on ? "bg-primary font-medium text-white" : "text-[#3A3D44] hover:bg-hover")}
               >
-                <span
-                  className={cx("num grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold", on ? "bg-white text-ink" : "bg-plane text-ink-2")}
-                  aria-hidden
-                >
-                  {i + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">{label}</span>
-                  <span className={cx("hidden text-xs md:block", on ? "text-white/70" : "text-ink-muted")}>{hint}</span>
-                </span>
+                <Icon className="h-[18px] w-[18px]" aria-hidden />
+                {label}
               </Link>
             );
           })}
@@ -168,7 +135,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       <GlobalDrawer />
-      <CompareTray />
     </div>
   );
 }
