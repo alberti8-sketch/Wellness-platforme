@@ -69,3 +69,7 @@ Thumbs.db
 # Dependencies lock files (optional)
 # frontend/package-lock.json
 # frontend/yarn.lock
+*.tsbuildinfo
+node_modules/
+.next/
+.pytest_cache/

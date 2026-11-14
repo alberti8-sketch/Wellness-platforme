@@ -1,276 +1,184 @@
-# Wellness & Population Health Analytics Platform
+# Wellness-platforme
 
-A complete, production-ready B2B/B2G platform for health data collection, processing, and analytics with strict tenant isolation and deterministic pipelines.
+La première biobanque de données comportementales, alimentée par des données numériques objectives, sécurisées et
+exploitables. Elle permettra d'identifier précocement les facteurs de risque, d'améliorer la prévention et de mieux
+piloter les politiques de santé.
 
-## 🏗️ Architecture Overview
+## MVP
 
-### Directory Structure
+Plateforme B2B/B2G d'analyse de santé populationnelle : collecte d'indicateurs agrégés par territoire,
+pipeline de scoring **déterministe**, carte des territoires notés de **1 à 10** (Bad / Middle / Best)
+avec **pondération** ajustable.
 
-```
-Wellness-platforme/
-├── backend/                          # FastAPI Python Backend
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                   # FastAPI app setup
-│   │   ├── models.py                 # SQLAlchemy ORM models
-│   │   ├── schemas.py                # Pydantic v2 validation schemas
-│   │   ├── routers/
-│   │   │   ├── __init__.py
-│   │   │   ├── ingest.py             # Excel upload & parsing
-│   │   │   ├── processing.py         # Pipeline status & approval
-│   │   │   └── dashboard.py          # Analytics & wellness scores
-│   │   └── pipeline/
-│   │       ├── __init__.py
-│   │       └── orchestrator.py       # Deterministic FSM pipeline
-│   ├── requirements.txt
-│   └── sample_data/
-│       ├── sample_health_data.xlsx
-│       └── sample_health_data.csv
-│
-├── frontend/                         # Next.js 14+ Frontend
-│   ├── app/
-│   │   ├── layout.tsx                # Root layout
-│   │   ├── globals.css               # Global Tailwind styles
-│   │   ├── page.tsx                  # Home page
-│   │   ├── collect/
-│   │   │   └── page.tsx              # Data collection portal
-│   │   ├── processing/
-│   │   │   └── page.tsx              # Processing hub & approval
-│   │   └── dashboard/
-│   │       └── page.tsx              # Analytics dashboard
-│   ├── components/
-│   │   └── HealthMap.tsx             # React-Leaflet map component
-│   ├── package.json
-│   ├── next.config.js
-│   ├── tailwind.config.ts
-│   └── postcss.config.js
-│
-└── README.md
-```
+> Première brique de la future biobanque de données comportementales. Le MVP ne traite **que des données
+> agrégées par territoire** (aucune donnée individuelle) : pas besoin d'hébergement HDS à ce stade.
 
----
-
-## 🎯 Core Features
-
-### 1. Data Collection Portal (`/collect`)
-- **Role-Based Multi-Input Form**: Separate interfaces for B2B (corporate) and B2G (government) stakeholders
-- **Bulk Excel Upload**: Drag-and-drop `.xlsx` file upload with validation
-- **Schema Validation**: Real-time validation against expected data structure
-- **Sample Template**: Pre-configured Excel template with required columns
-
-**Required Excel Columns:**
-- `Pincode` - Geographic identifier
-- `City` - City name
-- `PA` - Physical Activity (minutes/week, 0-100+ scale)
-- `NUT` - Nutrition Score (0-100)
-- `ENV` - Environmental Quality (0-100)
-- `Disease` - Disease name
-- `Disease_Prevalence` - Prevalence percentage (%)
-
-### 2. Data Processing & Cleaning Hub (`/processing`)
-- **Pipeline Status Dashboard**: Real-time FSM execution visualization
-- **4-Step Pipeline Visualization**:
-  1. Ingestion & Tenant Isolation
-  2. Cleaning & Normalization
-  3. Aggregation & Indexing
-  4. Output Generation
-- **Data Inspection Table**: Parsed data with normalization scores and flags
-- **Admin Approval Interface**: Review and approve/reject datasets
-
-### 3. Interactive Dashboard & Territory Map (`/dashboard`)
-- Uses the eight records in rows 7-14 of the `CITY` sheet in
-  [WP25](<context/WP25 .xlsx>): Annecy, Rennes, Nantes, Brest, Besancon,
-  Montreuil, Nice, and Marseille. Other sheets are deliberately excluded.
-- The bundled [territory matrix](frontend/data/wp25-territories.json) preserves
-  Sport, Environment, Health Care, and Global score exactly on their source
-  0-100 scale, including the workbook's postal-code strings and leading zeros.
-  Postal codes are source labels, not authoritative city identifiers.
-- React-Leaflet fits the eight approximate French city-centre markers on load.
-  City and indicator selectors update the map, chart, summary, and matrix.
-  Marker colours represent raw source scores, not clinical health ranks.
-- City coordinates are approximate reference coordinates, not boundaries from
-  the workbook. The basemap requires access to OpenStreetMap tiles.
-- The original Global score is not recomputed from the other columns.
-  Nutrition and disease prevalence are absent, not zero.
-- The supplied 2024 CNAM `effectif-departemental-par-pathologie-sexe-age`
-  workbook is bundled as a separate reference dataset. Both sheets are read;
-  the dashboard joins city references to department codes:
-  Annecy=74, Rennes=35, Nantes=44, Brest=29, Besancon=25, Montreuil=93,
-  Nice=06, Marseille=13. These are **department counts, not city counts or
-  prevalence**. Do not divide them by the WP25 city populations.
-- Select a disease/treatment and Men, Women, or Age 65+ to update the map,
-  chart, and comparison table. The 65+ cohort includes both sexes and overlaps
-  the men/women columns; neither cohorts nor overlapping diseases are summed.
-  Blank cells remain null and `<10` stays suppressed. Neither becomes zero
-  or an invented numeric value. The source `Total` row is not a disease option.
-- For later files, enter a Tenant ID on `/collect` and use **French Department
-  Health Workbook**, not the original PA/NUT/ENV uploader. It accepts `.xls`
-  and `.xlsx` with the same Tableau 7 layout: title containing `en YYYY`,
-  department codes on row 2, `Hommes`, `Femmes`, `≥ 65 ans` on row 3,
-  `top` in B4, and conditions in column A from row 5. Unsupported layouts
-  are rejected explicitly. Partial coverage is shown as missing, not filled
-  from the bundled reference.
-- Each valid upload is stored as a separate database snapshot. On `/dashboard`,
-  load the same tenant's datasets and select the workbook/reporting year.
-  Repeated uploads are never added together. The original India-style
-  ingestion/processing pages and their demonstration endpoints are unchanged.
-- New API routes: `POST /api/department-health/upload` (multipart `tenant_id`,
-  `file`), `GET /api/department-health?tenant_id=...`, and
-  `GET /api/department-health/{dataset_id}?tenant_id=...`.
-  Reads are filtered by tenant, but tenant IDs are **not authentication**.
-  These routes, like the existing application, require an authenticated
-  tenant identity and authorization layer before production use.
-- Configure `NEXT_PUBLIC_API_URL` for the backend URL (default:
-  `http://localhost:8000`). The supplied reference dashboard works without
-  the backend; uploaded snapshots require the backend and database.
-- Rebuild the bundled CNAM reference from the source workbook:
-  `PYTHONPATH=backend python backend/scripts/build_reference_data.py`.
-  Validate parsing, exact eight-department values, persistence, invalid uploads,
-  and tenant-scoped reads:
-  install `backend/requirements-dev.txt`, then run
-  `PYTHONPATH=backend python -m unittest discover -s backend/tests`.
-- Data-source regression check:
-  `python -m unittest discover -s frontend/tests -p 'test_*.py'`.
-  This comparison requires the original WP25 workbook; if it is removed from
-  `context`, the check is explicitly skipped and the bundled city matrix is
-  retained.
-
----
-
-## 🔄 Deterministic Pipeline Orchestrator
-
-### Pipeline Architecture (No Agent Loops)
-
-The `pipeline/orchestrator.py` implements a strict **Finite State Machine (FSM)** with explicit step-by-step execution:
-
-```
-STEP 1: Ingestion & Tenant Isolation
-    └─ Validate schema compliance
-    └─ Verify tenant isolation (NO cross-tenant data leakage)
-    └─ Count and log records
-
-STEP 2: Cleaning & Normalization
-    └─ Remove duplicates per pincode-indicator
-    └─ Normalize raw values to 0, 5, 10 scale
-    ├─ PA (Physical Activity): 0-30 mins=0, 30-70=5, 70+=10
-    ├─ NUT (Nutrition): 0-40 score=0, 40-70=5, 70+=10
-    ├─ ENV (Environment): 0-35=0, 35-65=5, 65+=10
-    └─ DISEASE: 50%+=0 (critical), 20-50%=5, <20%=10 (inverted scale)
-
-STEP 3: Aggregation & Indexing
-    └─ Group normalized data by pincode/city
-    └─ Calculate average scores per indicator type
-    └─ Compute overall wellness score: (PA + NUT + ENV + DISEASE) / 4
-    └─ Classify health rank: <3=Critical, 3-7=Medium, >7=Good
-
-STEP 4: Output Generation
-    └─ Serialize composite scores
-    └─ Prepare for database persistence
-    └─ Mark pipeline as complete
-```
-
-### Tenant Isolation Guarantee
-
-Every step validates tenant context:
-```python
-def validate_tenant_isolation(self, external_tenant_id: str) -> bool:
-    return self.tenant_id == external_tenant_id
-```
-
-**Key Safety Mechanisms:**
-- Immutable `PipelineContext` dataclass
-- No shared state between tenants
-- Explicit tenant ID validation at each step
-- No autonomous loops or agent decisions
-
----
-
-## 🚀 Getting Started
-
-### Backend Setup
+## Démarrage
 
 ```bash
+# Backend (Python 3.11+)
 cd backend
+python -m venv .venv && .venv/Scripts/activate        # Windows  (Linux/macOS : source .venv/bin/activate)
 pip install -r requirements.txt
+python -m scripts.generate_samples                      # régénère data/*.xlsx (optionnel)
+uvicorn main:app --reload --port 8000                   # API : http://localhost:8000/docs
 
-# Run FastAPI server
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**API Endpoints:**
-- `POST /api/ingest/upload` - Upload Excel file
-- `GET /api/processing/pipeline-status/{job_id}` - Check pipeline status
-- `GET /api/processing/inspection/{job_id}` - Get data inspection
-- `POST /api/processing/approve` - Approve dataset
-- `GET /api/dashboard/wellness-scores` - Get wellness scores
-- `GET /api/dashboard/territory-map/{region_code}` - Get map data
-
-### Frontend Setup
-
-```bash
+# Frontend (Node 18+)
 cd frontend
 npm install
-
-# Run Next.js dev server
-npm run dev
+cp .env.local.example .env.local                        # NEXT_PUBLIC_API_URL=http://localhost:8000
+npm run dev                                             # http://localhost:3000
 ```
 
-Open `http://localhost:3000` in browser.
+**Parcours de démo** (compte « B2G · Admin » sélectionné en haut à droite) :
+1. `/collect` : déposer `data/sample_5_territoires.xlsx`, cocher l'attestation, puis soumettre.
+2. `/processing` : suivre le pipeline, inspecter et corriger des cellules, puis **Approuver et publier**.
+3. `/dashboard` : l'onglet **WP25 cities & CNAM counts** affiche les huit villes de référence.
+   L'onglet **Published territorial analytics** conserve la carte des territoires publiés,
+   les curseurs de pondération, le classement, le détail, la matrice et les exports CSV/PDF.
 
-**Pages:**
-- `/` - Home
-- `/collect` - Data collection portal
-- `/processing` - Processing hub
-- `/dashboard` - Analytics dashboard
+Tests backend : `cd backend && .venv/Scripts/python -m pytest -q`
 
----
+Linux/macOS : `cd backend && .venv/bin/python -m pytest -q`.
+Frontend : `cd frontend && npm run typecheck && npm run build`.
 
-## 📊 Sample Data
+## WP25 et statistiques CNAM par département
 
-Sample data included in `backend/sample_data/`:
+Le tableau de bord réunit deux vues complémentaires, sans mélanger leurs échelles :
+
+- **WP25 cities & CNAM counts** : Annecy (74), Rennes (35), Nantes (44), Brest (29),
+  Besançon (25), Montreuil (93), Nice (06) et Marseille (13). Les positions sont des
+  centres de villes approximatifs, pas des limites administratives. Les scores Sport,
+  Environnement, Health Care et Global de la feuille `CITY` restent sur leur échelle
+  source **0–100** ; Global n'est pas recalculé. Les codes postaux sont conservés comme
+  libellés de source, y compris les zéros initiaux. La carte de référence utilise
+  les tuiles OpenStreetMap ; la carte analytique publiée utilise les contours locaux.
+- **Published territorial analytics** : les données validées par le pipeline du MVP,
+  notées de **1 à 10**, publiées après approbation et pondérées selon le catalogue.
+
+Le fichier fourni `2024_effectif-departemental-par-pathologie-sexe-age_serie-annuelle.xls`
+alimente la vue CNAM, avec ses deux feuilles et 63 pathologies/traitements (hors ligne Total).
+Les valeurs sont des **effectifs départementaux**, pas des effectifs communaux ni des
+prévalences. Elles ne doivent pas être divisées par les populations communales de WP25.
+Le choix d'une ville, d'une pathologie et d'une cohorte met à jour carte, graphique et table.
+Les 65 ans et plus incluent les deux sexes et recoupent les colonnes Hommes/Femmes.
+Les pathologies peuvent également se recouper : aucun total entre cohortes ou maladies
+n'est calculé. Les blancs restent absents/non applicables et `<10` reste masqué.
+
+Pour les fichiers suivants, utiliser **French Department Health Workbook** sur `/collect`.
+Ce dépôt distinct accepte `.xls` et `.xlsx` au format CNAM Tableau 7 : titre contenant
+`en YYYY`, codes départementaux en ligne 2, `Hommes`, `Femmes`, `≥ 65 ans` en ligne 3,
+`top` en B4, et pathologies en colonne A à partir de la ligne 5. Les formats non reconnus
+sont rejetés. Chaque dépôt est un instantané persistant distinct : les dépôts répétés ne
+sont jamais additionnés et une couverture partielle reste manquante.
+
+Les instantanés CNAM sont des références, séparées des indicateurs normalisés et publiés
+du pipeline. Le dépôt utilise le compte courant (`X-API-Key`, rôle contributeur ou admin) ;
+le tenant vient de la clé API, jamais d'un champ de formulaire. Le périmètre départemental
+du tenant est contrôlé. Dans la vue WP25, choisir le fichier/année dans **Workbook / reporting year**
+(**Refresh Uploaded Datasets** pour rafraîchir la liste).
+
+API : `POST /api/department-health/upload` (multipart `file`),
+`GET /api/department-health`, `GET /api/department-health/{dataset_id}`.
+Toutes ces routes exigent `X-API-Key`. La référence fournie reste disponible sans
+chargement d'un instantané privé ; les dépôts exigent l'API et sa base de données.
+
+Fichiers principaux : `frontend/components/ReferenceDashboard.tsx`,
+`frontend/components/PublishedAnalyticsDashboard.tsx`, `frontend/data/wp25-territories.json`,
+`frontend/data/department-health-2024.json`, `backend/app/department_health.py`,
+`backend/app/routers/department_health.py`.
+
+Recréer la référence CNAM depuis la racine :
+`PYTHONPATH=backend python backend/scripts/build_reference_data.py`.
+Les tests backend vérifient les deux feuilles, les huit départements, les valeurs sources,
+les blancs et `<10`, la persistance, les rôles et l'isolation des tenants.
+Le contrôle WP25 (`python -m unittest discover -s frontend/tests`) est explicitement
+ignoré si le classeur WP25 original n'est plus présent dans `context` ; la matrice extraite
+est conservée. Les tests sont aussi installables via `backend/requirements-dev.txt`.
+
+Lancement Docker Compose v2 : `docker compose up --build` (ou `./start.sh`).
+La configuration utilise `WELLNESS_DATABASE_URL` et
+`WELLNESS_CORS_ORIGINS`. `uvicorn app.main:app` reste un alias compatible de `main:app` ;
+il ne démarre pas une deuxième API différente. Les anciens modules de démonstration
+dans `backend/app` sont conservés mais leurs routes ne sont pas montées.
+
+## Arborescence
 
 ```
-11 records across 3 cities (Delhi, Mumbai, Bangalore)
-Indicators: PA, NUT, ENV, Disease Prevalence
-Format: Both .xlsx and .csv
+backend/
+  main.py                    FastAPI (CORS, routers, /api/me)
+  config.py                  tenants, clés API de démo, paramètres
+  security.py                auth X-API-Key + contrôle de rôle
+  models.py / db.py          SQLAlchemy (SQLite par défaut, WELLNESS_DATABASE_URL pour Postgres)
+  schemas.py                 contrats Pydantic de l'API
+  routers/ingest.py          modèle Excel, prévisualisation, upload Excel / saisie manuelle
+  routers/datasets.py        hub de traitement : détail, correction admin, approbation/rejet
+  routers/analytics.py       vue d'ensemble pondérée, catalogue, export CSV
+  pipeline/catalog.py        ★ catalogue d'indicateurs : sens, plages de référence, poids
+  pipeline/scoring.py        normalisation 1–10, classes, agrégation, indice composite
+  pipeline/validation.py     parsing Excel + schéma Pydantic strict + périmètre du tenant
+  pipeline/orchestrator.py   ★ machine à états déterministe
+  pipeline/template.py       génération du modèle Excel
+  scripts/generate_samples.py
+  tests/
+frontend/
+  app/collect/page.tsx       portail de collecte (B2B/B2G, drag & drop, saisie manuelle, contrôle)
+  app/processing/page.tsx    suivi du pipeline, table d'inspection, corrections, validation
+  app/dashboard/page.tsx     carte Leaflet, KPI, pondération, classement, détail, matrice, exports
+  components/territory-map.tsx
+  public/geo/departements.geojson   contours des 96 départements métropolitains
+data/
+  wellness_template.xlsx     modèle vierge (feuilles « data » et « dictionnaire »)
+  sample_5_territoires.xlsx  jeu fictif : Paris, Rhône, Nord, Bouches-du-Rhône, Creuse
 ```
 
----
+## Méthode de scoring
 
-## 🔐 Security & Compliance
+| Étape | Règle |
+|---|---|
+| Normalisation | `score = 1 + 9 × (x − ref_min) / (ref_max − ref_min)`, inversé si « plus bas = mieux », borné à [1, 10] |
+| Référence | plages **fixes** par indicateur (seuils OMS, références nationales), pas un min-max sur le lot : avec 5 territoires, un min-max donnerait toujours un 1 et un 10 |
+| Classes | **Bad** < 4 ≤ **Middle** < 7 ≤ **Best** |
+| Dimension | moyenne pondérée des indicateurs disponibles ; publiée seulement si ≥ 50 % des indicateurs sont présents |
+| Indice global | `Σ(poids × score dimension) / Σ poids` ; dimensions manquantes exclues, poids renormalisés, couverture affichée |
+| Poids par défaut | Activité physique 30 · Mobilité 25 · Environnement 25 · Nutrition 20 · Maladies chroniques 0 |
 
-### Tenant Isolation
+Les **maladies chroniques** sont un indicateur de *résultat* : elles sont affichées mais exclues de l'indice
+par défaut. Elles serviront à calibrer les poids (quels comportements expliquent le mieux la prévalence).
 
-- **Database Level**: `UNIQUE(tenant_id, region_code)` constraints
-- **Application Level**: `PipelineContext.validate_tenant_isolation()`
-- **Zero Cross-Contamination**: No shared processing state between tenants
+⚠️ Les plages de référence de `pipeline/catalog.py` et les valeurs de `sample_5_territoires.xlsx` sont des
+**valeurs provisoires ou fictives** : elles doivent être validées par un expert en santé publique.
 
-### Data Validation
+## Pipeline (machine à états)
 
-- **Pydantic v2 Schemas**: Strict type validation on all inputs
-- **Excel Schema Validation**: Required columns verified before processing
-- **Anomaly Detection**: Flags suspicious data patterns
+```
+RECEIVED → VALIDATED → CLEANED → NORMALIZED → AGGREGATED → PENDING_APPROVAL → PUBLISHED
+    └─────────┴──────────┴───────────┴────────────┴──→ FAILED   └──→ REJECTED
+                                     PENDING_APPROVAL ─(correction admin)→ RECEIVED (relance complète)
+```
 
----
+- Des fonctions pures sont exécutées dans un ordre fixe : aucun agent autonome, aucun appel LLM, aucun aléa.
+- Chaque transition est vérifiée contre une table explicite et inscrite dans un journal d'audit (`dataset_events`).
+- **Isolation des tenants** : le `tenant_id` vient toujours de la clé API, jamais du fichier. Toutes les requêtes
+  filtrent dessus, et une ressource d'un autre tenant renvoie une 404. Avant chaque écriture, un garde-fou vérifie
+  que tous les enregistrements portent le bon tenant et restent dans son périmètre géographique (ex. le tenant B2B
+  de démo est limité à 75, 69 et 13).
 
-## 📈 Technology Stack
+## Comptes de démo
 
-### Frontend
-- **Next.js 14+** - App Router, SSR/CSR flexibility
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Responsive design
-- **Recharts** - Analytics charts
-- **React-Leaflet** - Interactive maps
-- **Lucide React** - Icons
+| Clé `X-API-Key` | Tenant | Rôle |
+|---|---|---|
+| `demo-b2g-admin` | Observatoire régional de santé (B2G, toute la France) | admin |
+| `demo-b2g-contrib` | idem | contributeur (dépôt sans approbation) |
+| `demo-b2b-admin` | Entreprise QVT (B2B, départements 75/69/13) | admin |
 
-### Backend
-- **FastAPI** - High-performance async API
-- **Pydantic v2** - Data validation
-- **Pandas** - Data manipulation
-- **SQLAlchemy** - ORM
-- **Python 3.11+** - Latest features
+Pour des clés réelles, utiliser `WELLNESS_PRINCIPALS_FILE` (voir `config.py`).
 
----
+## Hors périmètre du MVP (étapes suivantes)
 
-**Version**: 1.0.0  
-**Complete Production-Ready Platform**
+- Authentification SSO/OIDC à la place des clés API ; gestion des utilisateurs.
+- Postgres + migrations (Alembic) ; communes et IRIS (contours IGN) en plus des départements.
+- Connecteurs open data (Data pathologies, Geod'air, INSEE) à la place de l'upload manuel.
+- Calibration des poids sur la prévalence des maladies ; export PDF serveur.
+- Phase biobanque : données individuelles (objets connectés) → consentement, pseudonymisation, hébergement **HDS**,
+  AIPD/CNIL, seuil de secret statistique (aucun agrégat < 11 individus).

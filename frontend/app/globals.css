@@ -2,16 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+html,
+body {
+  background: #f9f9f7;
+  color: #0b0b0b;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.leaflet-container {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #f4f6f8;
 }
 
 .primary-btn {
@@ -30,12 +29,23 @@ body {
   @apply bg-white rounded-lg shadow p-6 border border-gray-200;
 }
 
-/* Leaflet overrides */
-.leaflet-container {
-  @apply rounded-lg;
-  height: 500px;
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  section {
+    break-inside: avoid;
+  }
 }
 
-.leaflet-popup-content {
-  font-size: 14px;
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-axis bg-white px-3 py-2 text-sm text-ink;
+  }
+  .input:focus {
+    @apply border-brand outline-none ring-2 ring-brand/20;
+  }
 }

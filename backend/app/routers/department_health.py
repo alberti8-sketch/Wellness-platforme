@@ -4,15 +4,16 @@ import uuid
 from zipfile import BadZipFile
 from xml.etree.ElementTree import ParseError
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from xlrd.biffh import XLRDError
 
-from app.config import settings
-from app.database import get_db
+from config import MAX_UPLOAD_BYTES, Principal, Role
+from db import get_db
 from app.department_health import parse_department_health
-from app.models import DepartmentHealthDataset
+from models import DepartmentHealthDataset
+from security import get_principal, require
 
 
 logger = logging.getLogger(__name__)
@@ -22,18 +23,15 @@ router = APIRouter(prefix="/api/department-health", tags=["department-health"])
 @router.post("/upload", status_code=201)
 async def upload_department_health(
     file: UploadFile = File(...),
-    tenant_id: str = Form(..., min_length=1, max_length=128),
+    principal: Principal = Depends(require(Role.CONTRIBUTOR)),
     db: Session = Depends(get_db),
 ):
-    tenant_id = tenant_id.strip()
-    if not tenant_id:
-        raise HTTPException(422, "Tenant ID must not be blank")
     filename = file.filename or ""
     if not filename.lower().endswith((".xls", ".xlsx")):
         raise HTTPException(400, "Only .xls and .xlsx CNAM workbooks are supported")
-    contents = await file.read(settings.max_upload_size + 1)
-    if len(contents) > settings.max_upload_size:
-        raise HTTPException(413, "Workbook exceeds the 10 MB upload limit")
+    contents = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, f"Workbook exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB upload limit")
     try:
         payload = parse_department_health(contents, filename)
         if not payload["departments"]:
@@ -41,8 +39,11 @@ async def upload_department_health(
     except (ValueError, XLRDError, BadZipFile, ParseError, EOFError) as exc:
         logger.warning("Invalid department workbook: %s", exc)
         raise HTTPException(422, str(exc)) from exc
+    allowed = principal.tenant.allowed_territories
+    if allowed is not None and set(payload["departments"]) - allowed:
+        raise HTTPException(403, "Workbook includes departments outside this tenant's geographic scope")
     dataset = DepartmentHealthDataset(
-        dataset_id=str(uuid.uuid4()), tenant_id=tenant_id,
+        dataset_id=str(uuid.uuid4()), tenant_id=principal.tenant.id,
         source_name=payload["source_name"], year=payload["year"], payload=payload,
     )
     try:
@@ -65,11 +66,11 @@ def _dataset_summary(dataset):
 
 @router.get("")
 def list_department_datasets(
-    tenant_id: str = Query(..., min_length=1, max_length=128),
+    principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     datasets = db.query(DepartmentHealthDataset).filter(
-        DepartmentHealthDataset.tenant_id == tenant_id.strip()
+        DepartmentHealthDataset.tenant_id == principal.tenant.id
     ).order_by(DepartmentHealthDataset.created_at.desc()).all()
     return {"datasets": [_dataset_summary(dataset) for dataset in datasets]}
 
@@ -77,13 +78,22 @@ def list_department_datasets(
 @router.get("/{dataset_id}")
 def get_department_dataset(
     dataset_id: str,
-    tenant_id: str = Query(..., min_length=1, max_length=128),
+    principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     dataset = db.query(DepartmentHealthDataset).filter(
         DepartmentHealthDataset.dataset_id == dataset_id,
-        DepartmentHealthDataset.tenant_id == tenant_id.strip(),
+        DepartmentHealthDataset.tenant_id == principal.tenant.id,
     ).first()
     if dataset is None:
         raise HTTPException(404, "Dataset not found for this tenant")
-    return {"dataset_id": dataset.dataset_id, **dataset.payload}
+    payload = dataset.payload
+    if principal.tenant.allowed_territories is not None:
+        payload = {
+            **payload,
+            "departments": {
+                code: values for code, values in payload["departments"].items()
+                if code in principal.tenant.allowed_territories
+            },
+        }
+    return {"dataset_id": dataset.dataset_id, **payload}

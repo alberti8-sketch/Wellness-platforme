@@ -1,25 +1,13 @@
 """
 SQLAlchemy models for database persistence.
 """
-from sqlalchemy import Column, String, Float, DateTime, Integer, Enum, ForeignKey, UniqueConstraint, JSON
+from sqlalchemy import Column, String, Float, DateTime, Integer, Enum, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.schemas import HealthScaleEnum, IndicatorType
 
 Base = declarative_base()
-
-
-class DepartmentHealthDataset(Base):
-    """An uploaded snapshot; repeated uploads never sum overlapping counts."""
-    __tablename__ = "department_health_datasets"
-
-    dataset_id = Column(String, primary_key=True)
-    tenant_id = Column(String, nullable=False, index=True)
-    source_name = Column(String, nullable=False)
-    year = Column(Integer, nullable=False)
-    payload = Column(JSON, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class Tenant(Base):

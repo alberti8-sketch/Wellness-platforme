@@ -20,8 +20,8 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://wellness_user:wellness_password@postgres:5432/wellness_db
-      FRONTEND_URL: http://localhost:3000
+      WELLNESS_DATABASE_URL: postgresql://wellness_user:wellness_password@postgres:5432/wellness_db
+      WELLNESS_CORS_ORIGINS: http://localhost:3000
       LOG_LEVEL: INFO
     ports:
       - "8000:8000"
@@ -29,8 +29,8 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./backend/app:/app/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     build: ./frontend

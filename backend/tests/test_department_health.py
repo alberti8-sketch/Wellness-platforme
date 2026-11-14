@@ -1,20 +1,12 @@
 import io
 import json
 from pathlib import Path
-import tempfile
 import unittest
-from unittest.mock import patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 import openpyxl
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from app.database import get_db
 from app.department_health import parse_department_health
-from app.models import Base
-from app.routers.department_health import router
+from tests.conftest import ADMIN_B2B, ADMIN_B2G, CONTRIB_B2G
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -86,71 +78,60 @@ class DepartmentParserTests(unittest.TestCase):
             parse_department_health(stream.getvalue(), "duplicate.xlsx")
 
 
-class DepartmentUploadTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.database_url = f"sqlite:///{Path(self.temp.name) / 'health.db'}"
-        self.engine = create_engine(self.database_url, connect_args={"check_same_thread": False})
-        self.addCleanup(self.engine.dispose)
-        Base.metadata.create_all(self.engine)
-        self.sessions = sessionmaker(bind=self.engine)
-        app = FastAPI()
-        app.include_router(router)
+def upload(client, contents=None, filename="future.xlsx", headers=CONTRIB_B2G):
+    return client.post(
+        "/api/department-health/upload", headers=headers,
+        files={"file": (filename, contents if contents is not None else small_workbook())},
+    )
 
-        def db_override():
-            with self.sessions() as session:
-                yield session
 
-        app.dependency_overrides[get_db] = db_override
-        self.client = TestClient(app)
-        self.addCleanup(self.client.close)
+def test_upload_reload_and_authenticated_tenant_reads(client):
+    response = upload(client, contents=SOURCE.read_bytes(), filename=SOURCE.name)
+    assert response.status_code == 201, response.text
+    dataset_id = response.json()["dataset_id"]
+    response = client.get(f"/api/department-health/{dataset_id}", headers=ADMIN_B2G)
+    assert response.status_code == 200
+    assert response.json()["departments"]["74"]["diabete"]["women"] == 16970
+    assert client.get(f"/api/department-health/{dataset_id}", headers=ADMIN_B2B).status_code == 404
+    assert client.get("/api/department-health", headers=ADMIN_B2B).json() == {"datasets": []}
+    # Caller-controlled tenant parameters cannot cross the authenticated boundary.
+    assert client.get(
+        f"/api/department-health/{dataset_id}", headers=ADMIN_B2B,
+        params={"tenant_id": "b2g-sante-publique"},
+    ).status_code == 404
+    from db import engine
 
-    def upload(self, tenant="tenant-a", contents=None, filename="future.xlsx"):
-        return self.client.post(
-            "/api/department-health/upload", data={"tenant_id": tenant},
-            files={"file": (filename, contents if contents is not None else small_workbook())},
-        )
+    engine.dispose()
+    assert client.get("/api/department-health", headers=ADMIN_B2G).json()["datasets"][0]["dataset_id"] == dataset_id
 
-    def test_upload_reload_and_tenant_scoped_reads(self):
-        upload = self.upload(contents=SOURCE.read_bytes(), filename=SOURCE.name)
-        self.assertEqual(upload.status_code, 201, upload.text)
-        dataset_id = upload.json()["dataset_id"]
-        response = self.client.get(f"/api/department-health/{dataset_id}", params={"tenant_id": "tenant-a"})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["departments"]["74"]["diabete"]["women"], 16970)
-        self.assertEqual(self.client.get(
-            f"/api/department-health/{dataset_id}", params={"tenant_id": "tenant-b"}
-        ).status_code, 404)
-        self.assertEqual(self.client.get(
-            "/api/department-health", params={"tenant_id": "tenant-b"}
-        ).json(), {"datasets": []})
-        # A fresh engine/session must still see the stored snapshot.
-        self.engine.dispose()
-        self.assertEqual(self.client.get(
-            "/api/department-health", params={"tenant_id": "tenant-a"}
-        ).json()["datasets"][0]["dataset_id"], dataset_id)
 
-    def test_repeated_uploads_are_separate_snapshots_not_added_counts(self):
-        first, second = self.upload(), self.upload()
-        self.assertEqual(first.status_code, 201)
-        self.assertEqual(second.status_code, 201)
-        self.assertNotEqual(first.json()["dataset_id"], second.json()["dataset_id"])
-        response = self.client.get(
-            f"/api/department-health/{second.json()['dataset_id']}", params={"tenant_id": "tenant-a"}
-        )
-        self.assertEqual(response.json()["departments"]["35"]["diabete"]["men"], 12)
+def test_repeated_uploads_are_snapshots_not_added_counts(client):
+    first, second = upload(client), upload(client)
+    assert first.status_code == second.status_code == 201
+    assert first.json()["dataset_id"] != second.json()["dataset_id"]
+    response = client.get(f"/api/department-health/{second.json()['dataset_id']}", headers=ADMIN_B2G)
+    assert response.json()["departments"]["35"]["diabete"]["men"] == 12
 
-    def test_invalid_uploads_do_not_persist(self):
-        self.assertEqual(self.upload(contents=b"bad", filename="bad.xls").status_code, 422)
-        self.assertEqual(self.upload(filename="bad.csv").status_code, 400)
-        self.assertEqual(self.upload(tenant="   ").status_code, 422)
-        self.assertEqual(self.upload(contents=small_workbook(department="75")).status_code, 422)
-        with patch("app.routers.department_health.settings.max_upload_size", 10):
-            self.assertEqual(self.upload().status_code, 413)
-        self.assertEqual(self.client.get(
-            "/api/department-health", params={"tenant_id": "tenant-a"}
-        ).json(), {"datasets": []})
+
+def test_invalid_department_uploads_do_not_persist(client, monkeypatch):
+    assert upload(client, contents=b"bad", filename="bad.xls").status_code == 422
+    assert upload(client, filename="bad.csv").status_code == 400
+    assert upload(client, contents=small_workbook(department="75")).status_code == 422
+    monkeypatch.setattr("app.routers.department_health.MAX_UPLOAD_BYTES", 10)
+    assert upload(client).status_code == 413
+    assert client.get("/api/department-health", headers=ADMIN_B2G).json() == {"datasets": []}
+
+
+def test_department_upload_auth_role_and_geographic_scope(client, monkeypatch):
+    assert upload(client, headers={}).status_code == 401
+    assert client.get("/api/department-health").status_code == 401
+    assert upload(client, headers=ADMIN_B2B).status_code == 403
+    assert upload(client, headers=ADMIN_B2B, contents=small_workbook(department="13")).status_code == 201
+    from config import Principal, Role, principals
+
+    admin = principals()["demo-b2g-admin"]
+    monkeypatch.setitem(principals(), "test-viewer", Principal("Viewer", Role.VIEWER, admin.tenant))
+    assert upload(client, headers={"X-API-Key": "test-viewer"}).status_code == 403
 
 
 if __name__ == "__main__":
