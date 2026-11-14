@@ -1,0 +1,10 @@
+[
+  {"id":"annecy","city":"Annecy","source_city":"Annecy 74000","source_postal_code":"74000","department_code":"74","latitude":45.8992,"longitude":6.1294,"sport":89,"environment":75,"health_care":85,"global_score":85},
+  {"id":"rennes","city":"Rennes","source_city":"RENNES 35 700","source_postal_code":"35700","department_code":"35","latitude":48.1173,"longitude":-1.6778,"sport":84,"environment":16,"health_care":89,"global_score":74},
+  {"id":"nantes","city":"Nantes","source_city":"Nantes 44 200","source_postal_code":"44200","department_code":"44","latitude":47.2184,"longitude":-1.5536,"sport":88,"environment":12,"health_care":91,"global_score":74},
+  {"id":"brest","city":"Brest","source_city":"Brest 29200","source_postal_code":"29200","department_code":"29","latitude":48.3904,"longitude":-4.4861,"sport":88,"environment":37,"health_care":90,"global_score":79},
+  {"id":"besancon","city":"Besançon","source_city":"besançon 25000","source_postal_code":"25000","department_code":"25","latitude":47.2378,"longitude":6.0241,"sport":80,"environment":36,"health_care":87,"global_score":85},
+  {"id":"montreuil","city":"Montreuil","source_city":"Montreuil 93100","source_postal_code":"93100","department_code":"93","latitude":48.8638,"longitude":2.4485,"sport":69,"environment":44,"health_care":58,"global_score":50},
+  {"id":"nice","city":"Nice","source_city":"Nice 06000","source_postal_code":"06000","department_code":"06","latitude":43.7102,"longitude":7.2620,"sport":84,"environment":81,"health_care":59,"global_score":65},
+  {"id":"marseille","city":"Marseille","source_city":"Marseille 13000","source_postal_code":"13000","department_code":"13","latitude":43.2965,"longitude":5.3698,"sport":85,"environment":92,"health_care":54,"global_score":70}
+]

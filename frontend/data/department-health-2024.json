@@ -1,0 +1,2909 @@
+{
+  "year": 2024,
+  "source_name": "2024_effectif-departemental-par-pathologie-sexe-age_serie-annuelle.xls",
+  "source_level": "department",
+  "sheets": [
+    "Tableau 7 - Dpt 1 \u00e0 50",
+    "Tableau 7 - Dpt 51 \u00e0 976"
+  ],
+  "conditions": [
+    {
+      "id": "syndrome-coronaire-aigu",
+      "label": "Syndrome coronaire aigu",
+      "is_total": false
+    },
+    {
+      "id": "maladie-coronaire-chronique",
+      "label": "Maladie coronaire chronique",
+      "is_total": false
+    },
+    {
+      "id": "accident-vasculaire-cerebral-aigu",
+      "label": "Accident vasculaire c\u00e9r\u00e9bral aigu",
+      "is_total": false
+    },
+    {
+      "id": "sequelle-d-accident-vasculaire-cerebral",
+      "label": "S\u00e9quelle d'accident vasculaire c\u00e9r\u00e9bral",
+      "is_total": false
+    },
+    {
+      "id": "insuffisance-cardiaque-aigue",
+      "label": "Insuffisance cardiaque aigu\u00eb",
+      "is_total": false
+    },
+    {
+      "id": "insuffisance-cardiaque-chronique",
+      "label": "Insuffisance cardiaque chronique",
+      "is_total": false
+    },
+    {
+      "id": "arteriopathie-obliterante-du-membre-inferieur",
+      "label": "Art\u00e9riopathie oblit\u00e9rante du membre inf\u00e9rieur",
+      "is_total": false
+    },
+    {
+      "id": "troubles-du-rythme-ou-de-la-conduction-cardiaque",
+      "label": "Troubles du rythme ou de la conduction cardiaque",
+      "is_total": false
+    },
+    {
+      "id": "maladie-valvulaire",
+      "label": "Maladie valvulaire",
+      "is_total": false
+    },
+    {
+      "id": "embolie-pulmonaire-aigue",
+      "label": "Embolie pulmonaire aigu\u00eb",
+      "is_total": false
+    },
+    {
+      "id": "autres-affections-cardiovasculaires",
+      "label": "Autres affections cardiovasculaires",
+      "is_total": false
+    },
+    {
+      "id": "traitements-antihypertenseurs-hors-pathologies",
+      "label": "Traitements antihypertenseurs (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-hypolipemiants-hors-pathologies",
+      "label": "Traitements hypolip\u00e9miants (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-antihypertenseurs-avec-ou-sans-pathologies",
+      "label": "Traitements antihypertenseurs (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-hypolipemiants-avec-ou-sans-pathologies",
+      "label": "Traitements hypolip\u00e9miants (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "diabete",
+      "label": "Diab\u00e8te",
+      "is_total": false
+    },
+    {
+      "id": "cancer-du-sein-de-la-femme-actif",
+      "label": "Cancer du sein de la femme actif",
+      "is_total": false
+    },
+    {
+      "id": "cancer-du-sein-de-la-femme-sous-surveillance",
+      "label": "Cancer du sein de la femme sous surveillance",
+      "is_total": false
+    },
+    {
+      "id": "cancer-colorectal-actif",
+      "label": "Cancer colorectal actif",
+      "is_total": false
+    },
+    {
+      "id": "cancer-colorectal-sous-surveillance",
+      "label": "Cancer colorectal sous surveillance",
+      "is_total": false
+    },
+    {
+      "id": "cancer-du-poumon-actif",
+      "label": "Cancer du poumon actif",
+      "is_total": false
+    },
+    {
+      "id": "cancer-du-poumon-sous-surveillance",
+      "label": "Cancer du poumon sous surveillance",
+      "is_total": false
+    },
+    {
+      "id": "cancer-de-la-prostate-actif",
+      "label": "Cancer de la prostate actif",
+      "is_total": false
+    },
+    {
+      "id": "cancer-de-la-prostate-sous-surveillance",
+      "label": "Cancer de la prostate sous surveillance",
+      "is_total": false
+    },
+    {
+      "id": "autres-cancers-actifs",
+      "label": "Autres cancers actifs",
+      "is_total": false
+    },
+    {
+      "id": "autres-cancers-sous-surveillance",
+      "label": "Autres cancers sous surveillance",
+      "is_total": false
+    },
+    {
+      "id": "troubles-psychotiques",
+      "label": "Troubles psychotiques",
+      "is_total": false
+    },
+    {
+      "id": "troubles-nevrotiques-et-de-lhumeur",
+      "label": "Troubles n\u00e9vrotiques et de l\u2019humeur",
+      "is_total": false
+    },
+    {
+      "id": "deficience-mentale",
+      "label": "D\u00e9ficience mentale",
+      "is_total": false
+    },
+    {
+      "id": "troubles-addictifs",
+      "label": "Troubles addictifs",
+      "is_total": false
+    },
+    {
+      "id": "troubles-psychiatriques-ayant-debute-dans-l-enfance",
+      "label": "Troubles psychiatriques ayant d\u00e9but\u00e9 dans l'enfance",
+      "is_total": false
+    },
+    {
+      "id": "autres-troubles-psychiatriques",
+      "label": "Autres troubles psychiatriques",
+      "is_total": false
+    },
+    {
+      "id": "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies",
+      "label": "Traitements antid\u00e9presseurs ou r\u00e9gulateurs de l'humeur (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-neuroleptiques-hors-pathologies",
+      "label": "Traitements neuroleptiques (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-anxiolytiques-hors-pathologies",
+      "label": "Traitements anxiolytiques (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-hypnotiques-hors-pathologies",
+      "label": "Traitements hypnotiques (hors pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies",
+      "label": "Traitements antid\u00e9presseurs ou r\u00e9gulateurs de l'humeur (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-neuroleptiques-avec-ou-sans-pathologies",
+      "label": "Traitements neuroleptiques (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-anxiolytiques-avec-ou-sans-pathologies",
+      "label": "Traitements anxiolytiques (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "traitements-hypnotiques-avec-ou-sans-pathologies",
+      "label": "Traitements hypnotiques (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "demences-dont-maladie-d-alzheimer",
+      "label": "D\u00e9mences (dont maladie d'Alzheimer)",
+      "is_total": false
+    },
+    {
+      "id": "maladie-de-parkinson",
+      "label": "Maladie de Parkinson",
+      "is_total": false
+    },
+    {
+      "id": "sclerose-en-plaques",
+      "label": "Scl\u00e9rose en plaques",
+      "is_total": false
+    },
+    {
+      "id": "paraplegie",
+      "label": "Parapl\u00e9gie",
+      "is_total": false
+    },
+    {
+      "id": "myopathie-ou-myasthenie",
+      "label": "Myopathie ou myasth\u00e9nie",
+      "is_total": false
+    },
+    {
+      "id": "epilepsie",
+      "label": "\u00c9pilepsie",
+      "is_total": false
+    },
+    {
+      "id": "autres-affections-neurologiques",
+      "label": "Autres affections neurologiques",
+      "is_total": false
+    },
+    {
+      "id": "maladies-respiratoires-chroniques-hors-mucoviscidose",
+      "label": "Maladies respiratoires chroniques (hors mucoviscidose)",
+      "is_total": false
+    },
+    {
+      "id": "maladies-inflammatoires-chroniques-intestinales",
+      "label": "Maladies inflammatoires chroniques intestinales",
+      "is_total": false
+    },
+    {
+      "id": "polyarthrite-rhumatoide-et-maladies-apparentees",
+      "label": "Polyarthrite rhumato\u00efde et maladies apparent\u00e9es",
+      "is_total": false
+    },
+    {
+      "id": "spondylarthrite-ankylosante-et-maladies-apparentees",
+      "label": "Spondylarthrite ankylosante et maladies apparent\u00e9es",
+      "is_total": false
+    },
+    {
+      "id": "autres-maladies-inflammatoires-chroniques",
+      "label": "Autres maladies inflammatoires chroniques",
+      "is_total": false
+    },
+    {
+      "id": "maladies-metaboliques-hereditaires-ou-amylose",
+      "label": "Maladies m\u00e9taboliques h\u00e9r\u00e9ditaires ou amylose",
+      "is_total": false
+    },
+    {
+      "id": "mucoviscidose",
+      "label": "Mucoviscidose",
+      "is_total": false
+    },
+    {
+      "id": "hemophilie-ou-troubles-de-l-hemostase-graves",
+      "label": "H\u00e9mophilie ou troubles de l'h\u00e9mostase graves",
+      "is_total": false
+    },
+    {
+      "id": "vih-ou-sida",
+      "label": "VIH ou SIDA",
+      "is_total": false
+    },
+    {
+      "id": "dialyse-chronique",
+      "label": "Dialyse chronique",
+      "is_total": false
+    },
+    {
+      "id": "transplantation-renale",
+      "label": "Transplantation r\u00e9nale",
+      "is_total": false
+    },
+    {
+      "id": "suivi-de-transplantation-renale",
+      "label": "Suivi de transplantation r\u00e9nale",
+      "is_total": false
+    },
+    {
+      "id": "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose",
+      "label": "Maladies du foie ou du pancr\u00e9as (hors mucoviscidose)",
+      "is_total": false
+    },
+    {
+      "id": "autres-affections-de-longue-duree-dont-31-et-32",
+      "label": "Autres affections de longue dur\u00e9e (dont 31 et 32)",
+      "is_total": false
+    },
+    {
+      "id": "sejours-hospitaliers-pour-covid-19",
+      "label": "S\u00e9jours hospitaliers pour Covid-19",
+      "is_total": false
+    },
+    {
+      "id": "maternite-avec-ou-sans-pathologies",
+      "label": "Maternit\u00e9 (avec ou sans pathologies)",
+      "is_total": false
+    },
+    {
+      "id": "total",
+      "label": "Total",
+      "is_total": true
+    }
+  ],
+  "departments": {
+    "06": {
+      "syndrome-coronaire-aigu": {
+        "men": 1220,
+        "women": 580,
+        "age65plus": 1150
+      },
+      "maladie-coronaire-chronique": {
+        "men": 30410,
+        "women": 12560,
+        "age65plus": 33890
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1100,
+        "women": 990,
+        "age65plus": 1640
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 7230,
+        "women": 7320,
+        "age65plus": 11280
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 1420,
+        "women": 1420,
+        "age65plus": 2620
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 5860,
+        "women": 5690,
+        "age65plus": 10160
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 8400,
+        "women": 4810,
+        "age65plus": 10880
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 19340,
+        "women": 16510,
+        "age65plus": 31030
+      },
+      "maladie-valvulaire": {
+        "men": 4200,
+        "women": 3700,
+        "age65plus": 6580
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 370,
+        "women": 370,
+        "age65plus": 550
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 4100,
+        "women": 3120,
+        "age65plus": 4860
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 48880,
+        "women": 71740,
+        "age65plus": 82870
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 26030,
+        "women": 36910,
+        "age65plus": 45570
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 100420,
+        "women": 109400,
+        "age65plus": 154360
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 73820,
+        "women": 65110,
+        "age65plus": 104320
+      },
+      "diabete": {
+        "men": 40480,
+        "women": 32390,
+        "age65plus": 48910
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 5010,
+        "age65plus": 2780
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 8500,
+        "age65plus": 5930
+      },
+      "cancer-colorectal-actif": {
+        "men": 1450,
+        "women": 1380,
+        "age65plus": 2090
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 1870,
+        "women": 2020,
+        "age65plus": 3100
+      },
+      "cancer-du-poumon-actif": {
+        "men": 1230,
+        "women": 1130,
+        "age65plus": 1710
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 670,
+        "women": 650,
+        "age65plus": 1040
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 5210,
+        "women": null,
+        "age65plus": 4440
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 6020,
+        "women": null,
+        "age65plus": 5550
+      },
+      "autres-cancers-actifs": {
+        "men": 11900,
+        "women": 11070,
+        "age65plus": 16340
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 9780,
+        "women": 11370,
+        "age65plus": 15000
+      },
+      "troubles-psychotiques": {
+        "men": 5810,
+        "women": 4730,
+        "age65plus": 2480
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 8790,
+        "women": 17930,
+        "age65plus": 10790
+      },
+      "deficience-mentale": {
+        "men": 1160,
+        "women": 970,
+        "age65plus": 270
+      },
+      "troubles-addictifs": {
+        "men": 6950,
+        "women": 5420,
+        "age65plus": 3310
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 2760,
+        "women": 1240,
+        "age65plus": 50
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 2310,
+        "women": 3570,
+        "age65plus": 1870
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 19630,
+        "women": 45050,
+        "age65plus": 31460
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 3160,
+        "women": 4330,
+        "age65plus": 3870
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 17820,
+        "women": 35390,
+        "age65plus": 30780
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 9260,
+        "women": 15990,
+        "age65plus": 16120
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 28160,
+        "women": 61270,
+        "age65plus": 41750
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 10590,
+        "women": 12410,
+        "age65plus": 7710
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 25370,
+        "women": 47880,
+        "age65plus": 38420
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 13390,
+        "women": 22740,
+        "age65plus": 20490
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 4710,
+        "women": 10630,
+        "age65plus": 14990
+      },
+      "maladie-de-parkinson": {
+        "men": 2600,
+        "women": 2450,
+        "age65plus": 4500
+      },
+      "sclerose-en-plaques": {
+        "men": 530,
+        "women": 1510,
+        "age65plus": 480
+      },
+      "paraplegie": {
+        "men": 820,
+        "women": 680,
+        "age65plus": 530
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 550,
+        "women": 580,
+        "age65plus": 510
+      },
+      "epilepsie": {
+        "men": 4310,
+        "women": 4430,
+        "age65plus": 3570
+      },
+      "autres-affections-neurologiques": {
+        "men": 1760,
+        "women": 1860,
+        "age65plus": 1600
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 33200,
+        "women": 37410,
+        "age65plus": 32250
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 3000,
+        "women": 3240,
+        "age65plus": 1840
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1640,
+        "women": 4870,
+        "age65plus": 3940
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 2550,
+        "women": 3640,
+        "age65plus": 1960
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 1120,
+        "women": 3430,
+        "age65plus": 2560
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 890,
+        "women": 760,
+        "age65plus": 810
+      },
+      "mucoviscidose": {
+        "men": 80,
+        "women": 90,
+        "age65plus": 10
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 560,
+        "women": 740,
+        "age65plus": 490
+      },
+      "vih-ou-sida": {
+        "men": 3850,
+        "women": 1500,
+        "age65plus": 1140
+      },
+      "dialyse-chronique": {
+        "men": 620,
+        "women": 350,
+        "age65plus": 750
+      },
+      "transplantation-renale": {
+        "men": 40,
+        "women": 20,
+        "age65plus": 10
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 450,
+        "women": 280,
+        "age65plus": 320
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 6130,
+        "women": 4880,
+        "age65plus": 5440
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 11710,
+        "women": 17870,
+        "age65plus": 17570
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 610,
+        "women": 610,
+        "age65plus": 1030
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 16580,
+        "age65plus": null
+      },
+      "total": {
+        "men": 547730,
+        "women": 615810,
+        "age65plus": 294050
+      }
+    },
+    "13": {
+      "syndrome-coronaire-aigu": {
+        "men": 2510,
+        "women": 1100,
+        "age65plus": 2280
+      },
+      "maladie-coronaire-chronique": {
+        "men": 51420,
+        "women": 22900,
+        "age65plus": 55750
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1980,
+        "women": 1790,
+        "age65plus": 2810
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 13840,
+        "women": 13380,
+        "age65plus": 19630
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 2690,
+        "women": 2650,
+        "age65plus": 4800
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 10920,
+        "women": 11080,
+        "age65plus": 18650
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 16140,
+        "women": 9150,
+        "age65plus": 19940
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 32700,
+        "women": 28350,
+        "age65plus": 50870
+      },
+      "maladie-valvulaire": {
+        "men": 7680,
+        "women": 7440,
+        "age65plus": 12380
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 660,
+        "women": 750,
+        "age65plus": 1010
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 8400,
+        "women": 6630,
+        "age65plus": 9850
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 84160,
+        "women": 119100,
+        "age65plus": 126440
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 44940,
+        "women": 64290,
+        "age65plus": 72930
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 176530,
+        "women": 190850,
+        "age65plus": 251490
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 132800,
+        "women": 120230,
+        "age65plus": 176750
+      },
+      "diabete": {
+        "men": 78840,
+        "women": 65740,
+        "age65plus": 90710
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 8260,
+        "age65plus": 4290
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 14940,
+        "age65plus": 10150
+      },
+      "cancer-colorectal-actif": {
+        "men": 2680,
+        "women": 2380,
+        "age65plus": 3530
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 3240,
+        "women": 3480,
+        "age65plus": 5260
+      },
+      "cancer-du-poumon-actif": {
+        "men": 2440,
+        "women": 1830,
+        "age65plus": 2940
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 1120,
+        "women": 990,
+        "age65plus": 1630
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 7540,
+        "women": null,
+        "age65plus": 6420
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 8310,
+        "women": null,
+        "age65plus": 7640
+      },
+      "autres-cancers-actifs": {
+        "men": 17160,
+        "women": 14880,
+        "age65plus": 21520
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 14560,
+        "women": 17160,
+        "age65plus": 20990
+      },
+      "troubles-psychotiques": {
+        "men": 10700,
+        "women": 7530,
+        "age65plus": 4380
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 15680,
+        "women": 30430,
+        "age65plus": 18070
+      },
+      "deficience-mentale": {
+        "men": 2310,
+        "women": 1820,
+        "age65plus": 560
+      },
+      "troubles-addictifs": {
+        "men": 14140,
+        "women": 10170,
+        "age65plus": 6480
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 4460,
+        "women": 2360,
+        "age65plus": 90
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 6310,
+        "women": 8680,
+        "age65plus": 4760
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 36660,
+        "women": 82550,
+        "age65plus": 50890
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 6100,
+        "women": 7450,
+        "age65plus": 6530
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 35620,
+        "women": 68680,
+        "age65plus": 50730
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 17370,
+        "women": 28300,
+        "age65plus": 25540
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 52330,
+        "women": 110800,
+        "age65plus": 68580
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 19690,
+        "women": 20800,
+        "age65plus": 13290
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 50420,
+        "women": 91000,
+        "age65plus": 64400
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 24830,
+        "women": 39600,
+        "age65plus": 32880
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 7100,
+        "women": 15780,
+        "age65plus": 22290
+      },
+      "maladie-de-parkinson": {
+        "men": 5380,
+        "women": 5040,
+        "age65plus": 9350
+      },
+      "sclerose-en-plaques": {
+        "men": 1140,
+        "women": 2770,
+        "age65plus": 810
+      },
+      "paraplegie": {
+        "men": 1670,
+        "women": 1460,
+        "age65plus": 1100
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 960,
+        "women": 910,
+        "age65plus": 770
+      },
+      "epilepsie": {
+        "men": 9240,
+        "women": 9030,
+        "age65plus": 6710
+      },
+      "autres-affections-neurologiques": {
+        "men": 3250,
+        "women": 3220,
+        "age65plus": 2550
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 65700,
+        "women": 77580,
+        "age65plus": 57810
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 5510,
+        "women": 5990,
+        "age65plus": 3030
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 2860,
+        "women": 8690,
+        "age65plus": 6560
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 4500,
+        "women": 6950,
+        "age65plus": 3140
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 2120,
+        "women": 6600,
+        "age65plus": 4470
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 1960,
+        "women": 1860,
+        "age65plus": 1660
+      },
+      "mucoviscidose": {
+        "men": 150,
+        "women": 170,
+        "age65plus": 40
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 990,
+        "women": 1250,
+        "age65plus": 840
+      },
+      "vih-ou-sida": {
+        "men": 4430,
+        "women": 2070,
+        "age65plus": 1210
+      },
+      "dialyse-chronique": {
+        "men": 1370,
+        "women": 780,
+        "age65plus": 1590
+      },
+      "transplantation-renale": {
+        "men": 70,
+        "women": 40,
+        "age65plus": 20
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 680,
+        "women": 450,
+        "age65plus": 390
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 10990,
+        "women": 9480,
+        "age65plus": 9460
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 26280,
+        "women": 35750,
+        "age65plus": 36660
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 1110,
+        "women": 1340,
+        "age65plus": 2000
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 37220,
+        "age65plus": null
+      },
+      "total": {
+        "men": 1034230,
+        "women": 1126320,
+        "age65plus": 456610
+      }
+    },
+    "25": {
+      "syndrome-coronaire-aigu": {
+        "men": 510,
+        "women": 200,
+        "age65plus": 440
+      },
+      "maladie-coronaire-chronique": {
+        "men": 14550,
+        "women": 5870,
+        "age65plus": 15600
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 520,
+        "women": 410,
+        "age65plus": 710
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 3520,
+        "women": 3300,
+        "age65plus": 5090
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 610,
+        "women": 570,
+        "age65plus": 1050
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 2570,
+        "women": 2430,
+        "age65plus": 4260
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 3810,
+        "women": 1910,
+        "age65plus": 4500
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 8760,
+        "women": 7040,
+        "age65plus": 13200
+      },
+      "maladie-valvulaire": {
+        "men": 2010,
+        "women": 1540,
+        "age65plus": 2960
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 220,
+        "women": 230,
+        "age65plus": 300
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 2100,
+        "women": 1310,
+        "age65plus": 2110
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 22980,
+        "women": 33460,
+        "age65plus": 35120
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 14160,
+        "women": 19270,
+        "age65plus": 21960
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 47510,
+        "women": 51210,
+        "age65plus": 67410
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 38610,
+        "women": 34110,
+        "age65plus": 50630
+      },
+      "diabete": {
+        "men": 18820,
+        "women": 15590,
+        "age65plus": 22280
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 2050,
+        "age65plus": 1060
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 3470,
+        "age65plus": 2430
+      },
+      "cancer-colorectal-actif": {
+        "men": 650,
+        "women": 520,
+        "age65plus": 830
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 710,
+        "women": 700,
+        "age65plus": 1110
+      },
+      "cancer-du-poumon-actif": {
+        "men": 550,
+        "women": 400,
+        "age65plus": 670
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 240,
+        "women": 210,
+        "age65plus": 350
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 2190,
+        "women": null,
+        "age65plus": 1840
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 2500,
+        "women": null,
+        "age65plus": 2250
+      },
+      "autres-cancers-actifs": {
+        "men": 3960,
+        "women": 3370,
+        "age65plus": 4830
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 3370,
+        "women": 3780,
+        "age65plus": 4680
+      },
+      "troubles-psychotiques": {
+        "men": 1900,
+        "women": 1360,
+        "age65plus": 690
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 3410,
+        "women": 6730,
+        "age65plus": 3870
+      },
+      "deficience-mentale": {
+        "men": 610,
+        "women": 450,
+        "age65plus": 170
+      },
+      "troubles-addictifs": {
+        "men": 3220,
+        "women": 2250,
+        "age65plus": 1350
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 780,
+        "women": 420,
+        "age65plus": 20
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 1040,
+        "women": 1440,
+        "age65plus": 680
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 10000,
+        "women": 21940,
+        "age65plus": 14310
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 1420,
+        "women": 1440,
+        "age65plus": 1340
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 8520,
+        "women": 16330,
+        "age65plus": 13210
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 2740,
+        "women": 4750,
+        "age65plus": 4500
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 13760,
+        "women": 28440,
+        "age65plus": 18160
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 4310,
+        "women": 4390,
+        "age65plus": 2710
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 11530,
+        "women": 20920,
+        "age65plus": 15990
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 3770,
+        "women": 6340,
+        "age65plus": 5470
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 1730,
+        "women": 3370,
+        "age65plus": 4940
+      },
+      "maladie-de-parkinson": {
+        "men": 1270,
+        "women": 1160,
+        "age65plus": 2090
+      },
+      "sclerose-en-plaques": {
+        "men": 370,
+        "women": 930,
+        "age65plus": 270
+      },
+      "paraplegie": {
+        "men": 480,
+        "women": 350,
+        "age65plus": 250
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 230,
+        "women": 210,
+        "age65plus": 170
+      },
+      "epilepsie": {
+        "men": 2230,
+        "women": 1890,
+        "age65plus": 1420
+      },
+      "autres-affections-neurologiques": {
+        "men": 830,
+        "women": 760,
+        "age65plus": 570
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 14450,
+        "women": 15320,
+        "age65plus": 12420
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 1310,
+        "women": 1490,
+        "age65plus": 700
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 750,
+        "women": 1830,
+        "age65plus": 1520
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 940,
+        "women": 950,
+        "age65plus": 490
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 570,
+        "women": 1460,
+        "age65plus": 1150
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 470,
+        "women": 370,
+        "age65plus": 340
+      },
+      "mucoviscidose": {
+        "men": 70,
+        "women": 40,
+        "age65plus": 10
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 310,
+        "women": 350,
+        "age65plus": 230
+      },
+      "vih-ou-sida": {
+        "men": 470,
+        "women": 250,
+        "age65plus": 110
+      },
+      "dialyse-chronique": {
+        "men": 200,
+        "women": 130,
+        "age65plus": 220
+      },
+      "transplantation-renale": {
+        "men": 20,
+        "women": 10,
+        "age65plus": 10
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 220,
+        "women": 130,
+        "age65plus": 120
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 2490,
+        "women": 1970,
+        "age65plus": 2130
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 4350,
+        "women": 5280,
+        "age65plus": 4580
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 290,
+        "women": 330,
+        "age65plus": 500
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 8230,
+        "age65plus": null
+      },
+      "total": {
+        "men": 258120,
+        "women": 275170,
+        "age65plus": 117610
+      }
+    },
+    "29": {
+      "syndrome-coronaire-aigu": {
+        "men": 1020,
+        "women": 460,
+        "age65plus": 1000
+      },
+      "maladie-coronaire-chronique": {
+        "men": 22320,
+        "women": 9090,
+        "age65plus": 24190
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1160,
+        "women": 1000,
+        "age65plus": 1690
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 7530,
+        "women": 7280,
+        "age65plus": 11300
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 1450,
+        "women": 1590,
+        "age65plus": 2830
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 4900,
+        "women": 5000,
+        "age65plus": 8600
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 9180,
+        "women": 4580,
+        "age65plus": 11040
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 19040,
+        "women": 15040,
+        "age65plus": 29270
+      },
+      "maladie-valvulaire": {
+        "men": 4280,
+        "women": 3580,
+        "age65plus": 6730
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 310,
+        "women": 310,
+        "age65plus": 420
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 3250,
+        "women": 2290,
+        "age65plus": 3310
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 47510,
+        "women": 65820,
+        "age65plus": 76150
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 26290,
+        "women": 35160,
+        "age65plus": 43900
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 89850,
+        "women": 94980,
+        "age65plus": 132480
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 67240,
+        "women": 58650,
+        "age65plus": 92640
+      },
+      "diabete": {
+        "men": 27540,
+        "women": 20200,
+        "age65plus": 32020
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 4050,
+        "age65plus": 2270
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 6700,
+        "age65plus": 4630
+      },
+      "cancer-colorectal-actif": {
+        "men": 1730,
+        "women": 1290,
+        "age65plus": 2210
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 2070,
+        "women": 1950,
+        "age65plus": 3290
+      },
+      "cancer-du-poumon-actif": {
+        "men": 1430,
+        "women": 1050,
+        "age65plus": 1760
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 600,
+        "women": 400,
+        "age65plus": 770
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 4650,
+        "women": null,
+        "age65plus": 3890
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 5040,
+        "women": null,
+        "age65plus": 4660
+      },
+      "autres-cancers-actifs": {
+        "men": 9860,
+        "women": 8260,
+        "age65plus": 13220
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 8100,
+        "women": 9120,
+        "age65plus": 12450
+      },
+      "troubles-psychotiques": {
+        "men": 4900,
+        "women": 3790,
+        "age65plus": 2280
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 10270,
+        "women": 19000,
+        "age65plus": 11950
+      },
+      "deficience-mentale": {
+        "men": 1140,
+        "women": 920,
+        "age65plus": 390
+      },
+      "troubles-addictifs": {
+        "men": 10170,
+        "women": 6620,
+        "age65plus": 4310
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 2740,
+        "women": 1270,
+        "age65plus": 30
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 2890,
+        "women": 4030,
+        "age65plus": 2440
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 17320,
+        "women": 39030,
+        "age65plus": 26500
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 2470,
+        "women": 2810,
+        "age65plus": 2750
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 17630,
+        "women": 34860,
+        "age65plus": 30940
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 7940,
+        "women": 13920,
+        "age65plus": 15370
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 27800,
+        "women": 56880,
+        "age65plus": 38300
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 10430,
+        "women": 10870,
+        "age65plus": 7090
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 27500,
+        "women": 49170,
+        "age65plus": 40510
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 12050,
+        "women": 20350,
+        "age65plus": 20010
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 3280,
+        "women": 7930,
+        "age65plus": 10960
+      },
+      "maladie-de-parkinson": {
+        "men": 2150,
+        "women": 1930,
+        "age65plus": 3590
+      },
+      "sclerose-en-plaques": {
+        "men": 570,
+        "women": 1610,
+        "age65plus": 490
+      },
+      "paraplegie": {
+        "men": 710,
+        "women": 600,
+        "age65plus": 440
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 400,
+        "women": 420,
+        "age65plus": 300
+      },
+      "epilepsie": {
+        "men": 4800,
+        "women": 4180,
+        "age65plus": 3600
+      },
+      "autres-affections-neurologiques": {
+        "men": 1560,
+        "women": 1420,
+        "age65plus": 1170
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 31630,
+        "women": 32280,
+        "age65plus": 26420
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 2110,
+        "women": 2270,
+        "age65plus": 1150
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1700,
+        "women": 4310,
+        "age65plus": 3630
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 2020,
+        "women": 2260,
+        "age65plus": 1350
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 1120,
+        "women": 2640,
+        "age65plus": 2430
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 1660,
+        "women": 1500,
+        "age65plus": 1460
+      },
+      "mucoviscidose": {
+        "men": 100,
+        "women": 90,
+        "age65plus": "<10"
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 480,
+        "women": 440,
+        "age65plus": 390
+      },
+      "vih-ou-sida": {
+        "men": 970,
+        "women": 480,
+        "age65plus": 310
+      },
+      "dialyse-chronique": {
+        "men": 460,
+        "women": 230,
+        "age65plus": 510
+      },
+      "transplantation-renale": {
+        "men": 20,
+        "women": 20,
+        "age65plus": 10
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 350,
+        "women": 210,
+        "age65plus": 240
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 5210,
+        "women": 3790,
+        "age65plus": 4650
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 11940,
+        "women": 12300,
+        "age65plus": 13230
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 610,
+        "women": 670,
+        "age65plus": 1040
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 12630,
+        "age65plus": null
+      },
+      "total": {
+        "men": 450080,
+        "women": 484640,
+        "age65plus": 242760
+      }
+    },
+    "35": {
+      "syndrome-coronaire-aigu": {
+        "men": 900,
+        "women": 390,
+        "age65plus": 810
+      },
+      "maladie-coronaire-chronique": {
+        "men": 19040,
+        "women": 7180,
+        "age65plus": 19920
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1010,
+        "women": 930,
+        "age65plus": 1480
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 7060,
+        "women": 6540,
+        "age65plus": 10300
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 1310,
+        "women": 1370,
+        "age65plus": 2460
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 4620,
+        "women": 4340,
+        "age65plus": 7680
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 7070,
+        "women": 3830,
+        "age65plus": 8700
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 15320,
+        "women": 11710,
+        "age65plus": 22780
+      },
+      "maladie-valvulaire": {
+        "men": 4090,
+        "women": 3210,
+        "age65plus": 6050
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 300,
+        "women": 290,
+        "age65plus": 390
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 3330,
+        "women": 2380,
+        "age65plus": 3420
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 49200,
+        "women": 64860,
+        "age65plus": 71880
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 25790,
+        "women": 31090,
+        "age65plus": 39470
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 88920,
+        "women": 91550,
+        "age65plus": 122320
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 62280,
+        "women": 51200,
+        "age65plus": 80770
+      },
+      "diabete": {
+        "men": 26290,
+        "women": 20320,
+        "age65plus": 28580
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 4120,
+        "age65plus": 2030
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 6300,
+        "age65plus": 4010
+      },
+      "cancer-colorectal-actif": {
+        "men": 1400,
+        "women": 1150,
+        "age65plus": 1770
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 1850,
+        "women": 1810,
+        "age65plus": 2800
+      },
+      "cancer-du-poumon-actif": {
+        "men": 920,
+        "women": 640,
+        "age65plus": 1020
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 400,
+        "women": 290,
+        "age65plus": 500
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 3760,
+        "women": null,
+        "age65plus": 3170
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 3880,
+        "women": null,
+        "age65plus": 3530
+      },
+      "autres-cancers-actifs": {
+        "men": 8440,
+        "women": 7270,
+        "age65plus": 10630
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 6830,
+        "women": 7730,
+        "age65plus": 9830
+      },
+      "troubles-psychotiques": {
+        "men": 5140,
+        "women": 3900,
+        "age65plus": 2200
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 8620,
+        "women": 16620,
+        "age65plus": 9290
+      },
+      "deficience-mentale": {
+        "men": 1220,
+        "women": 960,
+        "age65plus": 460
+      },
+      "troubles-addictifs": {
+        "men": 9270,
+        "women": 5500,
+        "age65plus": 2820
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 3040,
+        "women": 1200,
+        "age65plus": 40
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 2510,
+        "women": 4000,
+        "age65plus": 2270
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 17990,
+        "women": 39350,
+        "age65plus": 23640
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 2630,
+        "women": 3000,
+        "age65plus": 2740
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 14300,
+        "women": 28250,
+        "age65plus": 22350
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 5950,
+        "women": 10860,
+        "age65plus": 11170
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 27250,
+        "women": 55270,
+        "age65plus": 33030
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 10120,
+        "women": 10580,
+        "age65plus": 6550
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 21480,
+        "women": 39290,
+        "age65plus": 28670
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 8970,
+        "women": 16000,
+        "age65plus": 14410
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 3850,
+        "women": 7610,
+        "age65plus": 11140
+      },
+      "maladie-de-parkinson": {
+        "men": 2180,
+        "women": 2050,
+        "age65plus": 3710
+      },
+      "sclerose-en-plaques": {
+        "men": 630,
+        "women": 1480,
+        "age65plus": 440
+      },
+      "paraplegie": {
+        "men": 890,
+        "women": 780,
+        "age65plus": 540
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 470,
+        "women": 410,
+        "age65plus": 300
+      },
+      "epilepsie": {
+        "men": 4830,
+        "women": 4320,
+        "age65plus": 3510
+      },
+      "autres-affections-neurologiques": {
+        "men": 1790,
+        "women": 1630,
+        "age65plus": 1240
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 30470,
+        "women": 30790,
+        "age65plus": 22510
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 2390,
+        "women": 2590,
+        "age65plus": 960
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1670,
+        "women": 3560,
+        "age65plus": 3150
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 2000,
+        "women": 1890,
+        "age65plus": 1150
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 1180,
+        "women": 2820,
+        "age65plus": 2430
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 1540,
+        "women": 1310,
+        "age65plus": 1280
+      },
+      "mucoviscidose": {
+        "men": 120,
+        "women": 100,
+        "age65plus": 10
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 480,
+        "women": 460,
+        "age65plus": 330
+      },
+      "vih-ou-sida": {
+        "men": 1160,
+        "women": 770,
+        "age65plus": 270
+      },
+      "dialyse-chronique": {
+        "men": 310,
+        "women": 190,
+        "age65plus": 310
+      },
+      "transplantation-renale": {
+        "men": 40,
+        "women": 10,
+        "age65plus": 10
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 420,
+        "women": 260,
+        "age65plus": 250
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 5270,
+        "women": 3540,
+        "age65plus": 3960
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 12130,
+        "women": 12890,
+        "age65plus": 13290
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 640,
+        "women": 700,
+        "age65plus": 1040
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 18950,
+        "age65plus": null
+      },
+      "total": {
+        "men": 535890,
+        "women": 572870,
+        "age65plus": 222170
+      }
+    },
+    "44": {
+      "syndrome-coronaire-aigu": {
+        "men": 1160,
+        "women": 510,
+        "age65plus": 1030
+      },
+      "maladie-coronaire-chronique": {
+        "men": 32850,
+        "women": 14650,
+        "age65plus": 36350
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1240,
+        "women": 1100,
+        "age65plus": 1760
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 8160,
+        "women": 7760,
+        "age65plus": 11530
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 1690,
+        "women": 1690,
+        "age65plus": 3070
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 6140,
+        "women": 5520,
+        "age65plus": 9920
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 9900,
+        "women": 4850,
+        "age65plus": 11660
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 21940,
+        "women": 16430,
+        "age65plus": 31830
+      },
+      "maladie-valvulaire": {
+        "men": 5180,
+        "women": 4050,
+        "age65plus": 7650
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 380,
+        "women": 320,
+        "age65plus": 440
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 4700,
+        "women": 3360,
+        "age65plus": 4790
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 66830,
+        "women": 89230,
+        "age65plus": 95820
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 35050,
+        "women": 43210,
+        "age65plus": 53310
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 126540,
+        "women": 129620,
+        "age65plus": 171950
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 91920,
+        "women": 75810,
+        "age65plus": 118870
+      },
+      "diabete": {
+        "men": 40540,
+        "women": 30560,
+        "age65plus": 45070
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 5870,
+        "age65plus": 2930
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 9320,
+        "age65plus": 5980
+      },
+      "cancer-colorectal-actif": {
+        "men": 1600,
+        "women": 1360,
+        "age65plus": 2070
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 1870,
+        "women": 1900,
+        "age65plus": 2880
+      },
+      "cancer-du-poumon-actif": {
+        "men": 1420,
+        "women": 960,
+        "age65plus": 1580
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 590,
+        "women": 430,
+        "age65plus": 760
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 5920,
+        "women": null,
+        "age65plus": 4940
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 6080,
+        "women": null,
+        "age65plus": 5450
+      },
+      "autres-cancers-actifs": {
+        "men": 12120,
+        "women": 9980,
+        "age65plus": 15210
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 10100,
+        "women": 10950,
+        "age65plus": 14070
+      },
+      "troubles-psychotiques": {
+        "men": 4970,
+        "women": 3830,
+        "age65plus": 2000
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 11070,
+        "women": 20230,
+        "age65plus": 10690
+      },
+      "deficience-mentale": {
+        "men": 1260,
+        "women": 1000,
+        "age65plus": 370
+      },
+      "troubles-addictifs": {
+        "men": 10670,
+        "women": 6380,
+        "age65plus": 3850
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 4000,
+        "women": 1780,
+        "age65plus": 40
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 3410,
+        "women": 5520,
+        "age65plus": 2560
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 26420,
+        "women": 59140,
+        "age65plus": 36620
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 3150,
+        "women": 3760,
+        "age65plus": 3400
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 17570,
+        "women": 34800,
+        "age65plus": 27710
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 6010,
+        "women": 11160,
+        "age65plus": 11370
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 37090,
+        "women": 77920,
+        "age65plus": 47600
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 11020,
+        "women": 12130,
+        "age65plus": 7370
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 24840,
+        "women": 46080,
+        "age65plus": 34280
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 8030,
+        "women": 14890,
+        "age65plus": 13850
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 5000,
+        "women": 10240,
+        "age65plus": 14880
+      },
+      "maladie-de-parkinson": {
+        "men": 2690,
+        "women": 2580,
+        "age65plus": 4570
+      },
+      "sclerose-en-plaques": {
+        "men": 780,
+        "women": 2150,
+        "age65plus": 660
+      },
+      "paraplegie": {
+        "men": 1100,
+        "women": 870,
+        "age65plus": 650
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 530,
+        "women": 590,
+        "age65plus": 360
+      },
+      "epilepsie": {
+        "men": 5300,
+        "women": 4550,
+        "age65plus": 3510
+      },
+      "autres-affections-neurologiques": {
+        "men": 2350,
+        "women": 2240,
+        "age65plus": 1680
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 43310,
+        "women": 44450,
+        "age65plus": 28860
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 2980,
+        "women": 3440,
+        "age65plus": 1320
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1910,
+        "women": 4600,
+        "age65plus": 3770
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 2800,
+        "women": 2710,
+        "age65plus": 1660
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 1380,
+        "women": 3330,
+        "age65plus": 2760
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 1510,
+        "women": 1350,
+        "age65plus": 1200
+      },
+      "mucoviscidose": {
+        "men": 120,
+        "women": 100,
+        "age65plus": 10
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 770,
+        "women": 750,
+        "age65plus": 540
+      },
+      "vih-ou-sida": {
+        "men": 2000,
+        "women": 1250,
+        "age65plus": 480
+      },
+      "dialyse-chronique": {
+        "men": 450,
+        "women": 250,
+        "age65plus": 470
+      },
+      "transplantation-renale": {
+        "men": 30,
+        "women": 30,
+        "age65plus": 20
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 510,
+        "women": 330,
+        "age65plus": 290
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 7230,
+        "women": 5160,
+        "age65plus": 5720
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 12420,
+        "women": 14600,
+        "age65plus": 12780
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 600,
+        "women": 590,
+        "age65plus": 970
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 26160,
+        "age65plus": null
+      },
+      "total": {
+        "men": 720260,
+        "women": 771710,
+        "age65plus": 305910
+      }
+    },
+    "74": {
+      "syndrome-coronaire-aigu": {
+        "men": 620,
+        "women": 290,
+        "age65plus": 540
+      },
+      "maladie-coronaire-chronique": {
+        "men": 14570,
+        "women": 5440,
+        "age65plus": 14900
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 620,
+        "women": 530,
+        "age65plus": 900
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 4460,
+        "women": 4240,
+        "age65plus": 6360
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 810,
+        "women": 810,
+        "age65plus": 1470
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 3170,
+        "women": 2680,
+        "age65plus": 4920
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 4380,
+        "women": 2120,
+        "age65plus": 5100
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 11440,
+        "women": 8870,
+        "age65plus": 16790
+      },
+      "maladie-valvulaire": {
+        "men": 2820,
+        "women": 2060,
+        "age65plus": 3890
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 310,
+        "women": 270,
+        "age65plus": 390
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 2780,
+        "women": 1710,
+        "age65plus": 2790
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 32590,
+        "women": 41800,
+        "age65plus": 46310
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 14350,
+        "women": 15780,
+        "age65plus": 20790
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 60750,
+        "women": 61020,
+        "age65plus": 82160
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 39060,
+        "women": 28860,
+        "age65plus": 48380
+      },
+      "diabete": {
+        "men": 21760,
+        "women": 16970,
+        "age65plus": 24510
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 2910,
+        "age65plus": 1400
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 4670,
+        "age65plus": 2960
+      },
+      "cancer-colorectal-actif": {
+        "men": 740,
+        "women": 660,
+        "age65plus": 960
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 880,
+        "women": 920,
+        "age65plus": 1400
+      },
+      "cancer-du-poumon-actif": {
+        "men": 630,
+        "women": 490,
+        "age65plus": 790
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 300,
+        "women": 210,
+        "age65plus": 380
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 2630,
+        "women": null,
+        "age65plus": 2170
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 2990,
+        "women": null,
+        "age65plus": 2700
+      },
+      "autres-cancers-actifs": {
+        "men": 5540,
+        "women": 4780,
+        "age65plus": 6640
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 4870,
+        "women": 5220,
+        "age65plus": 6540
+      },
+      "troubles-psychotiques": {
+        "men": 2510,
+        "women": 1960,
+        "age65plus": 1070
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 4970,
+        "women": 9720,
+        "age65plus": 4840
+      },
+      "deficience-mentale": {
+        "men": 640,
+        "women": 540,
+        "age65plus": 150
+      },
+      "troubles-addictifs": {
+        "men": 3950,
+        "women": 2770,
+        "age65plus": 1450
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 2120,
+        "women": 1110,
+        "age65plus": 40
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 1630,
+        "women": 2450,
+        "age65plus": 1180
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 11770,
+        "women": 27340,
+        "age65plus": 16350
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 1530,
+        "women": 1890,
+        "age65plus": 1630
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 8630,
+        "women": 16850,
+        "age65plus": 12670
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 2740,
+        "women": 4730,
+        "age65plus": 4360
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 16570,
+        "women": 36170,
+        "age65plus": 21170
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 5400,
+        "women": 6130,
+        "age65plus": 3490
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 12340,
+        "women": 22600,
+        "age65plus": 15610
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 4080,
+        "women": 6850,
+        "age65plus": 5430
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 2140,
+        "women": 4310,
+        "age65plus": 6290
+      },
+      "maladie-de-parkinson": {
+        "men": 1510,
+        "women": 1370,
+        "age65plus": 2450
+      },
+      "sclerose-en-plaques": {
+        "men": 410,
+        "women": 1040,
+        "age65plus": 290
+      },
+      "paraplegie": {
+        "men": 640,
+        "women": 390,
+        "age65plus": 340
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 280,
+        "women": 300,
+        "age65plus": 170
+      },
+      "epilepsie": {
+        "men": 2720,
+        "women": 2540,
+        "age65plus": 1780
+      },
+      "autres-affections-neurologiques": {
+        "men": 1090,
+        "women": 1060,
+        "age65plus": 850
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 17440,
+        "women": 18650,
+        "age65plus": 13930
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 1580,
+        "women": 1830,
+        "age65plus": 790
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1110,
+        "women": 2580,
+        "age65plus": 2130
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 1500,
+        "women": 1770,
+        "age65plus": 910
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 850,
+        "women": 2120,
+        "age65plus": 1590
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 700,
+        "women": 680,
+        "age65plus": 530
+      },
+      "mucoviscidose": {
+        "men": 80,
+        "women": 60,
+        "age65plus": 10
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 350,
+        "women": 330,
+        "age65plus": 230
+      },
+      "vih-ou-sida": {
+        "men": 980,
+        "women": 580,
+        "age65plus": 260
+      },
+      "dialyse-chronique": {
+        "men": 270,
+        "women": 120,
+        "age65plus": 270
+      },
+      "transplantation-renale": {
+        "men": 20,
+        "women": 20,
+        "age65plus": 10
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 310,
+        "women": 200,
+        "age65plus": 190
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 3390,
+        "women": 2580,
+        "age65plus": 2610
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 6310,
+        "women": 8290,
+        "age65plus": 6470
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 380,
+        "women": 390,
+        "age65plus": 600
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 13870,
+        "age65plus": null
+      },
+      "total": {
+        "men": 392580,
+        "women": 427680,
+        "age65plus": 157760
+      }
+    },
+    "93": {
+      "syndrome-coronaire-aigu": {
+        "men": 1180,
+        "women": 450,
+        "age65plus": 820
+      },
+      "maladie-coronaire-chronique": {
+        "men": 26670,
+        "women": 10990,
+        "age65plus": 24940
+      },
+      "accident-vasculaire-cerebral-aigu": {
+        "men": 1320,
+        "women": 950,
+        "age65plus": 1400
+      },
+      "sequelle-d-accident-vasculaire-cerebral": {
+        "men": 8590,
+        "women": 7530,
+        "age65plus": 10060
+      },
+      "insuffisance-cardiaque-aigue": {
+        "men": 1740,
+        "women": 1590,
+        "age65plus": 2720
+      },
+      "insuffisance-cardiaque-chronique": {
+        "men": 5960,
+        "women": 5020,
+        "age65plus": 8180
+      },
+      "arteriopathie-obliterante-du-membre-inferieur": {
+        "men": 6940,
+        "women": 3450,
+        "age65plus": 7480
+      },
+      "troubles-du-rythme-ou-de-la-conduction-cardiaque": {
+        "men": 15110,
+        "women": 12770,
+        "age65plus": 21410
+      },
+      "maladie-valvulaire": {
+        "men": 3510,
+        "women": 3340,
+        "age65plus": 4850
+      },
+      "embolie-pulmonaire-aigue": {
+        "men": 430,
+        "women": 500,
+        "age65plus": 500
+      },
+      "autres-affections-cardiovasculaires": {
+        "men": 3960,
+        "women": 3160,
+        "age65plus": 3540
+      },
+      "traitements-antihypertenseurs-hors-pathologies": {
+        "men": 54320,
+        "women": 77200,
+        "age65plus": 62420
+      },
+      "traitements-hypolipemiants-hors-pathologies": {
+        "men": 25280,
+        "women": 34060,
+        "age65plus": 34050
+      },
+      "traitements-antihypertenseurs-avec-ou-sans-pathologies": {
+        "men": 117430,
+        "women": 128280,
+        "age65plus": 135510
+      },
+      "traitements-hypolipemiants-avec-ou-sans-pathologies": {
+        "men": 84110,
+        "women": 76010,
+        "age65plus": 95960
+      },
+      "diabete": {
+        "men": 67800,
+        "women": 59320,
+        "age65plus": 63450
+      },
+      "cancer-du-sein-de-la-femme-actif": {
+        "men": null,
+        "women": 4840,
+        "age65plus": 1950
+      },
+      "cancer-du-sein-de-la-femme-sous-surveillance": {
+        "men": null,
+        "women": 8090,
+        "age65plus": 4990
+      },
+      "cancer-colorectal-actif": {
+        "men": 1480,
+        "women": 1230,
+        "age65plus": 1650
+      },
+      "cancer-colorectal-sous-surveillance": {
+        "men": 1760,
+        "women": 1640,
+        "age65plus": 2400
+      },
+      "cancer-du-poumon-actif": {
+        "men": 1240,
+        "women": 820,
+        "age65plus": 1280
+      },
+      "cancer-du-poumon-sous-surveillance": {
+        "men": 610,
+        "women": 450,
+        "age65plus": 720
+      },
+      "cancer-de-la-prostate-actif": {
+        "men": 3730,
+        "women": null,
+        "age65plus": 2970
+      },
+      "cancer-de-la-prostate-sous-surveillance": {
+        "men": 4440,
+        "women": null,
+        "age65plus": 3990
+      },
+      "autres-cancers-actifs": {
+        "men": 7690,
+        "women": 7340,
+        "age65plus": 8400
+      },
+      "autres-cancers-sous-surveillance": {
+        "men": 7190,
+        "women": 8850,
+        "age65plus": 9200
+      },
+      "troubles-psychotiques": {
+        "men": 7080,
+        "women": 5220,
+        "age65plus": 2180
+      },
+      "troubles-nevrotiques-et-de-lhumeur": {
+        "men": 8210,
+        "women": 16940,
+        "age65plus": 7720
+      },
+      "deficience-mentale": {
+        "men": 1720,
+        "women": 1210,
+        "age65plus": 210
+      },
+      "troubles-addictifs": {
+        "men": 7150,
+        "women": 4270,
+        "age65plus": 2580
+      },
+      "troubles-psychiatriques-ayant-debute-dans-l-enfance": {
+        "men": 5900,
+        "women": 2540,
+        "age65plus": 80
+      },
+      "autres-troubles-psychiatriques": {
+        "men": 3440,
+        "women": 4610,
+        "age65plus": 2570
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-hors-pathologies": {
+        "men": 16300,
+        "women": 33490,
+        "age65plus": 16810
+      },
+      "traitements-neuroleptiques-hors-pathologies": {
+        "men": 3020,
+        "women": 3240,
+        "age65plus": 2030
+      },
+      "traitements-anxiolytiques-hors-pathologies": {
+        "men": 15880,
+        "women": 29310,
+        "age65plus": 18650
+      },
+      "traitements-hypnotiques-hors-pathologies": {
+        "men": 5770,
+        "women": 8900,
+        "age65plus": 6780
+      },
+      "traitements-antidepresseurs-ou-regulateurs-de-l-humeur-avec-ou-sans-pathologies": {
+        "men": 23910,
+        "women": 47480,
+        "age65plus": 23690
+      },
+      "traitements-neuroleptiques-avec-ou-sans-pathologies": {
+        "men": 11200,
+        "women": 10890,
+        "age65plus": 4770
+      },
+      "traitements-anxiolytiques-avec-ou-sans-pathologies": {
+        "men": 22310,
+        "women": 39670,
+        "age65plus": 23700
+      },
+      "traitements-hypnotiques-avec-ou-sans-pathologies": {
+        "men": 8620,
+        "women": 13370,
+        "age65plus": 9030
+      },
+      "demences-dont-maladie-d-alzheimer": {
+        "men": 3610,
+        "women": 6260,
+        "age65plus": 9390
+      },
+      "maladie-de-parkinson": {
+        "men": 1990,
+        "women": 1620,
+        "age65plus": 3000
+      },
+      "sclerose-en-plaques": {
+        "men": 840,
+        "women": 1790,
+        "age65plus": 400
+      },
+      "paraplegie": {
+        "men": 1180,
+        "women": 910,
+        "age65plus": 650
+      },
+      "myopathie-ou-myasthenie": {
+        "men": 580,
+        "women": 580,
+        "age65plus": 280
+      },
+      "epilepsie": {
+        "men": 5920,
+        "women": 5130,
+        "age65plus": 2840
+      },
+      "autres-affections-neurologiques": {
+        "men": 1950,
+        "women": 1950,
+        "age65plus": 1130
+      },
+      "maladies-respiratoires-chroniques-hors-mucoviscidose": {
+        "men": 43180,
+        "women": 48000,
+        "age65plus": 27760
+      },
+      "maladies-inflammatoires-chroniques-intestinales": {
+        "men": 3380,
+        "women": 3510,
+        "age65plus": 1350
+      },
+      "polyarthrite-rhumatoide-et-maladies-apparentees": {
+        "men": 1490,
+        "women": 4730,
+        "age65plus": 2780
+      },
+      "spondylarthrite-ankylosante-et-maladies-apparentees": {
+        "men": 2740,
+        "women": 2940,
+        "age65plus": 1370
+      },
+      "autres-maladies-inflammatoires-chroniques": {
+        "men": 1600,
+        "women": 5090,
+        "age65plus": 2500
+      },
+      "maladies-metaboliques-hereditaires-ou-amylose": {
+        "men": 1160,
+        "women": 1190,
+        "age65plus": 780
+      },
+      "mucoviscidose": {
+        "men": 80,
+        "women": 70,
+        "age65plus": 20
+      },
+      "hemophilie-ou-troubles-de-l-hemostase-graves": {
+        "men": 550,
+        "women": 760,
+        "age65plus": 370
+      },
+      "vih-ou-sida": {
+        "men": 5970,
+        "women": 4260,
+        "age65plus": 1440
+      },
+      "dialyse-chronique": {
+        "men": 1070,
+        "women": 580,
+        "age65plus": 910
+      },
+      "transplantation-renale": {
+        "men": 80,
+        "women": 50,
+        "age65plus": 40
+      },
+      "suivi-de-transplantation-renale": {
+        "men": 810,
+        "women": 500,
+        "age65plus": 320
+      },
+      "maladies-du-foie-ou-du-pancreas-hors-mucoviscidose": {
+        "men": 9770,
+        "women": 7220,
+        "age65plus": 5650
+      },
+      "autres-affections-de-longue-duree-dont-31-et-32": {
+        "men": 18880,
+        "women": 24190,
+        "age65plus": 16610
+      },
+      "sejours-hospitaliers-pour-covid-19": {
+        "men": 510,
+        "women": 550,
+        "age65plus": 780
+      },
+      "maternite-avec-ou-sans-pathologies": {
+        "men": null,
+        "women": 35670,
+        "age65plus": null
+      },
+      "total": {
+        "men": 792020,
+        "women": 833050,
+        "age65plus": 223280
+      }
+    }
+  }
+}

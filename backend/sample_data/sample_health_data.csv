@@ -1,0 +1,12 @@
+Pincode,City,PA,NUT,ENV,Disease,Disease_Prevalence
+110001,Delhi,45.5,62.0,45.0,Type 2 Diabetes,8.5
+110002,Delhi,78.0,75.0,68.0,Hypertension,12.3
+110003,Delhi,32.0,48.0,35.0,Type 2 Diabetes,10.2
+110004,Delhi,55.0,70.0,60.0,Asthma,5.8
+110005,Delhi,68.5,82.0,75.0,Hypertension,15.0
+400001,Mumbai,42.0,58.0,40.0,Type 2 Diabetes,7.5
+400002,Mumbai,72.5,78.0,65.0,Hypertension,13.5
+400003,Mumbai,38.5,45.0,30.0,COPD,4.2
+560001,Bangalore,65.0,72.0,70.0,Type 2 Diabetes,6.8
+560002,Bangalore,55.5,68.0,62.0,Hypertension,11.0
+560003,Bangalore,48.0,55.0,50.0,Asthma,6.5
