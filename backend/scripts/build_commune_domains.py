@@ -37,6 +37,10 @@ OUT = ROOT / "data" / "ml" / "communes_domaines_2024.csv"
 OUT_DEPT = ROOT / "data" / "ml" / "departements_mobilite_2024.csv"
 WALK_FILE = SOURCES / "barometre_villes_marchables_2023.xlsx"
 BIKE_FILE = SOURCES / "VT_2024_cyclabilite_stationnement_commune.csv"
+FOOD_FILE = SOURCES / "score_communal_alimentation.xlsx"  # Score_communal_alimentation_final.xlsx (team)
+# The tracked cities are always kept, even under MIN_POP (Font-Romeu, Le Mont-Dore).
+TRACKED = {"74010", "35238", "44109", "29019", "25056", "93048", "06088", "13055",
+           "78646", "46042", "17300", "66124", "63236", "13102"}
 MIN_POP = 2000
 
 UA = {"User-Agent": "wellness-platform/0.1 (commune dataset)"}
@@ -134,6 +138,27 @@ def walk_by_commune(geo: list[dict], dept_names: dict[str, str]) -> dict[str, di
     return out
 
 
+def food_by_commune() -> dict[str, dict]:
+    """Team food-environment score (0-100, BPE 2025 + SIRENE, mRFEI-like method) — optional source."""
+    if not FOOD_FILE.exists():
+        print(f"Alimentation : {FOOD_FILE.name} absent, score non intégré")
+        return {}
+    df = pd.read_excel(FOOD_FILE, sheet_name="Toutes les communes", dtype={"Code INSEE": str})
+    out: dict[str, dict] = {}
+    for r in df.itertuples(index=False):
+        code = str(r[0]).zfill(5)
+        out[code] = {
+            "food_score": round(float(r[23]), 1),
+            "food_balance": round(float(r[16]), 1),
+            "fresh_10k": round(float(r[17]), 2),
+            "fastfood_10k": round(float(r[19]), 2),  # SIRENE 56.10C, employers or with a sign
+            "food_type": str(r[24]),
+            "food_reliable": 1 if str(r[25]).startswith("bonne") else 0,
+        }
+    print(f"Alimentation : {len(out)} communes")
+    return out
+
+
 def bike_by_commune() -> tuple[dict[str, dict], dict[str, str]]:
     v = pd.read_csv(BIKE_FILE, dtype={"INSEE_COM": str, "INSEE_EPCI": str, "INSEE_DEP": str}, encoding="utf-8-sig")
     out: dict[str, dict] = {}
@@ -193,6 +218,7 @@ def main() -> None:
     geo = cached("geo_communes", lambda: get_json(GEO))
     walk = walk_by_commune(geo, dept_names)
     bike, size = bike_by_commune()
+    food = food_by_commune()
     fast, resto, gp = sirene_by_commune("56.10C"), sirene_by_commune("56.10A"), sirene_by_commune("86.21Z")
     sport = sport_by_commune()
     print(f"SIRENE : {sum(fast.values())} fast-foods, {sum(resto.values())} restaurants, {sum(gp.values())} cabinets de médecine générale")
@@ -204,7 +230,7 @@ def main() -> None:
     rows = []
     for c in geo:
         code, pop = c["code"], c.get("population") or 0
-        if pop < MIN_POP and code not in walk:
+        if pop < MIN_POP and code not in walk and code not in TRACKED:
             continue
         if len(c["codeDepartement"]) != 2 or not c.get("centre"):
             continue  # metropolitan France (the map frame)
@@ -220,7 +246,8 @@ def main() -> None:
             "lon": round(lon, 5),
             **walk.get(code, {}),
             **bike.get(code, {}),
-            "fastfood_10k": per10k(fast.get(code, 0), pop),
+            **food.get(code, {}),
+            "fastfood_10k": food.get(code, {}).get("fastfood_10k", per10k(fast.get(code, 0), pop)),
             "restaurant_10k": per10k(resto.get(code, 0), pop),
             "sport_10k": per10k(sport.get(code, 0), pop),
             "gp_10k": per10k(gp.get(code, 0), pop),

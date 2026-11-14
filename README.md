@@ -186,10 +186,18 @@ Carte : `python -m scripts.build_france_mask` (dev, shapely) régénère le masq
 | Alimentation | Fast-foods et snacks (NAF 56.10C), restaurants traditionnels (56.10A) pour 10 000 hab. | SIRENE, établissements actifs (agrégat opendatasoft) |
 | Sport | Équipements sportifs pour 10 000 hab. ; taux de pratique INJEP 2023 de la taille d'agglomération (contexte national) | Recensement des équipements sportifs ; Baromètre national des pratiques sportives 2023, p. 33 |
 | Santé | Cabinets de médecine générale (86.21Z) pour 10 000 hab. | SIRENE |
+| Alimentation (score) | **Score alimentation 0-100** : équilibre de l'offre (type mRFEI, 40 %), commerces de produits frais / 10 000 hab. (35 %), faible densité de fast-foods (25 %) ; typologie (offre mixte, marais ou désert alimentaire) | Fichier d'équipe `Score_communal_alimentation_final.xlsx` (BPE 2025, SIRENE) → `data/sources/score_communal_alimentation.xlsx` |
 
 Classes : quintiles des communes affichées, arrondis ; la classe verte est la plus favorable à la santé (bleu quand
 l'indicateur n'a pas de sens favorable : restaurants, densité). Le baromètre INJEP est une enquête nationale
 (~4 000 personnes) : il ne mesure pas la pratique d'une commune, il donne le taux moyen des agglomérations de même taille.
+
+**Vue d'ensemble** : recherche d'une ville (« Rechercher une ville », lien `?ville=35238`) → vue de la ville : indice, rang,
+écart à la moyenne, dimensions face à la moyenne, évolution du diabète, **score alimentation** (commune) et **score dépistage**
+(département : rang moyen des dépistages du sein, colorectal et du col de l'utérus, Santé publique France). Sans ville
+choisie, un tableau compare les deux scores pour toutes les villes. **Comparer** : par défaut, la ville suivie la plus proche
+de l'utilisateur (géolocalisation, position gardée dans le navigateur) face à la ville la plus semblable (même type,
+population et densité proches). **Prédire** : prévalence en % et en nombre de personnes (prévalence × population).
 
 ## Prédiction du diabète (arbre de décision) — `/prediction`
 

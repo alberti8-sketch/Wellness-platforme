@@ -1,16 +1,20 @@
 "use client";
 
-import { ArrowRight, LayoutGrid } from "lucide-react";
+import { ArrowLeft, ArrowRight, LayoutGrid, PanelRightOpen } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
+import { CitySearch } from "@/components/city-search";
 import { DashboardTrends } from "@/components/dashboard-trends";
+import { EXTRA_DIMS, ExtraScoresCard, FoodScorePanel, ScreeningPanel, useExtraScores } from "@/components/extra-scores";
+import { TrendPanel } from "@/components/territory-context-panels";
 import { NextStep } from "@/components/next-step";
 import { PageActions } from "@/components/page-actions";
 import { useSession } from "@/components/session";
 import { BandBadge, Card, Empty, Kpi, PageHeader, ScoreBar, Spinner } from "@/components/ui";
 import { BAND_META, BAND_ORDER, bandOf, fmt } from "@/lib/bands";
-import { mean } from "@/lib/metrics";
-import type { BandCode, Territory } from "@/lib/types";
+import { TYPE_LABEL, mean } from "@/lib/metrics";
+import type { BandCode, Catalog, Territory } from "@/lib/types";
 
 function Donut({ counts, total }: { counts: Record<BandCode, number>; total: number }) {
   const r = 58;
@@ -50,12 +54,57 @@ function Donut({ counts, total }: { counts: Record<BandCode, number>; total: num
 
 export default function DashboardPage() {
   const { catalog } = useSession();
-  const { territories, overview, weights, open } = useAnalytics();
+  const { territories, overview, weights, open, rankOf } = useAnalytics();
+  const extra = useExtraScores(territories);
+  // Optional single-city view (?ville=<code>), chosen with the search box.
+  const [city, setCity] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get("ville");
+      if (v) setCity(v.toUpperCase());
+    } catch {
+      /* no URL access */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (city) url.searchParams.set("ville", city);
+      else url.searchParams.delete("ville");
+      window.history.replaceState(window.history.state, "", url);
+    } catch {
+      /* no URL access */
+    }
+  }, [city]);
 
   if (!catalog || !weights) return <Spinner />;
+  const cityT = city ? territories.find((t) => t.code === city) ?? null : null;
+  const search = <CitySearch territories={territories} value={cityT?.code ?? null} onPick={setCity} />;
   const header = (
-    <PageHeader title="Vue d'ensemble" subtitle={`L'indice de bien-être des villes, noté de 1 à 10 · ${overview?.period ?? ""}`} actions={<PageActions />} />
+    <PageHeader
+      title="Vue d'ensemble"
+      subtitle={`L'indice de bien-être des villes, noté de 1 à 10 · ${overview?.period ?? ""}`}
+      actions={
+        <>
+          {search}
+          <PageActions />
+        </>
+      }
+    />
   );
+  if (cityT && overview)
+    return (
+      <CityOverview
+        t={cityT}
+        territories={territories}
+        catalog={catalog}
+        rank={rankOf(cityT.code)}
+        extra={extra}
+        search={search}
+        onBack={() => setCity(null)}
+        onOpen={() => open(cityT.code)}
+      />
+    );
   if (!overview)
     return (
       <>
@@ -131,6 +180,21 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+            {EXTRA_DIMS.map((d) => {
+              const m = mean(territories.map((t) => extra[d.key][t.code]));
+              const b = bandOf(m);
+              return (
+                <div key={d.key}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                    <span className="text-sm text-ink">
+                      {d.label} <span className="text-xs text-ink-muted">· hors indice</span>
+                    </span>
+                    <span className="num text-sm font-semibold text-ink">{m == null ? "—" : fmt(m)}</span>
+                  </div>
+                  <ScoreBar score={m} color={b ? BAND_META[b].color : "#B9B9B2"} height={8} />
+                </div>
+              );
+            })}
           </div>
         </Card>
 
@@ -167,7 +231,117 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <ExtraScoresCard territories={territories} onPick={setCity} />
       <DashboardTrends />
+      <NextStep step={0} />
+    </div>
+  );
+}
+
+/** Overview of one city: its index, rank and gap to the average, its dimensions against the average, health context. */
+function CityOverview({
+  t,
+  territories,
+  catalog,
+  rank,
+  extra,
+  search,
+  onBack,
+  onOpen,
+}: {
+  t: Territory;
+  territories: Territory[];
+  catalog: Catalog;
+  rank: number;
+  extra: ReturnType<typeof useExtraScores>;
+  search: React.ReactNode;
+  onBack: () => void;
+  onOpen: () => void;
+}) {
+  const avg = mean(territories.map((x) => x.composite.score));
+  const score = t.composite.score;
+  const gap = score != null && avg != null ? score - avg : null;
+  const dims = catalog.dimensions.filter((d) => !d.is_outcome && t.dimensions[d.code]?.score != null);
+  const ordered = [...dims].sort((a, b) => (t.dimensions[b.code].score ?? 0) - (t.dimensions[a.code].score ?? 0));
+  const best = ordered[0];
+  const worst = ordered[ordered.length - 1];
+  const sub = [t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : null, t.context.population ? `${fmt(t.context.population, 0)} hab.` : null]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <div>
+      <PageHeader
+        title={t.name}
+        subtitle={sub || undefined}
+        actions={
+          <>
+            {search}
+            <button onClick={onBack} className="secondary-btn h-10">
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Toutes les villes
+            </button>
+          </>
+        }
+      />
+
+      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi label="Indice de bien-être" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
+        <Kpi label="Rang" value={rank ? `${rank}ᵉ` : "—"} sub={`sur ${territories.length} villes suivies`} />
+        <Kpi
+          label="Écart à la moyenne"
+          value={gap == null ? "—" : `${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmt(Math.abs(gap))}`}
+          sub={avg == null ? undefined : `moyenne des villes : ${fmt(avg)}`}
+        />
+        <Kpi
+          label="Point fort"
+          value={best ? fmt(t.dimensions[best.code].score) : "—"}
+          sub={best ? `${best.label}${worst && worst.code !== best.code ? ` · à améliorer : ${worst.label}` : ""}` : undefined}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card
+          title="Scores par dimension"
+          subtitle="La ville (barre) face à la moyenne des villes (trait)"
+          actions={
+            <button onClick={onOpen} className="inline-flex items-center gap-1 text-[13px] font-medium text-ink hover:underline">
+              Fiche complète <PanelRightOpen className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          }
+        >
+          <div className="space-y-4">
+            {[
+              ...dims.map((d) => ({ key: d.code, label: d.label, note: null as string | null, v: t.dimensions[d.code].score, m: mean(territories.map((x) => x.dimensions[d.code]?.score)) })),
+              ...EXTRA_DIMS.map((d) => ({ key: d.key, label: d.label, note: "hors indice", v: extra[d.key][t.code], m: mean(territories.map((x) => extra[d.key][x.code])) })),
+            ].map(({ key, label, note, v, m }) => {
+              const b = bandOf(v);
+              return (
+                <div key={key}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                    <span className="text-sm text-ink">
+                      {label}
+                      {note && <span className="text-xs text-ink-muted"> · {note}</span>}
+                    </span>
+                    <span className="text-sm">
+                      <span className="num font-semibold text-ink">{fmt(v)}</span>
+                      {m != null && <span className="text-xs text-ink-muted"> · moy. {fmt(m)}</span>}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <ScoreBar score={v} color={b ? BAND_META[b].color : "#B9B9B2"} height={8} />
+                    {m != null && (
+                      <span className="absolute -top-1 h-4 w-0.5 rounded bg-ink" style={{ left: `calc(${(m / 10) * 100}% - 1px)` }} aria-hidden />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+        <TrendPanel code={t.code} />
+        <FoodScorePanel code={t.code} />
+        <ScreeningPanel code={t.code} />
+      </div>
       <NextStep step={0} />
     </div>
   );

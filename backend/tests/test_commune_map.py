@@ -32,3 +32,10 @@ def test_domaines_requires_key(client):
 def test_domaines_missing_dataset(client, tmp_path, monkeypatch):
     monkeypatch.setenv("WELLNESS_ML_DIR", str(tmp_path / "absent"))
     assert client.get("/api/communes/domaines", headers=ADMIN_B2G).status_code == 503
+
+
+def test_domaines_filter_by_codes(client, tmp_path, monkeypatch):
+    (tmp_path / "communes_domaines_2024.csv").write_text(CSV, encoding="utf-8")
+    monkeypatch.setenv("WELLNESS_ML_DIR", str(tmp_path))
+    body = client.get("/api/communes/domaines?codes=35238,99999", headers=ADMIN_B2G).json()
+    assert [r[body["columns"].index("code")] for r in body["rows"]] == ["35238"]

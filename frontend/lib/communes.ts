@@ -25,6 +25,8 @@ export interface Commune {
   walk_class: string | null;
   size_class: string;
   sport_rate_size: number | null;
+  /** Food-environment typology of the team score (e.g. « Offre mixte »). */
+  food_type: string | null;
   values: Record<string, number | null>;
 }
 
@@ -37,34 +39,44 @@ interface Payload {
   rows: (string | number | null)[][];
 }
 
-const TEXT = new Set(["code", "name", "dep", "walk_class", "size_class"]);
+const TEXT = new Set(["code", "name", "dep", "walk_class", "size_class", "food_type"]);
 
+function parse(d: Payload): Commune[] {
+  const idx = Object.fromEntries(d.columns.map((c, i) => [c, i]));
+  return d.rows.map((r) => {
+    const values: Record<string, number | null> = {};
+    d.columns.forEach((c, i) => {
+      if (!TEXT.has(c)) values[c] = r[i] as number | null;
+    });
+    return {
+      code: r[idx.code] as string,
+      name: r[idx.name] as string,
+      dep: r[idx.dep] as string,
+      population: (r[idx.population] as number) ?? 0,
+      lat: r[idx.lat] as number,
+      lon: r[idx.lon] as number,
+      walk_class: (r[idx.walk_class] as string) || null,
+      size_class: r[idx.size_class] as string,
+      sport_rate_size: r[idx.sport_rate_size] as number | null,
+      food_type: (r[idx.food_type] as string) || null,
+      values,
+    };
+  });
+}
+
+/** All communes of the domain map (~5,400 rows). */
 export function useCommuneDomains() {
   const res = useLoad<Payload>("communes-domaines", () => api.get<Payload>("/api/communes/domaines"));
-  const communes = useMemo<Commune[]>(() => {
-    const d = res.data;
-    if (!d) return [];
-    const idx = Object.fromEntries(d.columns.map((c, i) => [c, i]));
-    return d.rows.map((r) => {
-      const values: Record<string, number | null> = {};
-      d.columns.forEach((c, i) => {
-        if (!TEXT.has(c)) values[c] = r[i] as number | null;
-      });
-      return {
-        code: r[idx.code] as string,
-        name: r[idx.name] as string,
-        dep: r[idx.dep] as string,
-        population: (r[idx.population] as number) ?? 0,
-        lat: r[idx.lat] as number,
-        lon: r[idx.lon] as number,
-        walk_class: (r[idx.walk_class] as string) || null,
-        size_class: r[idx.size_class] as string,
-        sport_rate_size: r[idx.sport_rate_size] as number | null,
-        values,
-      };
-    });
-  }, [res.data]);
+  const communes = useMemo<Commune[]>(() => (res.data ? parse(res.data) : []), [res.data]);
   return { meta: res.data, communes, error: res.error, loading: res.loading };
+}
+
+/** Only the given communes (e.g. the tracked cities), keyed by code. */
+export function useCommuneRows(codes: string[]) {
+  const k = [...new Set(codes)].sort().join(",");
+  const res = useLoad<Payload>(k ? `communes-domaines:${k}` : null, () => api.get<Payload>(`/api/communes/domaines?codes=${encodeURIComponent(k)}`));
+  const byCode = useMemo<Record<string, Commune>>(() => (res.data ? Object.fromEntries(parse(res.data).map((c) => [c.code, c])) : {}), [res.data]);
+  return { meta: res.data, byCode, error: res.error, loading: res.loading };
 }
 
 // ---- Classes & colours ----

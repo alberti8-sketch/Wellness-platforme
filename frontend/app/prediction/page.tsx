@@ -18,6 +18,11 @@ const RANGES: Record<FeatureKey, [number, number, number]> = {
 };
 const ORDER: FeatureKey[] = ["pct_65plus", "poverty_rate", "density_km2", "fastfood_per10k", "sport_per10k"];
 
+/** Prevalence (%) applied to the city's population, rounded to the nearest 10 people. */
+const people = (pct: number | null | undefined, pop: number | null | undefined) =>
+  pct == null || !pop ? null : Math.round(((pct / 100) * pop) / 10) * 10;
+const fmtPeople = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
+
 function LevelTag({ level }: { level: "commune" | "departement" }) {
   return (
     <span className={cx("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", level === "commune" ? "bg-accent-soft text-accent-text" : "bg-[#EFEFEA] text-ink-2")}>
@@ -43,6 +48,8 @@ export default function PredictionPage() {
   }, [codes, selected]);
 
   const p = selected ? preds.data?.territories[selected] : undefined;
+  const popOf = (code: string) => territories.find((t) => t.code === code)?.context.population ?? null;
+  const pop = selected ? popOf(selected) : null;
 
   // Simulator starts from the selected territory's real values.
   useEffect(() => {
@@ -143,10 +150,17 @@ export default function PredictionPage() {
                       <p className="num text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink">
                         {fmt(p.prediction, 2)} %
                       </p>
+                      {pop != null && (
+                        <p className="mt-2 text-sm text-ink-2">
+                          soit environ <strong className="num font-semibold text-ink">{fmtPeople(people(p.prediction, pop))}</strong> personnes diabétiques
+                          <span className="text-ink-muted"> sur {fmtPeople(pop)} habitants</span>
+                        </p>
+                      )}
                     </div>
                     {p.observed_departement != null && (
                       <div className="pb-1 text-sm text-ink-2">
                         Observé dans le département {p.departement} : <strong className="num text-ink">{fmt(p.observed_departement, 2)} %</strong>
+                        {pop != null && <span className="text-ink-muted"> (≈ {fmtPeople(people(p.observed_departement, pop))} pers.)</span>}
                         <br />
                         <span className="text-xs text-ink-muted">
                           écart {p.gap! > 0 ? "+" : ""}
@@ -192,9 +206,21 @@ export default function PredictionPage() {
                       <span className={cx("num text-sm font-semibold", simRes.prediction > p.prediction ? "text-[#9A2F1C]" : simRes.prediction < p.prediction ? "text-[#0E5A50]" : "text-ink-muted")}>
                         {simRes.prediction > p.prediction ? "+" : ""}
                         {fmt(simRes.prediction - p.prediction, 2)} pt vs réel
+                        {pop != null && (
+                          <>
+                            {" "}
+                            ({simRes.prediction > p.prediction ? "+" : simRes.prediction < p.prediction ? "−" : ""}
+                            {fmtPeople(Math.abs((people(simRes.prediction, pop) ?? 0) - (people(p.prediction, pop) ?? 0)))} personnes)
+                          </>
+                        )}
                       </span>
                     )}
                   </div>
+                  {pop != null && (
+                    <p className="-mt-3 mb-5 text-sm text-ink-2">
+                      soit environ <strong className="num font-semibold text-ink">{fmtPeople(people(simRes?.prediction ?? p.prediction, pop))}</strong> personnes diabétiques
+                    </p>
+                  )}
                   <div className="space-y-4">
                     {ORDER.map((k) => {
                       const [lo, hi, step] = RANGES[k];
@@ -234,6 +260,7 @@ export default function PredictionPage() {
                     <tr className="border-b border-hairline">
                       <th className="px-2 py-2 text-left font-medium">Territoire</th>
                       <th className="px-2 py-2 text-right font-medium">Prédiction</th>
+                      <th className="px-2 py-2 text-right font-medium">Personnes concernées (estimation)</th>
                       <th className="px-2 py-2 text-right font-medium">Observé (département)</th>
                       <th className="px-2 py-2 text-right font-medium">Écart</th>
                     </tr>
@@ -254,7 +281,18 @@ export default function PredictionPage() {
                               {fmt(r!.prediction, 2)} %
                             </span>
                           </td>
-                          <td className="num px-2 py-2.5 text-right text-ink-2">{fmt(r!.observed_departement, 2)} %</td>
+                          <td className="px-2 py-2.5 text-right">
+                            <span className="num font-semibold text-ink">{fmtPeople(people(r!.prediction, t.context.population))}</span>
+                            {t.context.population != null && (
+                              <span className="block text-xs text-ink-muted">sur {fmtPeople(t.context.population)} hab.</span>
+                            )}
+                          </td>
+                          <td className="num px-2 py-2.5 text-right text-ink-2">
+                            {fmt(r!.observed_departement, 2)} %
+                            {t.context.population != null && (
+                              <span className="block text-xs text-ink-muted">≈ {fmtPeople(people(r!.observed_departement, t.context.population))} pers.</span>
+                            )}
+                          </td>
                           <td className="num px-2 py-2.5 text-right text-ink-muted">
                             {r!.gap! > 0 ? "+" : ""}
                             {fmt(r!.gap, 2)}

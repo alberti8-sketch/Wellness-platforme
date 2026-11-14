@@ -56,6 +56,8 @@ const DOMAINS: { id: string; label: string; icon: LucideIcon; inds: Ind[] }[] = 
     label: "Alimentation",
     icon: Sandwich,
     inds: [
+      { key: "food_score", short: "Score", level: "commune" },
+      { key: "fresh_10k", short: "Produits frais", level: "commune" },
       { key: "fastfood_10k", short: "Fast-foods", level: "commune" },
       { key: "restaurant_10k", short: "Restaurants", level: "commune" },
     ],
@@ -68,6 +70,7 @@ const DOMAINS: { id: string; label: string; icon: LucideIcon; inds: Ind[] }[] = 
     inds: [
       { key: "gp_10k", short: "Médecins", level: "commune" },
       { key: "prev_diabete", short: "Diabète", level: "departement" },
+      { key: "prev_sub_depistage", short: "Dépistage", level: "departement" },
       { key: "icp", short: "Prévention", level: "departement" },
       { key: "framingham_10y", short: "Risque cardio", level: "departement" },
     ],
@@ -501,6 +504,9 @@ function CommuneCard({
           <Row label="Stationnement / 1 000 hab." k="bike_parking_1000" />
         </Section>
         <Section title="Alimentation">
+          <Row label="Score alimentation" k="food_score" />
+          {c.food_type && <p className="pb-1 pl-[18px] text-[12px] text-ink-muted">{c.food_type}</p>}
+          <Row label="Produits frais / 10 000 hab." k="fresh_10k" />
           <Row label="Fast-foods / 10 000 hab." k="fastfood_10k" />
           <Row label="Restaurants / 10 000 hab." k="restaurant_10k" />
         </Section>
@@ -515,6 +521,7 @@ function CommuneCard({
         <Section title="Santé">
           <Row label="Médecine générale / 10 000 hab." k="gp_10k" />
           <Row label="Diabète" k="prev_diabete" dept />
+          <Row label="Dépistage des cancers" k="prev_sub_depistage" dept />
           <Row label="Prévention (ICP)" k="icp" dept />
         </Section>
       </div>

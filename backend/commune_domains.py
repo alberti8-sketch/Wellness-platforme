@@ -17,6 +17,7 @@ SOURCES = {
     "bike": "Vélo & Territoires 2024, cyclabilité et stationnement par commune",
     "sirene": "SIRENE (INSEE), établissements actifs",
     "sport": "Recensement des équipements sportifs (ministère des Sports)",
+    "food": "Score communal alimentation (BPE 2025, SIRENE ; méthode type mRFEI)",
     "injep": "INJEP / CRÉDOC, Baromètre national des pratiques sportives 2023",
     "geo": "INSEE (geo.api.gouv.fr), population légale",
 }
@@ -32,8 +33,12 @@ INDICATORS: dict[str, dict[str, Any]] = {
     "bike_share": {"domain": "velo", "label": "Voirie avec aménagement cyclable", "unit": "%", "direction": "higher_is_better", "source": SOURCES["bike"]},
     "bike_parking_1000": {"domain": "velo", "label": "Places de stationnement vélo pour 1 000 hab.", "unit": "pour 1 000 hab.",
                           "direction": "higher_is_better", "source": SOURCES["bike"]},
+    "food_score": {"domain": "alimentation", "label": "Score alimentation", "unit": "/100", "direction": "higher_is_better",
+                   "source": SOURCES["food"]},
+    "fresh_10k": {"domain": "alimentation", "label": "Commerces de produits frais pour 10 000 hab.", "unit": "pour 10 000 hab.",
+                  "direction": "higher_is_better", "source": SOURCES["food"]},
     "fastfood_10k": {"domain": "alimentation", "label": "Fast-foods et snacks pour 10 000 hab.", "unit": "pour 10 000 hab.",
-                     "direction": "lower_is_better", "source": f"{SOURCES['sirene']}, NAF 56.10C"},
+                     "direction": "lower_is_better", "source": "SIRENE, NAF 56.10C, établissements employeurs ou avec enseigne (score communal alimentation)"},
     "restaurant_10k": {"domain": "alimentation", "label": "Restaurants traditionnels pour 10 000 hab.", "unit": "pour 10 000 hab.",
                        "direction": None, "source": f"{SOURCES['sirene']}, NAF 56.10A"},
     "sport_10k": {"domain": "sport", "label": "Équipements sportifs pour 10 000 hab.", "unit": "pour 10 000 hab.",
@@ -53,7 +58,7 @@ SPORT_RATE_2023: dict[str, dict[str, Any]] = {
     "paris": {"rate": 79, "label": "agglomération parisienne"},
 }
 
-TEXT = {"code", "name", "dep", "walk_class", "size_class"}
+TEXT = {"code", "name", "dep", "walk_class", "size_class", "food_type"}
 
 
 def _num(v: str) -> float | None:

@@ -1,8 +1,8 @@
 "use client";
 
 import { NextStep } from "@/components/next-step";
-import { GitCompareArrows, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { GitCompareArrows, LocateFixed, MapPin, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import { MAX_COMPARE, useAnalytics } from "@/components/analytics";
 import { CityPicker } from "@/components/city-picker";
@@ -16,14 +16,43 @@ import { deptOf } from "@/components/territory-context-panels";
 import { trendDelta, useFood, useTrends } from "@/lib/context-data";
 import { useDepartementData } from "@/lib/prediction";
 import { SERIES, TYPE_LABEL } from "@/lib/metrics";
+import { type LocateStatus, locateMyCity, similarCity } from "@/lib/my-city";
 import type { BandCode, Territory } from "@/lib/types";
 
 type SortKey = "IDX" | string;
 
 export default function ClassementPage() {
   const { catalog } = useSession();
-  const { territories, overview, open, compare, clearCompare } = useAnalytics();
+  const { territories, overview, open, compare, clearCompare, setCompareList } = useAnalytics();
   const [q, setQ] = useState("");
+  // Default comparison: the user's city (nearest tracked city) vs the most similar one.
+  const [locate, setLocate] = useState<LocateStatus>("idle");
+  const [auto, setAuto] = useState<{ mine: string; similar: string; km: number; reasons: string[] } | null>(null);
+  const tried = useRef(false);
+  const compareMyCity = useCallback(() => {
+    setLocate("locating");
+    locateMyCity(territories)
+      .then((m) => {
+        const mine = territories.find((t) => t.code === m.code);
+        const sim = mine ? similarCity(mine, territories) : null;
+        if (!mine || !sim) throw new Error("unavailable");
+        setCompareList([mine.code, sim.code]);
+        setAuto({ mine: mine.code, similar: sim.code, km: m.distanceKm, reasons: sim.reasons });
+        setLocate("found");
+      })
+      .catch((e: Error) => setLocate(e.message === "denied" ? "denied" : "unavailable"));
+  }, [territories, setCompareList]);
+  useEffect(() => {
+    if (tried.current || !territories.length || compare.length) return;
+    tried.current = true;
+    try {
+      if (window.sessionStorage.getItem("wellness.autoCompare")) return; // once per session
+      window.sessionStorage.setItem("wellness.autoCompare", "1");
+    } catch {
+      /* storage unavailable: try anyway */
+    }
+    compareMyCity();
+  }, [territories, compare.length, compareMyCity]);
   const [band, setBand] = useState<BandCode | "all">("all");
   const [sortKey, setSortKey] = useState<SortKey>("IDX");
   const [page, setPage] = useState(1);
@@ -110,6 +139,8 @@ export default function ClassementPage() {
       { section, label: "Restaurants (nombre)", values: f.map((x) => x?.counts?.restaurant ?? null), format: (v) => fmt(v, 0), better: null },
     );
   }
+  const showingAuto = !!auto && compare.length === 2 && compare[0] === auto.mine && compare[1] === auto.similar;
+  const byName = (code: string) => territories.find((t) => t.code === code)?.name ?? code;
   const radarData = catalog.dimensions
     .filter((d) => !d.is_outcome)
     .map((d) => ({ dim: d.label, ...Object.fromEntries(compared.map((t) => [t.code, t.dimensions[d.code]?.score ?? 0])) }));
@@ -125,9 +156,14 @@ export default function ClassementPage() {
       <div id="comparaison" className="mb-4 scroll-mt-6">
         <Card
           title="Comparaison"
-          subtitle={compared.length < 2 ? "Choisissez 2 à 4 villes avec « Villes à comparer », en haut de la page." : `${compared.length} villes comparées`}
+          subtitle={compared.length < 2 ? "Votre ville face à une ville semblable, ou 2 à 4 villes de votre choix." : `${compared.length} villes comparées`}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {!showingAuto && (
+                <Button variant="secondary" onClick={compareMyCity} disabled={locate === "locating"} className="min-h-[40px]">
+                  <LocateFixed className="h-4 w-4" aria-hidden /> {locate === "locating" ? "Localisation…" : "Ma ville"}
+                </Button>
+              )}
               {compared.length > 0 && (
                 <Button variant="secondary" onClick={clearCompare} className="min-h-[40px]">
                   Vider
@@ -136,9 +172,25 @@ export default function ClassementPage() {
             </div>
           }
         >
+          {showingAuto && auto && (
+            <p className="mb-5 flex items-start gap-2.5 rounded-xl bg-plane px-4 py-3 text-sm leading-relaxed text-ink-2">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink" aria-hidden />
+              <span>
+                <strong className="font-semibold text-ink">{byName(auto.mine)}</strong>, la ville suivie la plus proche de vous
+                {auto.km >= 1 ? ` (à ${fmt(auto.km, 0)} km)` : ""}, comparée à <strong className="font-semibold text-ink">{byName(auto.similar)}</strong>, la ville
+                la plus semblable : {auto.reasons.join(", ")}.
+              </span>
+            </p>
+          )}
           {compared.length < 2 ? (
-            <Empty icon={GitCompareArrows} title="Comparaison vide">
-              Ouvrez « Villes à comparer » en haut de la page, cochez 2 à 4 villes puis validez.
+            <Empty icon={locate === "locating" ? LocateFixed : GitCompareArrows} title={locate === "locating" ? "Recherche de votre ville…" : "Comparaison vide"}>
+              {locate === "denied"
+                ? "Localisation refusée. Autorisez-la puis cliquez « Ma ville », ou choisissez 2 à 4 villes avec « Villes à comparer »."
+                : locate === "unavailable"
+                  ? "Localisation indisponible. Choisissez 2 à 4 villes avec « Villes à comparer », en haut de la page."
+                  : locate === "locating"
+                    ? "Votre ville sera comparée à la ville la plus semblable. Votre position reste dans votre navigateur."
+                    : "Cliquez « Ma ville » pour comparer votre ville à une ville semblable, ou choisissez 2 à 4 villes avec « Villes à comparer »."}
             </Empty>
           ) : (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
