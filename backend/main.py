@@ -10,9 +10,9 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import CORS_ORIGINS, Principal
+from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, Principal
 from db import init_db
-from routers import analytics, datasets, ingest
+from routers import analytics, datasets, geo, ingest
 from security import get_principal
 from app.routers import department_health
 
@@ -33,6 +33,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["X-API-Key", "Content-Type"],
@@ -42,6 +43,7 @@ app.add_middleware(
 app.include_router(ingest.router)
 app.include_router(datasets.router)
 app.include_router(analytics.router)
+app.include_router(geo.router)
 app.include_router(department_health.router)
 
 

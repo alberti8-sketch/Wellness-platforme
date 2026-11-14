@@ -102,6 +102,23 @@ class DimensionScore(Base):
     __table_args__ = (Index("ix_dim_tenant_territory", "tenant_id", "territory_code", "period"),)
 
 
+class TerritoryContext(Base):
+    """Descriptive context of a territory in a dataset (typology, population…). Never scored."""
+
+    __tablename__ = "territory_contexts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    dataset_id: Mapped[str] = mapped_column(ForeignKey("datasets.id", ondelete="CASCADE"), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(64))
+    territory_code: Mapped[str] = mapped_column(String(16))
+    period: Mapped[int] = mapped_column(Integer)
+    level: Mapped[str] = mapped_column(String(16))  # departement | commune
+    territory_type: Mapped[str | None] = mapped_column(String(16))
+    population: Mapped[float | None] = mapped_column(Float)
+    density_km2: Mapped[float | None] = mapped_column(Float)
+    source_global_score: Mapped[float | None] = mapped_column(Float)
+
+
 class DepartmentHealthDataset(Base):
     """A CNAM reference snapshot, kept separate from scored/published indicators."""
     __tablename__ = "department_health_datasets"

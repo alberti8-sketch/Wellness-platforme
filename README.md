@@ -20,7 +20,7 @@ avec **pondération** ajustable.
 cd backend
 python -m venv .venv && .venv/Scripts/activate        # Windows  (Linux/macOS : source .venv/bin/activate)
 pip install -r requirements.txt
-python -m scripts.generate_samples                      # régénère data/*.xlsx (optionnel)
+python -m scripts.seed_demo                             # charge et publie les 14 communes WP25 (démo)
 uvicorn main:app --reload --port 8000                   # API : http://localhost:8000/docs
 
 # Frontend (Node 18+)
@@ -31,11 +31,17 @@ npm run dev                                             # http://localhost:3000
 ```
 
 **Parcours de démo** (compte « B2G · Admin » sélectionné en haut à droite) :
-1. `/collect` : déposer `data/sample_5_territoires.xlsx`, cocher l'attestation, puis soumettre.
-2. `/processing` : suivre le pipeline, inspecter et corriger des cellules, puis **Approuver et publier**.
-3. `/dashboard` : l'onglet **WP25 cities & CNAM counts** affiche les huit villes de référence.
-   L'onglet **Published territorial analytics** conserve la carte des territoires publiés,
-   les curseurs de pondération, le classement, le détail, la matrice et les exports CSV/PDF.
+1. `python -m scripts.seed_demo` (dans `backend/`) publie directement les 14 communes WP25 : l'onglet
+   **Published territorial analytics** est rempli dès le premier lancement. Parcours manuel équivalent :
+   `/collect` (déposer `data/wp25_communes.xlsx`), puis `/processing` (**Approuver et publier**).
+2. `/dashboard` : l'onglet **WP25 cities & CNAM counts** affiche les huit villes de référence et les effectifs CNAM.
+   L'onglet **Published territorial analytics** affiche la carte des territoires publiés (fond **Plan IGN** en couleur
+   par défaut, ou satellite IGN, OpenStreetMap ou sans fond), les curseurs de pondération, le filtre urbain /
+   semi-urbain / rural, le classement, le détail, la matrice et les exports CSV/PDF.
+
+**La carte publiée est vide ?** Elle ne s'affiche que si des données sont publiées (la base `wellness.db` n'est pas
+versionnée) : lancer `python -m scripts.seed_demo`. En développement, le backend accepte n'importe quel port
+`localhost` (désactiver avec `WELLNESS_CORS_DEV=0` en production).
 
 Tests backend : `cd backend && .venv/Scripts/python -m pytest -q`
 
@@ -128,8 +134,12 @@ frontend/
   components/territory-map.tsx
   public/geo/departements.geojson   contours des 96 départements métropolitains
 data/
+  sources/WP25.xlsx          classeur de l'équipe (Drive « HACKATHON 13/11/26 / DATA SCORING »)
+  wp25_communes.xlsx         WP25 converti au format de la plateforme (14 communes)
   wellness_template.xlsx     modèle vierge (feuilles « data » et « dictionnaire »)
-  sample_5_territoires.xlsx  jeu fictif : Paris, Rhône, Nord, Bouches-du-Rhône, Creuse
+backend/scripts/import_wp25.py   conversion WP25 → modèle (résolution des codes INSEE, population, QPV)
+backend/scripts/seed_demo.py     charge et publie WP25 via le pipeline normal
+backend/geo.py                   référentiel communes/départements + contours (cache + geo.api.gouv.fr)
 ```
 
 ## Méthode de scoring
@@ -141,13 +151,44 @@ data/
 | Classes | **Bad** < 4 ≤ **Middle** < 7 ≤ **Best** |
 | Dimension | moyenne pondérée des indicateurs disponibles ; publiée seulement si ≥ 50 % des indicateurs sont présents |
 | Indice global | `Σ(poids × score dimension) / Σ poids` ; dimensions manquantes exclues, poids renormalisés, couverture affichée |
-| Poids par défaut | Activité physique 30 · Mobilité 25 · Environnement 25 · Nutrition 20 · Maladies chroniques 0 |
+| Poids par défaut | **PONDERATION 3** : Sport 30 · Environnement 25 · Offre de soins 30 · Social 15 · Maladies chroniques 0 |
+| Territoires | communes (code INSEE à 5 caractères) ou départements ; typologie urbain / semi-urbain / rural pour comparer des territoires de même type |
 
 Les **maladies chroniques** sont un indicateur de *résultat* : elles sont affichées mais exclues de l'indice
 par défaut. Elles serviront à calibrer les poids (quels comportements expliquent le mieux la prévalence).
 
-⚠️ Les plages de référence de `pipeline/catalog.py` et les valeurs de `sample_5_territoires.xlsx` sont des
-**valeurs provisoires ou fictives** : elles doivent être validées par un expert en santé publique.
+### Sources des pondérations
+
+Chaque poids indique sa base (`backend/pipeline/evidence.py`, visible dans le tableau de bord, carte « Sources des
+pondérations »). Elle provient du classeur `Maladies_chroniques_habitudes_de_vie_prototype2-2.xlsx`, feuilles
+« Liens maladies-habitudes » et « Sources ».
+
+| Dimension | Base du poids | Contenu |
+|---|---|---|
+| Sport (30 %) | **Fondé sur des preuves** | 8 associations chiffrées (MCV RR 0,70-0,75 ; diabète T2 −14-28 % ; HTA ; cancer colorectal ; sédentarité RR 1,04/h…) |
+| Environnement (25 %) | Poids d'expert | aucune association chiffrée dans le classeur (seulement l'indice ATMO comme source de données) |
+| Offre de soins (30 %) | Poids d'expert | aucune association chiffrée (MRMI/ERMI servent à prioriser les publics) |
+| Social (15 %) | Poids d'expert | aucune association chiffrée (FDep proposé en extension) |
+| Maladies chroniques (0 %) | Indicateur de résultat | prévalences de référence : Baromètre SpF 2024, BEH HTA, Esteban |
+
+L'indice additif lui-même s'appuie sur le cumul d'habitudes saines : −66 % de mortalité toutes causes (Springer 2022).
+Les poids d'expert restent à justifier par une méta-analyse avant usage réel.
+
+### Données WP25 (réelles, fournies par l'équipe)
+
+| Colonne WP25 | Champ plateforme |
+|---|---|
+| SPORT / ENVIRONMENT / HEALTH CARE (/100) | `sport_score`, `env_score`, `health_care_score` → normalisés en 1–10 (réf. 0–100) |
+| ZIP code Poverty quarter / population | `social_qpv_pct` = population en QPV / population (dimension Social) |
+| Global score | `source_global_score` : **affiché pour comparaison, non utilisé**. Il ne découle pas des 3 scores (écart moyen ≈ 9 pts) |
+| Population, densité, onglet (CITY / middle CiTY / COUNTRY SIDE) | contexte : `population`, `density_km2`, `territory_type` |
+
+Points à vérifier dans la source : Saint-Victoret a exactement les mêmes scores que Mont-Dore (copier-coller ?) ;
+pas de donnée QPV pour les villes moyennes et rurales (Social non calculé, poids renormalisés) ; QPV d'Annecy à 19 %
+(25 k hab.) à confirmer ; période supposée 2025.
+
+⚠️ La plage de référence QPV (0–30 %) et celles des maladies chroniques sont provisoires et doivent être validées
+par un expert en santé publique.
 
 ## Pipeline (machine à états)
 

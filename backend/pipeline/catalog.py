@@ -1,18 +1,16 @@
 """Indicator catalog — the single source of truth for scoring rules.
 
-Every indicator declares:
-  * its dimension (PA, MOB, ENV, NUT, CLIN),
-  * a direction (is a higher raw value better or worse?),
-  * a FIXED reference range [ref_min, ref_max] used to map raw values onto 1–10,
-  * hard physical bounds [hard_min, hard_max] outside which a value is rejected.
+Dimensions and weights follow the team document « PONDERATION 3 » (MVP WP, March 2025):
 
-Reference ranges are deliberately fixed (national/expert references, WHO
-guidelines…) rather than computed from the uploaded batch: with only a handful
-of territories a min-max over the batch would always produce one "1" and one
-"10", which is meaningless.
+    Sport 30 % · Environnement 25 % · Health care 30 % · Social 15 %
 
-The reference values below are PLACEHOLDERS for the MVP and must be validated
-by a public-health expert before any real use.
+Chronic-disease prevalence is kept as an OUTCOME dimension (weight 0 by default): it is
+displayed and used to calibrate the weights, never mixed into the behaviour index.
+
+Every indicator declares a direction and a FIXED reference range [ref_min, ref_max] mapped
+onto the 1–10 scale. The WP25 dimension scores are already expressed out of 100, so their
+reference range is simply 0–100. Other ranges are placeholders to be validated by a
+public-health expert.
 """
 
 from __future__ import annotations
@@ -32,7 +30,7 @@ class Dimension:
     label: str
     description: str
     default_weight: float
-    is_outcome: bool = False  # outcome (disease burden) vs. behaviour/environment
+    is_outcome: bool = False
 
 
 @dataclass(frozen=True)
@@ -53,17 +51,12 @@ class Indicator:
 DIMENSIONS: dict[str, Dimension] = {
     d.code: d
     for d in [
-        Dimension("PA", "Activité physique", "Niveau d'activité et sédentarité", 30),
-        Dimension("MOB", "Mobilité", "Mobilité active et dépendance à la voiture", 25),
-        Dimension("ENV", "Environnement", "Pollution de l'air et espaces verts", 25),
-        Dimension("NUT", "Nutrition", "Habitudes et environnement alimentaires", 20),
-        Dimension(
-            "CLIN",
-            "Maladies chroniques",
-            "Prévalence des maladies chroniques (indicateur de résultat)",
-            0,  # outcome: excluded from the wellness index by default, used for calibration
-            is_outcome=True,
-        ),
+        Dimension("SPORT", "Sport", "Offre et pratique sportive, activité physique", 30),
+        Dimension("ENV", "Environnement", "Qualité de l'air, nature, cadre de vie", 25),
+        Dimension("HEALTH", "Offre de soins", "Accès et offre de soins (health care)", 30),
+        Dimension("SOCIAL", "Social", "Précarité et inégalités sociales", 15),
+        Dimension("CLIN", "Maladies chroniques",
+                  "Prévalence des maladies chroniques (indicateur de résultat)", 0, is_outcome=True),
     ]
 }
 
@@ -72,58 +65,43 @@ H, L = Direction.HIGHER_IS_BETTER, Direction.LOWER_IS_BETTER
 INDICATORS: dict[str, Indicator] = {
     i.code: i
     for i in [
-        # --- Physical activity -------------------------------------------------
-        Indicator("pa_active_adults_pct", "Adultes atteignant les recommandations OMS", "PA", "%", H,
-                  20, 70, 0, 100, source_hint="Santé publique France — Baromètre santé"),
-        Indicator("pa_sport_licences_per100", "Licences sportives pour 100 hab.", "PA", "/100 hab.", H,
-                  10, 35, 0, 100, source_hint="INJEP — recensement des licences"),
-        Indicator("pa_sedentary_hours", "Temps assis quotidien", "PA", "h/jour", L,
-                  4, 10, 0, 24, source_hint="Enquêtes déclaratives / capteurs (phase biobanque)"),
-        # --- Mobility ----------------------------------------------------------
-        Indicator("mob_active_commute_pct", "Trajets domicile-travail à pied ou à vélo", "MOB", "%", H,
-                  2, 40, 0, 100, source_hint="INSEE RP — MOBPRO"),
-        Indicator("mob_car_commute_pct", "Trajets domicile-travail en voiture", "MOB", "%", L,
-                  20, 90, 0, 100, source_hint="INSEE RP — MOBPRO"),
-        Indicator("mob_daily_steps", "Nombre moyen de pas par jour", "MOB", "pas/jour", H,
-                  3000, 10000, 0, 50000, source_hint="Données objets connectés agrégées (phase biobanque)"),
-        # --- Environment -------------------------------------------------------
-        Indicator("env_pm25_ugm3", "Concentration moyenne PM2.5", "ENV", "µg/m³", L,
-                  5, 15, 0, 200, source_hint="Geod'air / Atmo — seuil OMS 2021 : 5 µg/m³"),
-        Indicator("env_no2_ugm3", "Concentration moyenne NO₂", "ENV", "µg/m³", L,
-                  10, 40, 0, 300, source_hint="Geod'air / Atmo — seuil OMS 2021 : 10 µg/m³"),
-        Indicator("env_green_space_pct", "Part de surface en espaces verts", "ENV", "%", H,
-                  2, 40, 0, 100, source_hint="Corine Land Cover / OSM"),
-        # --- Nutrition ---------------------------------------------------------
-        Indicator("nut_fruit_veg_pct", "Adultes consommant 5 fruits et légumes par jour", "NUT", "%", H,
-                  20, 60, 0, 100, source_hint="Santé publique France — Esteban"),
-        Indicator("nut_fastfood_per10k", "Restauration rapide pour 10 000 hab.", "NUT", "/10k hab.", L,
-                  2, 12, 0, 1000, source_hint="INSEE — Base permanente des équipements"),
-        # --- Clinical outcomes (disease prevalence) ----------------------------
-        Indicator("clin_diabetes_pct", "Prévalence du diabète", "CLIN", "%", L,
-                  3, 9, 0, 100, source_hint="Assurance Maladie — Data pathologies"),
-        Indicator("clin_cardio_pct", "Prévalence des maladies cardio-neurovasculaires", "CLIN", "%", L,
-                  4, 12, 0, 100, source_hint="Assurance Maladie — Data pathologies"),
-        Indicator("clin_obesity_pct", "Prévalence de l'obésité adulte", "CLIN", "%", L,
-                  8, 25, 0, 100, source_hint="Santé publique France"),
-        Indicator("clin_respiratory_pct", "Prévalence des maladies respiratoires chroniques", "CLIN", "%", L,
-                  2, 8, 0, 100, source_hint="Assurance Maladie — Data pathologies"),
+        Indicator("sport_score", "Score sport (WP)", "SPORT", "/100", H, 0, 100, 0, 100,
+                  source_hint="WP25 — onglets CITY / middle CiTY / COUNTRY SIDE, colonne SPORT"),
+        Indicator("env_score", "Score environnement (WP)", "ENV", "/100", H, 0, 100, 0, 100,
+                  source_hint="WP25 — colonne ENVIRONMENT"),
+        Indicator("health_care_score", "Score offre de soins (WP)", "HEALTH", "/100", H, 0, 100, 0, 100,
+                  source_hint="WP25 — colonne HEALTH CARE"),
+        Indicator("social_qpv_pct", "Part de la population en quartier prioritaire (QPV)", "SOCIAL", "%", L,
+                  0, 30, 0, 100,
+                  source_hint="WP25 — population QPV / population ; ANCT pop_QPV24_2020"),
+        Indicator("clin_diabetes_pct", "Prévalence du diabète", "CLIN", "%", L, 3, 9, 0, 100,
+                  source_hint="Assurance Maladie — effectifs par pathologie (Drive : DATA & PONDERATION)"),
+        Indicator("clin_cardio_pct", "Prévalence des maladies cardio-neurovasculaires", "CLIN", "%", L, 4, 12, 0, 100,
+                  source_hint="Assurance Maladie — Data pathologies"),
+        Indicator("clin_obesity_pct", "Prévalence de l'obésité adulte", "CLIN", "%", L, 8, 25, 0, 100,
+                  source_hint="Santé publique France"),
     ]
 }
 
-# Columns every uploaded sheet must carry, in addition to indicator columns.
+# Identification columns every uploaded sheet must carry.
 ID_COLUMNS: tuple[str, ...] = ("territory_code", "territory_name", "period")
 
-# Score bands on the 1–10 scale. Lower bound inclusive.
+# Context columns: validated and displayed, but never scored.
+TERRITORY_TYPES = ("urbain", "semi-urbain", "rural")
+CONTEXT_COLUMNS: dict[str, str] = {
+    "territory_type": "Typologie : urbain / semi-urbain / rural (comparaison entre territoires de même type)",
+    "population": "Population (habitants)",
+    "density_km2": "Densité (hab./km²)",
+    "source_global_score": "Score global fourni par la source (/100), affiché pour comparaison",
+}
+
 SCORE_MIN, SCORE_MAX = 1.0, 10.0
 BANDS: tuple[tuple[str, str, float], ...] = (
-    # (code, label, lower bound)
     ("best", "Best", 7.0),
     ("middle", "Middle", 4.0),
     ("bad", "Bad", SCORE_MIN),
 )
 
-# A dimension score is only published if at least this share of its
-# indicators (by weight) is present.
 MIN_DIMENSION_COVERAGE = 0.5
 
 

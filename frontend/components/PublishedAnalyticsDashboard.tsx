@@ -8,10 +8,11 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceLine, Responsiv
 import { useSession } from "@/components/session";
 import { BandBadge, BandLegend, Button, Card, Empty, ErrorBox, Spinner, cx } from "@/components/ui";
 import type { MapValue } from "@/components/territory-map";
+import { BasisBadge, WeightSources } from "@/components/weight-sources";
 import { api, download } from "@/lib/api";
 import { BAND_META, BAND_ORDER, NO_DATA_COLOR, bandOf, fmt } from "@/lib/bands";
-import { useDepartements } from "@/lib/geo";
-import type { BandCode, Catalog, DimensionScore, Overview, Territory } from "@/lib/types";
+import { useTerritoryShapes } from "@/lib/geo";
+import type { BandCode, Catalog, DimensionScore, Overview, Territory, TerritoryType } from "@/lib/types";
 
 const TerritoryMap = dynamic(() => import("@/components/territory-map"), { ssr: false, loading: () => <Spinner label="Chargement de la carte…" /> });
 
@@ -44,7 +45,7 @@ const weightsParam = (w: Record<string, number>) =>
 
 export default function PublishedAnalyticsDashboard() {
   const { ready, catalog, apiKey } = useSession();
-  const { geo } = useDepartements();
+  const [ttype, setTtype] = useState<TerritoryType | "">("");
   const [weights, setWeights] = useState<Record<string, number> | null>(null);
   const [period, setPeriod] = useState<number | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -71,6 +72,7 @@ export default function PublishedAnalyticsDashboard() {
       setLoading(true);
       const q = new URLSearchParams({ weights: weightsParam(weights) });
       if (period) q.set("period", String(period));
+      if (ttype) q.set("territory_type", ttype);
       api
         .get<Overview>(`/api/analytics/overview?${q}`)
         .then((o) => {
@@ -81,9 +83,10 @@ export default function PublishedAnalyticsDashboard() {
         .finally(() => setLoading(false));
     }, 250);
     return () => clearTimeout(t);
-  }, [ready, weights, period, apiKey]);
+  }, [ready, weights, period, apiKey, ttype]);
 
   const territories = useMemo(() => (overview?.territories ?? []).filter((t) => filter.size === 0 || filter.has(t.code)), [overview, filter]);
+  const { departements, shapes } = useTerritoryShapes(territories.map((t) => t.code));
   useEffect(() => {
     if (territories.length && (!selected || !territories.some((t) => t.code === selected))) setSelected(territories[0].code);
   }, [territories, selected]);
@@ -107,6 +110,7 @@ export default function PublishedAnalyticsDashboard() {
     const q = new URLSearchParams({ weights: weightsParam(weights) });
     if (overview?.period) q.set("period", String(overview.period));
     if (filter.size) q.set("territories", [...filter].join(","));
+    if (ttype) q.set("territory_type", ttype);
     void download(`/api/analytics/export.csv?${q}`, "wellness.csv").catch((e: Error) => setError(e.message));
   };
 
@@ -133,7 +137,7 @@ export default function PublishedAnalyticsDashboard() {
         <Card>
           <Empty icon={MapIcon} title="Aucune donnée publiée pour ce compte">
             Déposez un fichier sur la page <Link className="text-brand underline" href="/collect">Collecte</Link>, puis approuvez-le dans{" "}
-            <Link className="text-brand underline" href="/processing">Traitement</Link>. Un exemple prêt à l'emploi se trouve dans <code>data/sample_5_territoires.xlsx</code>.
+            <Link className="text-brand underline" href="/processing">Traitement</Link>. Données de l'équipe prêtes à l'emploi : <code>data/wp25_communes.xlsx</code>, ou en une commande : <code>python -m scripts.seed_demo</code> dans <code>backend/</code>.
           </Empty>
         </Card>
       ) : !overview ? (
@@ -176,6 +180,24 @@ export default function PublishedAnalyticsDashboard() {
                 </select>
               </label>
             )}
+            <label className="flex items-center gap-2">
+              <span className="text-ink-2">Typologie</span>
+              <select
+                className="rounded-md border border-axis bg-white px-2 py-1.5"
+                value={ttype}
+                onChange={(e) => {
+                  setTtype(e.target.value as TerritoryType | "");
+                  setFilter(new Set());
+                }}
+              >
+                <option value="">Toutes</option>
+                {catalog.territory_types.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-ink-2">Territoires</span>
               {overview.territories.map((t) => {
@@ -210,8 +232,14 @@ export default function PublishedAnalyticsDashboard() {
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <Card title={`Carte · ${label}`} actions={<BandLegend />}>
-              <div className="h-[460px]">{geo ? <TerritoryMap geo={geo} values={mapValues} selected={selected} onSelect={setSelected} metricLabel={label} /> : <Spinner />}</div>
-              <p className="mt-2 text-xs text-ink-muted">Cliquez sur un territoire pour afficher son détail.</p>
+              <div className="h-[520px]">
+                {shapes ? (
+                  <TerritoryMap departements={departements} shapes={shapes} values={mapValues} selected={selected} onSelect={setSelected} metricLabel={label} />
+                ) : (
+                  <Spinner />
+                )}
+              </div>
+              <p className="mt-2 text-xs text-ink-muted">Cliquez sur un territoire pour afficher son détail. Fond de carte modifiable via l'icône en haut à droite.</p>
             </Card>
             <WeightsPanel catalog={catalog} weights={weights} onChange={setWeights} onReset={() => defaults && setWeights(defaults)} />
           </div>
@@ -226,6 +254,8 @@ export default function PublishedAnalyticsDashboard() {
           <Card title="Matrice territoires × dimensions">
             <Matrix territories={territories} catalog={catalog} selected={selected} onSelect={setSelected} />
           </Card>
+
+          <WeightSources catalog={catalog} />
         </>
       )}
     </div>
@@ -262,8 +292,10 @@ function WeightsPanel({ catalog, weights, onChange, onReset }: { catalog: Catalo
           const w = weights[d.code] ?? 0;
           return (
             <label key={d.code} className="block">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-ink">{d.label}</span>
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="flex flex-wrap items-center gap-1.5 font-medium text-ink">
+                  {d.label} <BasisBadge basis={d.weight_basis.basis} />
+                </span>
                 <span className="tabular-nums text-ink-2">{total ? Math.round((w / total) * 100) : 0} %</span>
               </div>
               <input
@@ -351,6 +383,7 @@ function TerritoryDetail({ t, catalog }: { t: Territory; catalog: Catalog }) {
         </span>
       }
     >
+      <ContextBlock t={t} />
       <p className="mb-2 text-xs text-ink-2">Score par dimension (1–10). Repères pointillés : seuils Middle (4) et Best (7).</p>
       <div className="h-[200px]">
         <ResponsiveContainer>
@@ -427,6 +460,7 @@ function Matrix({ territories, catalog, selected, onSelect }: { territories: Ter
         <thead className="text-left text-xs text-ink-2">
           <tr>
             <th className="py-2 pr-3 font-medium">Territoire</th>
+            <th className="px-2 py-2 font-medium">Typologie</th>
             <th className="px-2 py-2 font-semibold text-ink">Indice global</th>
             {catalog.dimensions.map((d) => (
               <th key={d.code} className="px-2 py-2 font-medium">
@@ -435,6 +469,7 @@ function Matrix({ territories, catalog, selected, onSelect }: { territories: Ter
               </th>
             ))}
             <th className="px-2 py-2 font-medium">Couverture</th>
+            <th className="px-2 py-2 font-medium" title="Score global fourni dans le fichier source, sur 100">Score source /100</th>
           </tr>
         </thead>
         <tbody>
@@ -443,6 +478,7 @@ function Matrix({ territories, catalog, selected, onSelect }: { territories: Ter
               <td className="py-2 pr-3 font-medium text-ink">
                 {t.name} <span className="text-ink-muted">({t.code})</span>
               </td>
+              <td className="px-2 py-2 text-ink-2">{t.context.territory_type ?? "—"}</td>
               <td className="px-2 py-2">
                 <BandBadge band={t.composite.band} score={t.composite.score} />
               </td>
@@ -452,10 +488,31 @@ function Matrix({ territories, catalog, selected, onSelect }: { territories: Ter
                 </td>
               ))}
               <td className="px-2 py-2 tabular-nums text-ink-2">{Math.round(t.composite.coverage * 100)} %</td>
+              <td className="px-2 py-2 tabular-nums text-ink-2">{fmt(t.context.source_global_score, 0)}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ContextBlock({ t }: { t: Territory }) {
+  const c = t.context;
+  const items = [
+    ["Typologie", c.territory_type ?? "—"],
+    ["Population", c.population != null ? `${fmt(c.population, 0)} hab.` : "—"],
+    ["Densité", c.density_km2 != null ? `${fmt(c.density_km2, 0)} hab./km²` : "—"],
+    ["Score global source", c.source_global_score != null ? `${fmt(c.source_global_score, 0)} / 100` : "—"],
+  ];
+  return (
+    <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg bg-plane px-3 py-2 text-xs sm:grid-cols-4">
+      {items.map(([k, v]) => (
+        <div key={k}>
+          <dt className="text-ink-muted">{k}</dt>
+          <dd className="font-medium tabular-nums text-ink">{v}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

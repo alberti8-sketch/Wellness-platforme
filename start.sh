@@ -38,7 +38,7 @@ if docker compose ps | grep -q "Up"; then
     echo "   API Docs:  http://localhost:8000/docs"
     echo ""
     echo "📊 Sample Data:"
-    echo "   Published analytics sample: data/sample_5_territoires.xlsx"
+    echo "   Published analytics sample: data/wp25_communes.xlsx (ou python -m scripts.seed_demo)"
     echo "   WP25 / CNAM reference: bundled in the dashboard"
     echo ""
     echo "⚠️  Initial setup:"
