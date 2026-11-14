@@ -127,9 +127,13 @@ Wellness-platforme/
   `PYTHONPATH=backend python backend/scripts/build_reference_data.py`.
   Validate parsing, exact eight-department values, persistence, invalid uploads,
   and tenant-scoped reads:
+  install `backend/requirements-dev.txt`, then run
   `PYTHONPATH=backend python -m unittest discover -s backend/tests`.
 - Data-source regression check:
-  `python -m unittest discover -s frontend/tests -p 'test_*.py'`
+  `python -m unittest discover -s frontend/tests -p 'test_*.py'`.
+  This comparison requires the original WP25 workbook; if it is removed from
+  `context`, the check is explicitly skipped and the bundled city matrix is
+  retained.
 
 ---
 
