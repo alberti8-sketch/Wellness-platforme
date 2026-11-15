@@ -320,12 +320,12 @@ export function ComparisonCard({ report }: { report: Report }) {
   const all = [...withData, { id: "maladies", label: "Maladies" }];
   const [theme, setTheme] = useState(all[0]?.id ?? "maladies");
   const color = (i: number) => SERIES[i % SERIES.length];
-  // Question for the assistant: solutions taken from the similar cities doing better (on the selected theme).
+  // Question for the assistant: solutions taken from the similar cities doing better, on all the themes at once.
   const others = cities.filter((c) => !c.self).map((c) => c.name);
-  const themeLabel = all.find((t) => t.id === theme)?.label ?? "";
   const question =
-    `En comparant ${report.name} avec ${others.join(", ")} (villes semblables)${themeLabel ? `, sur le thème « ${themeLabel} »` : ""}, ` +
-    `quelles solutions ${report.name} peut-elle reprendre des villes qui font mieux ? Appuie-toi sur les écarts chiffrés de la comparaison.`;
+    `En comparant ${report.name} avec ${others.join(", ")} (villes semblables) sur tous les thèmes ` +
+    `(${all.map((t) => t.label.toLowerCase()).join(", ")}), quelles solutions ${report.name} peut-elle reprendre des villes qui font mieux ? ` +
+    `Appuie-toi sur les plus grands écarts chiffrés de la comparaison.`;
 
   return (
     <Card
