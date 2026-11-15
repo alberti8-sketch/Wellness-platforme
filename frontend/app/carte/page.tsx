@@ -267,12 +267,9 @@ export default function CartePage() {
 
       {/* Left panel: domains, indicator, key figure, legend */}
       <aside className="order-1 z-[1000] w-full bg-white p-4 md:absolute md:left-4 md:top-4 md:max-h-[calc(100vh-2rem)] md:w-[330px] md:overflow-y-auto md:rounded-2xl md:shadow-[0_8px_30px_rgba(21,23,28,0.12)]">
-        <h1 className="text-[17px] font-semibold tracking-[-0.01em] text-ink">Carte de France</h1>
-        <p className="mt-0.5 text-[12px] text-ink-muted">
-          {communes.length ? `${communes.length.toLocaleString("fr-FR")} communes de 2 000 hab. et plus` : "Chargement…"}
-        </p>
+        <h1 className="sr-only">Carte de France</h1>
 
-        <div className="mt-4 grid grid-cols-3 gap-1.5" role="tablist" aria-label="Domaine">
+        <div className="grid grid-cols-3 gap-1.5" role="tablist" aria-label="Domaine">
           {DOMAINS.map((d) => {
             const on = d.id === domain;
             const Icon = d.icon;
