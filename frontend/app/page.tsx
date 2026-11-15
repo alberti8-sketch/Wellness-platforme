@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRight, Columns2, MapPin, TrendingUp } from "lucide-react";
+import { Activity, ArrowRight, Columns2, MapPin, PlayCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ import type { BandCode } from "@/lib/types";
 const FEATURES = [
   { icon: MapPin, title: "Situez chaque ville", text: "Sur une carte de France : marche, vélo, alimentation, sport et santé." },
   { icon: Columns2, title: "Comparez-vous", text: "Votre commune face aux villes qui lui ressemblent, indicateur par indicateur." },
-  { icon: TrendingUp, title: "Anticipez les maladies", text: "Estimez le diabète à partir du profil d'une ville." },
+  { icon: TrendingUp, title: "Anticipez les maladies", text: "Estimez les maladies chroniques à partir du profil de votre commune." },
 ];
 
 // Static preview of a city sheet (demo values of Annecy, as shown in the app).
@@ -68,6 +68,9 @@ export default function LandingPage() {
                   Créer un compte
                 </Link>
               </div>
+              <a href="#decouvrir" className="inline-flex items-center gap-2 text-[15px] font-medium text-primary hover:underline">
+                <PlayCircle className="h-5 w-5" aria-hidden /> Voir la présentation en vidéo
+              </a>
             </div>
 
             <figure
@@ -103,6 +106,26 @@ export default function LandingPage() {
               <figcaption className="text-[13px] text-ink-muted">{PREVIEW.rank}</figcaption>
             </figure>
           </div>
+
+          {/* Onboarding: guided tour of the platform. */}
+          <section id="decouvrir" aria-labelledby="decouvrir-titre" className="flex scroll-mt-8 flex-col items-center gap-5 text-center">
+            <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[13px] text-ink-muted">Prise en main</span>
+            <h2 id="decouvrir-titre" className="text-[30px] font-semibold leading-tight tracking-[-0.02em] md:text-[38px]">
+              Découvrez Wellness en vidéo
+            </h2>
+            <p className="max-w-[560px] text-[16px] text-ink-muted">
+              La carte, le rapport de votre commune, les solutions proposées par l&apos;IA et les prédictions : tout ce qu&apos;il faut pour bien démarrer.
+            </p>
+            <video
+              className="mt-2 w-full max-w-[960px] rounded-[20px] border border-hairline bg-black shadow-[0_24px_48px_-32px_rgba(21,23,28,0.35)]"
+              src="/videos/onboarding.mp4"
+              controls
+              playsInline
+              preload="metadata"
+            >
+              Votre navigateur ne lit pas cette vidéo.
+            </video>
+          </section>
 
           <ul className="grid gap-4 md:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, text }) => (

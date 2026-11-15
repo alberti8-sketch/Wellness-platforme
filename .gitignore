@@ -81,3 +81,6 @@ node_modules/
 
 # Cache des API externes (data.ameli.fr, Overpass, geo.api.gouv.fr)
 /backend/data/cache/
+
+# Onboarding video (118 MB, above GitHub's 100 MB limit): served locally from frontend/public/videos/.
+/frontend/public/videos/*.mp4
