@@ -3,11 +3,11 @@
  * stay reachable from contextual links, not from the menu.
  */
 export const STEPS = [
+  { href: "/carte", label: "Carte de France" },
   { href: "/dashboard", label: "Vue d'ensemble" },
   { href: "/assistant", label: "Solutions" },
-  { href: "/carte", label: "Carte de France" },
-  { href: "/prediction", label: "Prédire le diabète" },
+  { href: "/prediction", label: "Prédictions" },
 ];
 
 /** Pages about one commune: the menu keeps the current commune (?ville=) when moving between them. */
-export const CITY_PAGES = new Set(["/dashboard", "/assistant"]);
+export const CITY_PAGES = new Set(["/dashboard", "/assistant", "/prediction"]);

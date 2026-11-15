@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
-export type PredPatho = "diabete";
+/** Disease key of the CNAM groups (diabete, cardio, cancers…). */
+export type PredPatho = string;
 export type FeatureKey = "pct_65plus" | "density_km2" | "poverty_rate" | "fastfood_per10k" | "sport_per10k";
 
 export interface TreeNode {
@@ -86,6 +87,31 @@ export function usePredictions(codes: string[], patho: PredPatho) {
     api.get(`/api/prediction/territories?territories=${encodeURIComponent(k)}&patho=${patho}`),
   );
 }
+
+/** Every disease predicted for one commune. */
+export interface DiseasePrediction {
+  patho: PredPatho;
+  label: string;
+  prediction: number;
+  observed_departement: number | null;
+  gap: number | null;
+  departements_mean: number;
+  r2_cv: number;
+  mae_cv: number;
+  reliability: "fiable" | "indicative" | "peu fiable";
+}
+export interface CommunePredictions {
+  code: string;
+  name: string | null;
+  departement: string;
+  year: number;
+  features: Record<FeatureKey, number>;
+  feature_levels: Record<FeatureKey, "commune" | "departement">;
+  items: DiseasePrediction[];
+  caveat: string;
+}
+export const useCommunePredictions = (code: string | null) =>
+  useLoad<CommunePredictions>(code ? `pred-commune:${code}` : null, () => api.get(`/api/prediction/commune?ville=${code}`));
 
 export const simulate = (patho: PredPatho, features: Record<FeatureKey, number>) =>
   api.post<{ prediction: number; leaf: number; path: PathStep[] }>("/api/prediction/simulate", { patho, ...features });

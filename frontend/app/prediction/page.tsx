@@ -1,13 +1,23 @@
 "use client";
 
 import { NextStep } from "@/components/next-step";
-import { Info, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
-import { Card, ErrorBox, Kpi, PageHeader, Spinner, cx } from "@/components/ui";
+import { useSession } from "@/components/session";
+import { Card, ErrorBox, PageHeader, Spinner, cx } from "@/components/ui";
 import { fmt } from "@/lib/bands";
-import { FEATURE_SHORT, fmtFeature, rampColor } from "@/lib/feature-format";
-import { simulate, useModel, usePredictions, type FeatureKey, type PathStep, type PredPatho } from "@/lib/prediction";
+import { FEATURE_SHORT, fmtFeature } from "@/lib/feature-format";
+import {
+  simulate,
+  useCommunePredictions,
+  useModel,
+  usePredictions,
+  type DiseasePrediction,
+  type FeatureKey,
+  type PathStep,
+  type PredPatho,
+} from "@/lib/prediction";
 
 const RANGES: Record<FeatureKey, [number, number, number]> = {
   pct_65plus: [10, 35, 0.5],
@@ -23,35 +33,49 @@ const people = (pct: number | null | undefined, pop: number | null | undefined) 
   pct == null || !pop ? null : Math.round(((pct / 100) * pop) / 10) * 10;
 const fmtPeople = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
 
-function LevelTag({ level }: { level: "commune" | "departement" }) {
-  return (
-    <span className={cx("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", level === "commune" ? "bg-accent-soft text-accent-text" : "bg-[#EFEFEA] text-ink-2")}>
-      {level === "commune" ? "commune" : "département"}
-    </span>
-  );
-}
+const RELIABILITY: Record<DiseasePrediction["reliability"], { label: string; bg: string; fg: string }> = {
+  fiable: { label: "Estimation fiable", bg: "#DDF0EA", fg: "#0E5A50" },
+  indicative: { label: "Estimation approximative", bg: "#F6EDD3", fg: "#6E5110" },
+  "peu fiable": { label: "Ordre de grandeur", bg: "#EFEFEA", fg: "#61656E" },
+};
 
 export default function PredictionPage() {
   const { territories } = useAnalytics();
-  // Diabetes is the single disease kept as an example.
-  const patho: PredPatho = "diabete";
-  const [selected, setSelected] = useState<string>("");
+  const { account, authReady } = useSession();
+  const [patho, setPatho] = useState<PredPatho>("diabete");
+  const [city, setCity] = useState<string>("");
   const [sim, setSim] = useState<Record<FeatureKey, number> | null>(null);
   const [simRes, setSimRes] = useState<{ prediction: number; leaf: number; path: PathStep[] } | null>(null);
 
-  const model = useModel(patho);
-  const codes = useMemo(() => territories.map((t) => t.code), [territories]);
-  const preds = usePredictions(codes, patho);
-
+  // Our city only: the commune carried by the menu (?ville=), else the signed-in account's commune.
   useEffect(() => {
-    if (!selected && codes.length) setSelected(codes.includes("35238") ? "35238" : codes[0]);
-  }, [codes, selected]);
+    if (city || !authReady) return;
+    let v: string | null = null;
+    try {
+      v = new URLSearchParams(window.location.search).get("ville")?.toUpperCase() ?? null;
+    } catch {
+      /* no URL access */
+    }
+    const pick = v ?? account?.city_code ?? null;
+    if (pick) setCity(pick);
+  }, [city, account, authReady]);
 
-  const p = selected ? preds.data?.territories[selected] : undefined;
-  const popOf = (code: string) => territories.find((t) => t.code === code)?.context.population ?? null;
-  const pop = selected ? popOf(selected) : null;
+  const all = useCommunePredictions(city || null);
+  const model = useModel(patho);
+  const codes = useMemo(() => (city ? [city] : []), [city]);
+  const preds = usePredictions(codes, patho);
+  const t = territories.find((x) => x.code === city);
+  const cityName = t?.name ?? all.data?.name ?? "votre commune";
+  const pop = t?.context.population ?? null;
+  const p = city ? preds.data?.territories[city] : undefined;
+  const disease = all.data?.items.find((i) => i.patho === patho);
+  const rel = disease ? RELIABILITY[disease.reliability] : null;
+  const m = model.data;
+  // Factors with no measured effect on this disease have no slider.
+  const active = m ? ORDER.filter((k) => (m.importances[k] ?? 0) > 0) : ORDER;
+  const inactive = m ? ORDER.filter((k) => !active.includes(k)) : [];
 
-  // Simulator starts from the selected territory's real values.
+  // Simulator starts from the city's real values.
   useEffect(() => {
     if (p && !p.error) {
       setSim({ ...p.features });
@@ -64,246 +88,145 @@ export default function PredictionPage() {
       setSimRes(null);
       return;
     }
-    const t = setTimeout(() => {
+    const id = setTimeout(() => {
       simulate(patho, sim)
         .then(setSimRes)
         .catch(() => setSimRes(null));
     }, 150);
-    return () => clearTimeout(t);
+    return () => clearTimeout(id);
   }, [sim, dirty, patho]);
 
-  const m = model.data;
-  const rows = useMemo(
-    () =>
-      territories
-        .map((t) => ({ t, r: preds.data?.territories[t.code] }))
-        .filter((x) => x.r && !x.r.error)
-        .sort((a, b) => b.r!.prediction - a.r!.prediction),
-    [territories, preds.data],
-  );
-
-  const importances = m ? (Object.entries(m.importances) as [FeatureKey, number][]).sort((a, b) => b[1] - a[1]) : [];
+  const now = p && !p.error ? p.prediction : null;
+  const simulated = simRes?.prediction ?? now;
+  const deltaPeople = now != null && simRes && pop != null ? (people(simRes.prediction, pop) ?? 0) - (people(now, pop) ?? 0) : null;
 
   return (
     <div>
-      <PageHeader
-        title="Prédire le diabète"
-        subtitle="Estime la prévalence du diabète d'un territoire à partir de son profil. Modèle entraîné sur les 96 départements de métropole."
-      />
+      <PageHeader title={`Prédictions · ${cityName}`} subtitle="Nombre estimé d'habitants touchés, maladie par maladie." />
+
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="text-[14px] font-semibold text-ink">Maladie</span>
+            <select
+              className="input h-11 w-full max-w-[420px] text-[14px] font-medium"
+              value={patho}
+              onChange={(e) => setPatho(e.target.value)}
+              aria-label="Choisir une maladie"
+              disabled={!all.data}
+            >
+              {(all.data?.items ?? []).map((i) => (
+                <option key={i.patho} value={i.patho}>
+                  {i.label}
+                </option>
+              ))}
+              {!all.data && <option value={patho}>Chargement…</option>}
+            </select>
+          </label>
+          {rel && (
+            <span className="rounded-full px-2.5 py-1 text-[12px] font-semibold" style={{ background: rel.bg, color: rel.fg }}>
+              {rel.label}
+            </span>
+          )}
+        </div>
+        {all.error && (
+          <div className="mt-3">
+            <ErrorBox>{all.error}</ErrorBox>
+          </div>
+        )}
+      </Card>
 
       {model.error && <ErrorBox>{model.error}</ErrorBox>}
-      {!m ? (
-        !model.error && <Spinner label="Calcul du modèle…" />
+      {!m || !city ? (
+        !model.error && <Spinner label="Calcul de l'estimation…" />
+      ) : preds.loading ? (
+        <Spinner />
+      ) : !p || p.error ? (
+        <p className="text-sm text-ink-muted">{p?.error ?? "Aucune estimation pour cette commune."}</p>
       ) : (
-        <>
-          <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi
-              label="Part expliquée (validation croisée)"
-              value={`${fmt(m.metrics.r2_cv * 100, 0)} %`}
-              sub={m.metrics.r2_cv >= 0.6 ? "Bonne capacité prédictive" : m.metrics.r2_cv >= 0.3 ? "Capacité prédictive modérée" : "Capacité prédictive faible : à interpréter avec prudence"}
-            />
-            <Kpi
-              label="Erreur moyenne"
-              value={`± ${fmt(m.metrics.mae_cv, 2)} pt`}
-              sub={`contre ± ${fmt(m.metrics.mae_baseline, 2)} pt en prédisant la moyenne nationale (${m.metrics.gain_vs_baseline_pct > 0 ? "−" : "+"}${fmt(Math.abs(m.metrics.gain_vs_baseline_pct), 0)} %)`}
-            />
-            <Kpi label="Prévalence observée" value={`${fmt(m.metrics.target_mean, 2)} %`} sub={`moyenne des départements · de ${fmt(m.metrics.target_min, 1)} à ${fmt(m.metrics.target_max, 1)} % (${m.year})`} />
-            <div className="rounded-card border border-hairline bg-white p-5">
-              <p className="text-[13px] text-ink-muted">Ce qui pèse dans la prédiction</p>
-              <ul className="mt-2 space-y-1.5">
-                {importances.map(([k, v]) => (
-                  <li key={k} className="grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-2 text-xs">
-                    <span className="truncate text-ink">{FEATURE_SHORT[k]}</span>
-                    <span className="h-1.5 overflow-hidden rounded-full bg-[#EEEEE9]">
-                      <span className="block h-full rounded-full bg-[#3E63DD]" style={{ width: `${v * 100}%` }} />
-                    </span>
-                    <span className="num text-right text-ink-2">{fmt(v * 100, 0)} %</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            <Card
-              title="Prédiction"
-              subtitle="Prévalence estimée et profil utilisé"
-              actions={
-                <select className="input h-10 w-auto min-w-[200px]" value={selected} onChange={(e) => setSelected(e.target.value)} aria-label="Territoire">
-                  {territories.map((t) => (
-                    <option key={t.code} value={t.code}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              }
-            >
-              {preds.loading ? (
-                <Spinner />
-              ) : !p || p.error ? (
-                <p className="text-sm text-ink-muted">{p?.error ?? "Choisissez un territoire."}</p>
-              ) : (
-                <>
-                  <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                    <div>
-                      <p className="text-[13px] text-ink-muted">Prévalence prédite</p>
-                      <p className="num text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink">
-                        {fmt(p.prediction, 2)} %
-                      </p>
-                      {pop != null && (
-                        <p className="num mt-2 text-sm text-ink-2">
-                          <strong className="font-semibold text-ink">{fmtPeople(people(p.prediction, pop))}</strong> / {fmtPeople(pop)} habitants
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <h3 className="mb-2 mt-5 text-[13px] font-semibold text-ink">Profil utilisé</h3>
-                  <ul className="grid gap-2 sm:grid-cols-2">
-                    {ORDER.map((k) => (
-                      <li key={k} className="flex items-center justify-between gap-2 rounded-xl bg-plane px-3 py-2 text-sm">
-                        <span className="text-ink-2">{FEATURE_SHORT[k]}</span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="num font-semibold text-ink">{fmtFeature(k, p.features[k])}</span>
-                          <LevelTag level={p.feature_levels[k]} />
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </Card>
-
-            <Card
-              title="Et si… ?"
-              subtitle="Modifiez le profil pour voir comment la prédiction évolue."
-              actions={
-                dirty && p && !p.error ? (
-                  <button className="secondary-btn h-9 text-[13px]" onClick={() => setSim({ ...p.features })}>
-                    <RotateCcw className="h-4 w-4" aria-hidden /> Valeurs réelles
-                  </button>
-                ) : undefined
-              }
-            >
-              {!sim || !p || p.error ? (
-                <p className="text-sm text-ink-muted">Choisissez un territoire.</p>
-              ) : (
-                <>
-                  <div className="mb-5 flex flex-wrap items-baseline gap-x-3">
-                    <span className="num text-[32px] font-semibold leading-none tracking-[-0.03em] text-ink">{fmt(simRes?.prediction ?? p.prediction, 2)} %</span>
-                    {simRes && (
-                      <span className={cx("num text-sm font-semibold", simRes.prediction > p.prediction ? "text-[#9A2F1C]" : simRes.prediction < p.prediction ? "text-[#0E5A50]" : "text-ink-muted")}>
-                        {simRes.prediction > p.prediction ? "+" : ""}
-                        {fmt(simRes.prediction - p.prediction, 2)} pt vs réel
-                        {pop != null && (
-                          <>
-                            {" "}
-                            ({simRes.prediction > p.prediction ? "+" : simRes.prediction < p.prediction ? "−" : ""}
-                            {fmtPeople(Math.abs((people(simRes.prediction, pop) ?? 0) - (people(p.prediction, pop) ?? 0)))} personnes)
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  {pop != null && (
-                    <p className="num -mt-3 mb-5 text-sm text-ink-2">
-                      <strong className="font-semibold text-ink">{fmtPeople(people(simRes?.prediction ?? p.prediction, pop))}</strong> / {fmtPeople(pop)} habitants
-                    </p>
-                  )}
-                  <div className="space-y-4">
-                    {ORDER.map((k) => {
-                      const [lo, hi, step] = RANGES[k];
-                      return (
-                        <label key={k} className="block">
-                          <span className="flex items-baseline justify-between gap-2 text-sm">
-                            <span className="text-ink">{m.features[k].label}</span>
-                            <span className="num font-semibold text-ink">{fmtFeature(k, sim[k])}</span>
-                          </span>
-                          <input
-                            type="range"
-                            min={lo}
-                            max={Math.max(hi, p.features[k])}
-                            step={step}
-                            value={sim[k]}
-                            onChange={(e) => setSim({ ...sim, [k]: Number(e.target.value) })}
-                            className="mt-1 h-7 w-full"
-                            aria-label={m.features[k].label}
-                          />
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-4 text-xs text-ink-muted">La prédiction évolue par paliers : elle ne change que lorsqu'une valeur franchit un seuil du modèle.</p>
-                </>
-              )}
-            </Card>
-          </div>
-
-          <Card className="mt-4" title={`Prédictions par territoire · ${m.label}`} subtitle="Trié par prévalence prédite. Cliquez une ligne pour voir son détail.">
-            {preds.loading ? (
-              <Spinner />
-            ) : (
-              <div className="-mx-2 overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="text-xs text-ink-muted">
-                    <tr className="border-b border-hairline">
-                      <th className="px-2 py-2 text-left font-medium">Territoire</th>
-                      <th className="px-2 py-2 text-right font-medium">Prédiction</th>
-                      <th className="px-2 py-2 text-right font-medium">Habitants concernés / population</th>
-                      <th className="px-2 py-2 text-right font-medium">Observé (département)</th>
-                      <th className="px-2 py-2 text-right font-medium">Écart</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(({ t, r }) => {
-                      const c = rampColor(r!.prediction, m.metrics.target_min, m.metrics.target_max);
-                      return (
-                        <tr key={t.code} onClick={() => setSelected(t.code)} className={cx("cursor-pointer border-b border-[#F2F2EE] hover:bg-[#FAFAF7]", selected === t.code && "bg-[#FAFAF7]")}>
-                          <td className="px-2 py-2.5">
-                            <button className="text-left font-medium text-ink hover:underline" onClick={() => setSelected(t.code)}>
-                              {t.name}
-                            </button>
-                            <span className="block text-xs text-ink-muted">dép. {r!.departement}</span>
-                          </td>
-                          <td className="px-2 py-2.5 text-right">
-                            <span className="num inline-block rounded-lg px-2 py-1 font-semibold" style={{ background: c.bg, color: c.fg }}>
-                              {fmt(r!.prediction, 2)} %
-                            </span>
-                          </td>
-                          <td className="px-2 py-2.5 text-right">
-                            <span className="num">
-                              <span className="font-semibold text-ink">{fmtPeople(people(r!.prediction, t.context.population))}</span>
-                              {t.context.population != null && <span className="text-ink-muted"> / {fmtPeople(t.context.population)}</span>}
-                            </span>
-                          </td>
-                          <td className="num px-2 py-2.5 text-right text-ink-2">
-                            {fmt(r!.observed_departement, 2)} %
-                            {t.context.population != null && (
-                              <span className="block text-xs text-ink-muted">
-                                {fmtPeople(people(r!.observed_departement, t.context.population))} / {fmtPeople(t.context.population)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="num px-2 py-2.5 text-right text-ink-muted">
-                            {r!.gap! > 0 ? "+" : ""}
-                            {fmt(r!.gap, 2)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <Card title="Aujourd'hui">
+            <p className="num text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink">{fmt(p.prediction, 1)} %</p>
+            <p className="mt-1 text-[13px] text-ink-muted">des habitants</p>
+            {pop != null && (
+              <p className="num mt-3 text-[15px] text-ink-2">
+                ≈ <strong className="font-semibold text-ink">{fmtPeople(people(p.prediction, pop))}</strong> personnes sur {fmtPeople(pop)}
+              </p>
             )}
+            <dl className="mt-5 space-y-2 border-t border-hairline pt-4 text-[13px]">
+              {p.observed_departement != null && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">Chiffre réel du département</dt>
+                  <dd className="num font-semibold text-ink">{fmt(p.observed_departement, 1)} %</dd>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-muted">Marge d'erreur</dt>
+                <dd className="num font-semibold text-ink">± {fmt(m.metrics.mae_cv, 1)} point</dd>
+              </div>
+            </dl>
           </Card>
 
-          <p className="mt-4 flex gap-2 rounded-xl border border-hairline bg-white px-4 py-3 text-xs leading-relaxed text-ink-2">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>
-              {m.caveat} {m.source} Les prévalences observées sont départementales : l'écart d'une commune avec son département ne mesure pas une erreur de la commune.
-            </span>
-          </p>
-        </>
+          <Card
+            title="Et si… ?"
+            subtitle="Bougez un curseur pour voir l'effet sur le nombre de malades."
+            actions={
+              dirty ? (
+                <button className="secondary-btn h-9 text-[13px]" onClick={() => setSim({ ...p.features })}>
+                  <RotateCcw className="h-4 w-4" aria-hidden /> Réinitialiser
+                </button>
+              ) : undefined
+            }
+          >
+            {sim && (
+              <>
+                <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="num text-[32px] font-semibold leading-none tracking-[-0.03em] text-ink">{fmt(simulated, 1)} %</span>
+                  {pop != null && <span className="num text-[14px] text-ink-2">≈ {fmtPeople(people(simulated, pop))} personnes</span>}
+                  {deltaPeople != null && deltaPeople !== 0 && (
+                    <span
+                      className="num rounded-full px-2.5 py-0.5 text-[13px] font-semibold"
+                      style={deltaPeople < 0 ? { background: "#DDF0EA", color: "#0E5A50" } : { background: "#FBE6DF", color: "#9A2F1C" }}
+                    >
+                      {deltaPeople > 0 ? "+" : "−"} {fmtPeople(Math.abs(deltaPeople))} personnes
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {active.map((k) => {
+                    const [lo, hi, step] = RANGES[k];
+                    return (
+                      <label key={k} className="block">
+                        <span className="flex items-baseline justify-between gap-2 text-[13.5px]">
+                          <span className="text-ink">{FEATURE_SHORT[k]}</span>
+                          <span className="num shrink-0 font-semibold text-ink">{fmtFeature(k, sim[k])}</span>
+                        </span>
+                        <input
+                          type="range"
+                          min={Math.min(lo, p.features[k])}
+                          max={Math.max(hi, p.features[k])}
+                          step={step}
+                          value={sim[k]}
+                          onChange={(e) => setSim({ ...sim, [k]: Number(e.target.value) })}
+                          className="mt-1 h-7 w-full"
+                          aria-label={FEATURE_SHORT[k]}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+                {inactive.length > 0 && (
+                  <p className="mt-3 text-[12px] text-ink-muted">Sans effet mesuré sur cette maladie : {inactive.map((k) => FEATURE_SHORT[k].toLowerCase()).join(", ")}.</p>
+                )}
+              </>
+            )}
+          </Card>
+        </div>
       )}
+
+      <p className="mt-4 text-[12px] text-ink-muted">
+        Estimation statistique apprise sur les 96 départements (Assurance Maladie {m?.year ?? ""}) : elle montre des liens, pas des causes.
+      </p>
       <NextStep step={3} />
     </div>
   );
