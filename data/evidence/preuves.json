@@ -1,0 +1,144 @@
+{
+ "sources": {
+  "liens": "Classeur d'équipe « Maladies chroniques et habitudes de vie » (prototype 2), feuille Liens maladies-habitudes : synthèse de méta-analyses de cohortes prospectives",
+  "injep": "INJEP / CRÉDOC, Baromètre national des pratiques sportives 2023"
+ },
+ "liens": [
+  {
+   "maladie": "Maladies cardiovasculaires (coronaropathie, AVC)",
+   "habitude": "Tabagisme",
+   "association": "RR x 2 à 4 chez les fumeurs vs non-fumeurs (facteur de risque majeur)",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Maladies cardiovasculaires",
+   "habitude": "Activité physique régulière",
+   "association": "RR ≈ 0,70-0,75 (réduction du risque de 25-30 %) ; effet dose-réponse",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Maladies cardiovasculaires",
+   "habitude": "Alimentation de type méditerranéen",
+   "association": "RR coronaropathie 0,73 ; AVC 0,80 ; mortalité CV 0,79",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Maladies cardiovasculaires",
+   "habitude": "Sommeil < 7 h / nuit",
+   "association": "RR coronaropathie ≈ 1,48 ; AVC ≈ 1,15 ; sommeil long (> 9 h) aussi délétère (relation en U)",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Maladies cardiovasculaires",
+   "habitude": "Sédentarité (> 8 h/j assis)",
+   "association": "RR mortalité CV ≈ 1,04 par heure au-delà de 8 h/j, après ajustement sur l'AP",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Diabète de type 2",
+   "habitude": "Activité physique régulière",
+   "association": "Réduction du risque de 14-28 % chez les actifs vs inactifs",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Diabète de type 2",
+   "habitude": "Surpoids / obésité (IMC, tour de taille)",
+   "association": "Facteur de risque dominant (RR x 7 pour IMC ≥ 35 vs < 25) ; tour de taille : seuils H > 94 cm, F > 80 cm",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Diabète de type 2",
+   "habitude": "Alimentation (fibres, régime méditerranéen)",
+   "association": "RR ≈ 0,87 (régime méditerranéen) ; consommation fruits/légumes et baies dans FINDRISC",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Diabète de type 2",
+   "habitude": "Sommeil < 6 h / nuit",
+   "association": "Relation en U : risque accru ≈ 1,28 pour sommeil court et long ; 482 502 participants",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Hypertension artérielle (≈ 22 % des adultes en France)",
+   "habitude": "Activité physique",
+   "association": "Baisse de PA ≈ 6 % par tranche de 600 MET-min/sem ; ≈ 19 % (actifs vs sédentaires)",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Hypertension artérielle",
+   "habitude": "Consommation de sel",
+   "association": "Augmentation linéaire de la PA et du risque ; cible OMS < 5 g/j",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Hypertension artérielle",
+   "habitude": "Alcool",
+   "association": "Relation dose-réponse : risque HTA croissant avec la consommation régulière",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Maladie rénale chronique",
+   "habitude": "Activité physique",
+   "association": "RR ≈ 0,91 (les plus actifs vs les moins actifs)",
+   "niveau": "Modéré"
+  },
+  {
+   "maladie": "Maladie rénale chronique",
+   "habitude": "Alimentation (légumes, potassium ; sel)",
+   "association": "Légumes OR ≈ 0,79 ; potassium OR ≈ 0,78 ; sel : risque accru",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Cancer du poumon / BPCO",
+   "habitude": "Tabagisme",
+   "association": "RR x 15 à 30 (fumeur régulier) ; cause principale (80-90 % des décès)",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Cancer colorectal",
+   "habitude": "Activité physique",
+   "association": "RR ≈ 0,80 (réduction ≈ 20 %)",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Cancer colorectal / sein",
+   "habitude": "Alcool",
+   "association": "Cancérogène groupe 1 (CIRC) : risque croissant dès 1 verre/j (sein +10 % par verre/j)",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Cancer du sein (post-ménopause) / colorectal",
+   "habitude": "Surpoids / obésité",
+   "association": "RR ≈ 1,2-1,4 par tranche de 5 kg/m²",
+   "niveau": "Fort"
+  },
+  {
+   "maladie": "Obésité",
+   "habitude": "Sédentarité + sommeil court + alimentation",
+   "association": "Sommeil < 6 h : risque d'obésité accru ≈ 1,3-1,5 ; association synergique avec sédentarité",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Dépression / anxiété",
+   "habitude": "Activité physique régulière",
+   "association": "RR ≈ 0,78-0,83 (effet protecteur, cohérent dans les méta-analyses)",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Déclin cognitif / démence",
+   "habitude": "Activité physique",
+   "association": "RR ≈ 0,80 (réduction ≈ 20 %) ; sommeil 7 h optimal (relation en U)",
+   "niveau": "Moyen"
+  },
+  {
+   "maladie": "Toutes causes (mortalité)",
+   "habitude": "Cumul de 4-5 habitudes saines",
+   "association": "Réduction de la mortalité toutes causes ≈ 66 % vs 0 habitude saine (1,09 M participants)",
+   "niveau": "Fort"
+  }
+ ],
+ "injep": [
+  "Taux de pratique sportive en 2023 selon la taille d'agglomération : communes rurales 65 %, 2 000 à 20 000 hab. 66 %, 20 000 à 100 000 hab. 70 %, plus de 100 000 hab. 72 %, agglomération parisienne 79 % (INJEP / CRÉDOC, p. 33).",
+  "Entre 2022 et 2023, la pratique sportive se tasse partout en France sauf dans l'agglomération parisienne (INJEP 2023)."
+ ]
+}
