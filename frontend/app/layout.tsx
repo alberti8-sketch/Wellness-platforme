@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { SessionProvider } from "@/components/session";
 
 export const metadata: Metadata = {
-  title: "Wellness — Santé populationnelle",
+  title: "Wellness - Santé populationnelle",
   description: "Plateforme d'analyse de santé populationnelle et de données comportementales",
 };
 

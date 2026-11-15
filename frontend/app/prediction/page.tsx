@@ -1,6 +1,5 @@
 "use client";
 
-import { NextStep } from "@/components/next-step";
 import { RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
@@ -227,7 +226,6 @@ export default function PredictionPage() {
       <p className="mt-4 text-[12px] text-ink-muted">
         Estimation statistique apprise sur les 96 départements (Assurance Maladie {m?.year ?? ""}) : elle montre des liens, pas des causes.
       </p>
-      <NextStep step={3} />
     </div>
   );
 }
