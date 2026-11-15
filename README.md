@@ -48,6 +48,10 @@ Tests backend : `cd backend && .venv/Scripts/python -m pytest -q`
 Linux/macOS : `cd backend && .venv/bin/python -m pytest -q`.
 Frontend : `cd frontend && npm run typecheck && npm run build`.
 
+## Mise en ligne
+
+API et base Postgres sur Render (`render.yaml`), interface sur Vercel (`frontend/vercel.json`) : voir [DEPLOIEMENT.md](DEPLOIEMENT.md).
+
 ## WP25 et statistiques CNAM par département
 
 Le tableau de bord réunit deux vues complémentaires, sans mélanger leurs échelles :

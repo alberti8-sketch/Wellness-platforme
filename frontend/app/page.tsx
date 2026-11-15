@@ -118,7 +118,7 @@ export default function LandingPage() {
             </p>
             <video
               className="mt-2 w-full max-w-[960px] rounded-[20px] border border-hairline bg-black shadow-[0_24px_48px_-32px_rgba(21,23,28,0.35)]"
-              src="/videos/onboarding.mp4"
+              src={process.env.NEXT_PUBLIC_ONBOARDING_VIDEO_URL || "/videos/onboarding.mp4"}
               controls
               playsInline
               preload="metadata"

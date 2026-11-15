@@ -1,5 +1,7 @@
 # DEPLOYMENT_GUIDE.md
 
+> ⚠️ Ce guide est en partie obsolète. Pour la mise en ligne (Render + Vercel) et le lancement avec Docker, voir **[DEPLOIEMENT.md](DEPLOIEMENT.md)**.
+
 # Wellness Platform - Deployment Guide
 
 ## 📋 Prerequisites

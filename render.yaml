@@ -1,0 +1,43 @@
+# Blueprint Render : API FastAPI + base Postgres.
+# Render > New > Blueprint > choisir ce dépôt. Les valeurs marquées « sync: false »
+# sont demandées à la création (elles ne sont jamais écrites dans le dépôt).
+services:
+  - type: web
+    name: wellness-api
+    runtime: docker
+    region: frankfurt          # le plus proche de Paris chez Render
+    plan: 0.5c-512mb           # 7 $/mois, toujours actif ; « free » se met en veille sans visite
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true           # redéploie à chaque push sur la branche suivie
+    buildFilter:
+      paths:
+        - backend/**
+        - data/**
+        - render.yaml
+    envVars:
+      - key: WELLNESS_DATABASE_URL
+        fromDatabase:
+          name: wellness-db
+          property: connectionString
+      # Adresse(s) de l'interface autorisées à appeler l'API, séparées par des virgules,
+      # ex. https://wellness-platform.vercel.app
+      - key: WELLNESS_CORS_ORIGINS
+        sync: false
+      - key: WELLNESS_CORS_DEV     # 0 = refuse localhost en production
+        value: "0"
+      - key: WELLNESS_SEED_DEMO    # 1 = charge les données de démonstration au démarrage
+        value: "1"
+      - key: OPENROUTER_API_KEY    # assistant « Solutions »
+        sync: false
+      - key: OPENROUTER_MODEL      # facultatif : laisser vide pour le modèle par défaut
+        sync: false
+
+databases:
+  - name: wellness-db
+    region: frankfurt          # même région que l'API (connexion interne)
+    plan: 0.1c-256mb           # 6 $/mois ; « free » est limité dans le temps chez Render
+    databaseName: wellness_db
+    user: wellness_user
+    ipAllowList: []            # liste vide = aucune connexion depuis Internet, seulement depuis Render

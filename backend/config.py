@@ -17,6 +17,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 DATABASE_URL = os.getenv("WELLNESS_DATABASE_URL", f"sqlite:///{BASE_DIR / 'wellness.db'}")
+# Some hosts hand out "postgres://" URLs, which SQLAlchemy 2 no longer accepts.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 CORS_ORIGINS = [o.strip() for o in os.getenv("WELLNESS_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
 # In development any localhost / 127.0.0.1 port is accepted (Next.js may fall back to 3001…).
 # Set WELLNESS_CORS_DEV=0 in production to only allow WELLNESS_CORS_ORIGINS.

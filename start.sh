@@ -20,6 +20,14 @@ fi
 echo "✅ Docker and Docker Compose found"
 echo ""
 
+# Local secrets: create .env with a random database password on first run
+if [ ! -f .env ]; then
+    cp .env.example .env
+    PASSWORD=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)
+    sed -i.bak "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$PASSWORD/" .env && rm -f .env.bak
+    echo "🔐 .env created with a random database password"
+fi
+
 # Start services with Docker Compose
 echo "🐳 Starting Docker services..."
 docker compose up -d --build

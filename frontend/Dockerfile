@@ -1,21 +1,17 @@
-FROM node:18-alpine
+# Interface Wellness Platform (Next.js) — pour docker-compose ou un hébergeur Docker.
+# Sur Vercel, ce fichier n'est pas utilisé.
+FROM node:20-alpine
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy app
 COPY . .
-
-# Build Next.js
+# Adresse publique de l'API, figée au moment de la construction (variable NEXT_PUBLIC_*).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# Expose port
 EXPOSE 3000
-
-# Start app
 CMD ["npm", "start"]
