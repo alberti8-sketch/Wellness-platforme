@@ -20,6 +20,7 @@ SOURCES = {
     "food": "Score communal alimentation (BPE 2025, SIRENE ; méthode type mRFEI)",
     "injep": "INJEP / CRÉDOC, Baromètre national des pratiques sportives 2023",
     "geo": "INSEE (geo.api.gouv.fr), population légale",
+    "land": "Corine Land Cover 2018 par commune (SDES) ; zones de 25 ha minimum",
 }
 
 # key → metadata; "direction": which end is better for health (None = context only).
@@ -45,6 +46,14 @@ INDICATORS: dict[str, dict[str, Any]] = {
                   "direction": "higher_is_better", "source": SOURCES["sport"]},
     "gp_10k": {"domain": "sante", "label": "Cabinets de médecine générale pour 10 000 hab.", "unit": "pour 10 000 hab.",
                "direction": "higher_is_better", "source": f"{SOURCES['sirene']}, NAF 86.21Z"},
+    "land_built_pct": {"domain": "cadre", "label": "Sols artificialisés (bâti, zones d'activité, routes)", "unit": "%",
+                       "direction": "lower_is_better", "source": SOURCES["land"]},
+    "land_green_pct": {"domain": "cadre", "label": "Espaces verts urbains", "unit": "%", "direction": "higher_is_better", "source": SOURCES["land"]},
+    "land_natural_pct": {"domain": "cadre", "label": "Forêts et milieux naturels", "unit": "%", "direction": "higher_is_better", "source": SOURCES["land"]},
+    "land_agri_pct": {"domain": "cadre", "label": "Terres agricoles", "unit": "%", "direction": None, "source": SOURCES["land"]},
+    "land_water_pct": {"domain": "cadre", "label": "Eau et zones humides", "unit": "%", "direction": None, "source": SOURCES["land"]},
+    "zone30_share": {"domain": "velo", "label": "Voirie en zone 30", "unit": "%", "direction": "higher_is_better", "source": SOURCES["bike"]},
+    "pedestrian_share": {"domain": "marche", "label": "Voirie en zone piétonne", "unit": "%", "direction": "higher_is_better", "source": SOURCES["bike"]},
     "density_km2": {"domain": "contexte", "label": "Densité de population", "unit": "hab./km²", "direction": None, "source": SOURCES["geo"]},
 }
 

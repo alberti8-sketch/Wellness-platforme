@@ -38,6 +38,10 @@ OUT_DEPT = ROOT / "data" / "ml" / "departements_mobilite_2024.csv"
 WALK_FILE = SOURCES / "barometre_villes_marchables_2023.xlsx"
 BIKE_FILE = SOURCES / "VT_2024_cyclabilite_stationnement_commune.csv"
 FOOD_FILE = SOURCES / "score_communal_alimentation.xlsx"  # Score_communal_alimentation_final.xlsx (team)
+# SDES, Corine Land Cover par commune, 15 postes (statistiques.developpement-durable.gouv.fr, clc_etat_com_n2.csv)
+LAND_FILE = SOURCES / "clc_occupation_sol_communes.csv"
+# OpenStreetMap green spaces of the tracked cities (python -m scripts.build_osm_green), versioned
+OSM_FILE = ROOT / "data" / "ml" / "communes_osm_2024.csv"
 # The tracked cities are always kept, even under MIN_POP (Font-Romeu, Le Mont-Dore).
 TRACKED = {"74010", "35238", "44109", "29019", "25056", "93048", "06088", "13055",
            "78646", "46042", "17300", "66124", "63236", "13102"}
@@ -159,6 +163,34 @@ def food_by_commune() -> dict[str, dict]:
     return out
 
 
+def land_by_commune() -> dict[str, dict]:
+    """Land cover 2018 (Corine Land Cover, SDES): % of the commune's area by type. Optional source.
+
+    CLC maps patches of 25 ha or more: small parks and gardens inside built-up areas are not counted.
+    """
+    if not LAND_FILE.exists():
+        print(f"Occupation du sol : {LAND_FILE.name} absent, non intégré")
+        return {}
+    df = pd.read_csv(LAND_FILE, sep=";", dtype=str, encoding="utf-8")
+    df = df[df.iloc[:, 1] == "2018"]
+    out: dict[str, dict] = {}
+    for r in df.itertuples(index=False):
+        ha = [float(x or 0) for x in r[3:18]]  # postes 11, 12, 13, 14, 21-24, 31-33, 41, 42, 51, 52
+        total = sum(ha)
+        if total <= 0:
+            continue
+        pct = lambda *idx: round(100 * sum(ha[i] for i in idx) / total, 1)  # noqa: E731
+        out[str(r[0]).zfill(5)] = {
+            "land_built_pct": pct(0, 1, 2),        # built-up, business zones and transport, mines and building sites
+            "land_green_pct": pct(3),             # urban green spaces (parks, sports and leisure grounds)
+            "land_agri_pct": pct(4, 5, 6, 7),
+            "land_natural_pct": pct(8, 9, 10),    # forests and semi-natural areas
+            "land_water_pct": pct(11, 12, 13, 14),
+        }
+    print(f"Occupation du sol : {len(out)} communes")
+    return out
+
+
 def bike_by_commune() -> tuple[dict[str, dict], dict[str, str]]:
     v = pd.read_csv(BIKE_FILE, dtype={"INSEE_COM": str, "INSEE_EPCI": str, "INSEE_DEP": str}, encoding="utf-8-sig")
     out: dict[str, dict] = {}
@@ -170,6 +202,8 @@ def bike_by_commune() -> tuple[dict[str, dict], dict[str, str]]:
         out[code] = {
             "bike_share": round(min(share, 100), 2) if share is not None else None,
             "bike_parking_1000": round(float(r.Stationnement_1000hab), 2) if pd.notna(r.Stationnement_1000hab) else None,
+            "zone30_share": round(min(100 * float(r.Zone_30_km or 0) / road, 100), 2) if road > 0 else None,
+            "pedestrian_share": round(min(100 * float(r.Zone_pietonne_km or 0) / road, 100), 2) if road > 0 else None,
         }
         t = r.UU_taille if isinstance(r.UU_taille, str) else ""
         if t == "Paris":
@@ -219,6 +253,8 @@ def main() -> None:
     walk = walk_by_commune(geo, dept_names)
     bike, size = bike_by_commune()
     food = food_by_commune()
+    land = land_by_commune()
+    osm = pd.read_csv(OSM_FILE, dtype={"code": str}).set_index("code").to_dict("index") if OSM_FILE.exists() else {}
     fast, resto, gp = sirene_by_commune("56.10C"), sirene_by_commune("56.10A"), sirene_by_commune("86.21Z")
     sport = sport_by_commune()
     print(f"SIRENE : {sum(fast.values())} fast-foods, {sum(resto.values())} restaurants, {sum(gp.values())} cabinets de médecine générale")
@@ -247,6 +283,8 @@ def main() -> None:
             **walk.get(code, {}),
             **bike.get(code, {}),
             **food.get(code, {}),
+            **land.get(code, {}),
+            **osm.get(code, {}),
             "fastfood_10k": food.get(code, {}).get("fastfood_10k", per10k(fast.get(code, 0), pop)),
             "restaurant_10k": per10k(resto.get(code, 0), pop),
             "sport_10k": per10k(sport.get(code, 0), pop),
