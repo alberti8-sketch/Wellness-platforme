@@ -129,3 +129,44 @@ class DepartmentHealthDataset(Base):
     year: Mapped[int] = mapped_column(Integer)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class User(Base):
+    """A registered person (simple e-mail / password account). Belongs to one tenant, viewer role."""
+
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    job: Mapped[str] = mapped_column(String(80))
+    city_code: Mapped[str] = mapped_column(String(16))
+    tenant_id: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class UserSession(Base):
+    """Sign-in session. Only the SHA-256 of the bearer token is stored."""
+
+    __tablename__ = "user_sessions"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ChatConversation(Base):
+    """A conversation with the assistant, kept per user (owner = tenant + account or API-key name)."""
+
+    __tablename__ = "chat_conversations"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    owner: Mapped[str] = mapped_column(String(320), index=True)
+    tenant_id: Mapped[str] = mapped_column(String(64))
+    city_code: Mapped[str] = mapped_column(String(16))
+    title: Mapped[str] = mapped_column(String(160))
+    # [{"role": "user" | "assistant", "content": str, "structured": {...} | null, "at": iso}]
+    messages: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
