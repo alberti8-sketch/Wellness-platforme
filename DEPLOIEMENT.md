@@ -10,7 +10,12 @@ Navigateur ──► Vercel : interface Next.js        https://wellness-platform
                Render : Postgres
 ```
 
-Coût indicatif : API 7 $/mois (`0.5c-512mb`) + base 6 $/mois (`0.1c-256mb`) chez Render, interface chez Vercel : l'offre Hobby est gratuite mais réservée à un usage non commercial ; l'offre Pro (20 $/mois par membre) est nécessaire pour un usage commercial.
+Coût : `render.yaml` utilise la **formule gratuite** de Render pour l'API et la base.
+- L'API se met en veille après 15 minutes sans visite ; la visite suivante attend environ 1 minute.
+- La base gratuite (1 Go, sans sauvegarde) **expire 30 jours après sa création**, puis est supprimée après 14 jours de grâce.
+- Pour une démonstration durable, passer `plan` à `0.5c-512mb` (API, 7 $/mois) et `0.1c-256mb` (base, 6 $/mois), avant l'expiration de la base.
+
+Interface chez Vercel : l'offre Hobby est gratuite mais réservée à un usage non commercial ; l'offre Pro (20 $/mois par membre) est nécessaire pour un usage commercial.
 L'API consomme environ 240 Mo de mémoire.
 
 > **Données de santé.** Cette architecture convient à la démonstration, qui utilise uniquement des données publiques agrégées par commune.
@@ -69,7 +74,7 @@ Deux solutions :
   - En ligne, n'importe qui peut s'en servir pour déposer ou valider des données.
   - Pour une vraie ouverture, définir `WELLNESS_PRINCIPALS_FILE` (fichier JSON de clés privées, monté comme *Secret File* sur Render) et retirer le sélecteur de démo de l'interface.
 - **Comptes des maires** : les sessions durent 30 jours (`WELLNESS_SESSION_DAYS`).
-- **Sauvegardes** : les offres payantes de Render Postgres incluent des sauvegardes quotidiennes ; vérifier leur durée de conservation dans le tableau de bord.
+- **Sauvegardes** : la base gratuite n'en a aucune ; passer à une offre payante avant d'y stocker des données à conserver.
 
 ## Variables de l'API
 
