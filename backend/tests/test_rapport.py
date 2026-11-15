@@ -92,7 +92,7 @@ def fake_llm(monkeypatch):
 
     def fake_post(payload, api_key):
         sent.append({"payload": payload, "key": api_key})
-        return {"model": "test/model", "choices": [{"message": {"content": f"Réponse {len(sent)}"}}]}
+        return {"model": "test/model", "choices": [{"message": {"content": f"Réponse {len(sent)}", "reasoning": "Je regarde le rapport. Voir https://x.y/z"}}]}
 
     monkeypatch.setattr(assistant, "_setting", lambda name, default=None: {"OPENROUTER_API_KEY": "sk-test"}.get(name, default))
     monkeypatch.setattr(assistant, "post_openrouter", fake_post)
@@ -104,6 +104,7 @@ def test_assistant_uses_the_report(app, fake_llm):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["reply"] == "Réponse 1" and body["structured"] is None and body["model"] == "test/model"
+    assert body["reasoning"] == "Je regarde le rapport. Voir"  # shown to the user, web addresses removed
     payload = fake_llm[0]["payload"]
     system = payload["messages"][0]
     assert system["role"] == "system" and "# Rapport santé — Nantes" in system["content"]
@@ -128,6 +129,7 @@ def test_conversation_history(app, fake_llm):
     assert [(c["id"], c["messages"], c["ville"], c["ville_nom"]) for c in listing] == [(cid, 4, "44109", "Nantes")]
     detail = app.get(f"/api/assistant/conversations/{cid}", headers=ADMIN_B2G).json()
     assert [m["role"] for m in detail["items"]] == ["user", "assistant", "user", "assistant"]
+    assert detail["items"][1]["reasoning"]  # the reasoning is saved with the answer
 
     # Another user does not see it, and cannot continue or delete it.
     assert app.get("/api/assistant/conversations", headers=CONTRIB_B2G).json() == []

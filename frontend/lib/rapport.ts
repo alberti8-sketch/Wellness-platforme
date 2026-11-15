@@ -58,14 +58,15 @@ export interface ChatMessage {
   content: string;
   /** Parsed answer of the assistant (cards and diagrams); the raw text stays in `content` for the history. */
   structured?: Structured | null;
+  /** The model's reasoning before the answer (shown folded). */
+  reasoning?: string | null;
 }
 /** Ask a question; the server saves it with the answer in the conversation (created when `conversationId` is null). */
 export const askAssistant = (ville: string, question: string, conversationId: string | null) =>
-  api.post<{ reply: string; structured: Structured | null; model: string; conversation_id: string; title: string }>("/api/assistant/chat", {
-    ville,
-    question,
-    conversation_id: conversationId,
-  });
+  api.post<{ reply: string; structured: Structured | null; reasoning: string | null; model: string; conversation_id: string; title: string }>(
+    "/api/assistant/chat",
+    { ville, question, conversation_id: conversationId },
+  );
 
 export interface ConversationSummary {
   id: string;

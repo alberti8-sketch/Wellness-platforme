@@ -3,7 +3,7 @@
 import { ArrowUp, Lightbulb, MapPin, SquarePen, Trash2 } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
-import { StructuredAnswer } from "@/components/assistant-answer";
+import { Reasoning, StructuredAnswer } from "@/components/assistant-answer";
 import { CitySearch } from "@/components/city-search";
 import { Markdown } from "@/components/markdown";
 import { cx } from "@/components/ui";
@@ -91,7 +91,7 @@ function Composer({
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="grid h-9 w-9 place-items-center rounded-full bg-ink text-white transition hover:bg-black disabled:bg-[#D9D7CF]"
+          className="grid h-9 w-9 place-items-center rounded-full bg-primary text-white transition hover:bg-brand-700 disabled:bg-[#D9D7CF]"
           aria-label="Envoyer"
         >
           <ArrowUp className="h-[18px] w-[18px]" />
@@ -132,7 +132,7 @@ export default function AssistantPage() {
     try {
       const c = await getConversation(id);
       setCurrent(c.id);
-      setMessages(c.items.map(({ role, content, structured }) => ({ role, content, structured })));
+      setMessages(c.items.map(({ role, content, structured, reasoning }) => ({ role, content, structured, reasoning })));
       if (c.ville !== city) setCity(c.ville);
     } catch (e) {
       setError((e as Error).message);
@@ -159,7 +159,7 @@ export default function AssistantPage() {
     try {
       const r = await askAssistant(city, text.trim(), current);
       setCurrent(r.conversation_id);
-      setMessages([...next, { role: "assistant", content: r.reply, structured: r.structured }]);
+      setMessages([...next, { role: "assistant", content: r.reply, structured: r.structured, reasoning: r.reasoning }]);
       refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -194,7 +194,7 @@ export default function AssistantPage() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="flex h-[calc(100vh-0px)] min-h-[600px] bg-[#FAF9F6]">
+    <div className="flex h-[calc(100vh-0px)] min-h-[600px] bg-[#F7F9FB]">
       {/* Conversation */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 px-5 py-3">
@@ -267,7 +267,10 @@ export default function AssistantPage() {
                       <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#FCEDE6] text-[#D9592B]" aria-hidden>
                         <Lightbulb className="h-4 w-4" />
                       </span>
-                      <div className="min-w-0 flex-1">{m.structured ? <StructuredAnswer s={m.structured} /> : <Markdown text={m.content} />}</div>
+                      <div className="min-w-0 flex-1">
+                        {m.reasoning && <Reasoning text={m.reasoning} />}
+                        {m.structured ? <StructuredAnswer s={m.structured} /> : <Markdown text={m.content} />}
+                      </div>
                     </div>
                   ),
                 )}
@@ -303,7 +306,7 @@ export default function AssistantPage() {
       </div>
 
       {/* History, on the right */}
-      <aside className="hidden w-[260px] shrink-0 flex-col border-l border-[#ECEAE3] bg-[#F4F3EF] p-3 md:flex" aria-label="Historique des conversations">
+      <aside className="hidden w-[260px] shrink-0 flex-col border-l border-[#E3E8EE] bg-[#EFF3F7] p-3 md:flex" aria-label="Historique des conversations">
         <button onClick={startNew} className="flex h-10 items-center gap-2.5 rounded-xl px-3 text-[14px] font-medium text-ink hover:bg-[#E9E7E0]">
           <SquarePen className="h-[18px] w-[18px]" aria-hidden /> Nouvelle conversation
         </button>

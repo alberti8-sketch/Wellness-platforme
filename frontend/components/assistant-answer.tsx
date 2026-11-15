@@ -1,6 +1,6 @@
 "use client";
 
-import { Apple, Bike, CigaretteOff, HandCoins, HeartPulse, type LucideIcon, MoonStar, Stethoscope, Trees, WineOff } from "lucide-react";
+import { Apple, Bike, Brain, ChevronRight, CigaretteOff, HandCoins, HeartPulse, type LucideIcon, MoonStar, Stethoscope, Trees, WineOff } from "lucide-react";
 import type { Priority, Structured } from "@/lib/rapport";
 
 /** Representative icon and colour of each theme (health determinant) of a solution. */
@@ -71,6 +71,22 @@ function SolutionCard({ p }: { p: Priority }) {
         </details>
       )}
     </article>
+  );
+}
+
+/** The model's reasoning before its answer, folded (like « Réflexion » in Claude desktop). */
+export function Reasoning({ text }: { text: string }) {
+  return (
+    <details className="group mb-3">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-medium text-ink-muted hover:bg-[#EFEDE6] hover:text-ink [&::-webkit-details-marker]:hidden">
+        <Brain className="h-4 w-4" aria-hidden /> Réflexion de l'IA
+        <ChevronRight className="h-3.5 w-3.5 transition group-open:rotate-90" aria-hidden />
+      </summary>
+      <div className="mt-2 border-l-2 border-hairline pl-3">
+        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-muted">{text}</p>
+        <p className="mt-2 text-[11.5px] text-ink-faint">Telle que produite par le modèle, souvent en anglais.</p>
+      </div>
+    </details>
   );
 }
 

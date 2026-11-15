@@ -64,6 +64,7 @@ def system_prompt(report_md: str, city: str) -> str:
 Ta mission : proposer des solutions concrètes, à la portée d'une commune, pour améliorer la santé des habitants de {city}.
 
 Règles :
+- Ta réflexion avant la réponse est montrée à l'élu : écris-la en français, en phrases courtes et sans jargon.
 - Appuie-toi uniquement sur le RAPPORT de la commune et sur la BASE DE PREUVES ci-dessous.
 - Chiffres : n'utilise QUE ceux du rapport et de la base de preuves. N'invente aucun chiffre (pas de nombre d'écoles,
   de cantines, de budgets, d'arbres, d'études ou de cohortes externes, pas de données de pollution absentes du rapport).
@@ -155,18 +156,31 @@ def answer(report_md: str, city: str, messages: list[dict[str, str]]) -> dict[st
         **({"models": [model(), *FREE_FALLBACKS]} if model() == DEFAULT_MODEL else {}),
         "messages": [{"role": "system", "content": system_prompt(report_md, city)}, *convo],
         "temperature": 0.3,
-        "max_tokens": 4000,
-        # No hidden reasoning: free reasoning models otherwise spend the whole budget thinking and return nothing.
-        "reasoning": {"enabled": False},
+        "max_tokens": 8000,
+        # Visible reasoning with a bounded effort: unbounded, free reasoning models spend the whole budget thinking
+        # and return no answer.
+        "reasoning": {"effort": "medium"},
     }
     data = post_openrouter(payload, key)
     try:
-        text = data["choices"][0]["message"]["content"]
+        message = data["choices"][0]["message"]
+        text = message["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise AssistantError(f"Réponse inattendue d'OpenRouter : {str(data)[:300]}") from exc
     if not text or not text.strip():
         raise AssistantError("Le modèle n'a pas renvoyé de texte : reformulez ou réessayez.")
-    return {"reply": text, "structured": parse_structured(text), "model": data.get("model", payload["model"])}
+    return {"reply": text, "structured": parse_structured(text), "reasoning": reasoning_of(message),
+            "model": data.get("model", payload["model"])}
+
+
+def reasoning_of(message: dict[str, Any]) -> str | None:
+    """The model's reasoning shown to the user: `reasoning`, else the text parts of `reasoning_details`."""
+    text = message.get("reasoning")
+    if not isinstance(text, str) or not text.strip():
+        details = message.get("reasoning_details") or []
+        text = "\n".join(d.get("text") or d.get("summary") or "" for d in details if isinstance(d, dict))
+    text = re.sub(r"\s*\(?https?://\S+\)?", "", text or "").strip()
+    return text or None
 
 
 HORIZONS = {"court", "moyen", "long"}

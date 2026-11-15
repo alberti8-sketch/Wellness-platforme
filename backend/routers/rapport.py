@@ -115,7 +115,8 @@ def chat(body: ChatIn, principal: Principal = Depends(get_principal), db: Sessio
     # A new list (not an in-place append) so that SQLAlchemy saves the JSON column.
     conv.messages = [*(conv.messages or []),
                      {"role": "user", "content": body.question, "at": now.isoformat()},
-                     {"role": "assistant", "content": out["reply"], "structured": out.get("structured"), "at": now.isoformat()}]
+                     {"role": "assistant", "content": out["reply"], "structured": out.get("structured"),
+                      "reasoning": out.get("reasoning"), "at": now.isoformat()}]
     conv.updated_at = now
     db.commit()
     return {**out, "conversation_id": conv.id, "title": conv.title}
