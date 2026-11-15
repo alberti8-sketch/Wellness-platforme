@@ -154,3 +154,6 @@ def test_parse_structured_answer():
     p = s["priorites"][0]
     assert p["horizon"] == "moyen" and p["niveau_preuve"] == "fort" and p["maladies"] == ["Diabète"]
     assert assistant.parse_structured("Voici trois idées sans JSON.") is None
+    # Invented web addresses are removed from the answer.
+    with_url = raw.replace('"preuve": "RR 0,87"', '"preuve": "RR 0,87 (https://docs.google.com/spreadsheets/d/xyz/edit)"')
+    assert assistant.parse_structured(with_url)["priorites"][0]["preuve"] == "RR 0,87"

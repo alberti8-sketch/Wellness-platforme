@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -69,6 +70,7 @@ Règles :
   Une cible chiffrée est une proposition « à définir avec les services », jamais un fait. Si une information manque,
   dis-le simplement.
 - Preuves : ne cite comme justification que les liens de la BASE DE PREUVES, avec leur niveau (fort, moyen, modéré).
+- Aucune adresse web, aucun lien ni URL dans la réponse.
 - Privilégie les leviers d'une mairie : urbanisme et aménagement, mobilités actives (marche, vélo), équipements et
   associations sportives, restauration scolaire et collective, offre alimentaire et commerces de proximité,
   communication et campagnes de prévention (dépistage, vaccination) avec la CPAM, l'ARS et les acteurs locaux,
@@ -184,7 +186,8 @@ def parse_structured(text: str) -> dict[str, Any] | None:
         return None
 
     def txt(v: Any) -> str:
-        return v.strip() if isinstance(v, str) else ""
+        # Web addresses are dropped: the model invents them (none is in the data it receives).
+        return re.sub(r"\s*\(?https?://\S+\)?", "", v).strip(" ;,") if isinstance(v, str) else ""
 
     prios = []
     for item in obj.get("priorites", [])[:5]:
