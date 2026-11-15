@@ -1,8 +1,9 @@
 "use client";
 
-import { Bike, Dumbbell, Footprints, type LucideIcon, Sandwich, Search, Stethoscope, Users, X } from "lucide-react";
+import { Bike, Dumbbell, Footprints, type LucideIcon, Sandwich, Search, Stethoscope, Trees, Users, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "@/components/session";
 import type { DeptValue, MapPoint } from "@/components/domain-map";
 import { ErrorBox, Spinner } from "@/components/ui";
 import { fmt } from "@/lib/bands";
@@ -40,6 +41,7 @@ const DOMAINS: { id: string; label: string; icon: LucideIcon; inds: Ind[] }[] = 
       { key: "walk_safety", short: "Sécurité", level: "commune" },
       { key: "walk_comfort", short: "Confort", level: "commune" },
       { key: "walk_services", short: "Services", level: "commune" },
+      { key: "pedestrian_share", short: "Zones piétonnes", level: "commune" },
     ],
   },
   {
@@ -49,6 +51,7 @@ const DOMAINS: { id: string; label: string; icon: LucideIcon; inds: Ind[] }[] = 
     inds: [
       { key: "bike_share", short: "Voirie cyclable", level: "commune" },
       { key: "bike_parking_1000", short: "Stationnement", level: "commune" },
+      { key: "zone30_share", short: "Zones 30", level: "commune" },
     ],
   },
   {
@@ -60,6 +63,16 @@ const DOMAINS: { id: string; label: string; icon: LucideIcon; inds: Ind[] }[] = 
       { key: "fresh_10k", short: "Produits frais", level: "commune" },
       { key: "fastfood_10k", short: "Fast-foods", level: "commune" },
       { key: "restaurant_10k", short: "Restaurants", level: "commune" },
+    ],
+  },
+  {
+    id: "cadre",
+    label: "Cadre de vie",
+    icon: Trees,
+    inds: [
+      { key: "land_green_pct", short: "Espaces verts", level: "commune" },
+      { key: "land_built_pct", short: "Sols artificialisés", level: "commune" },
+      { key: "land_natural_pct", short: "Milieux naturels", level: "commune" },
     ],
   },
   { id: "sport", label: "Sport", icon: Dumbbell, inds: [{ key: "sport_10k", short: "Équipements", level: "commune" }] },
@@ -105,6 +118,8 @@ export default function CartePage() {
   const [domain, setDomain] = useState("marche");
   const [key, setKey] = useState("walk_score");
   const [selected, setSelected] = useState<string | null>(null);
+  const { account } = useSession();
+  const placed = useRef(false);
 
   // Shareable view: /carte?indicateur=fastfood_10k&commune=35238
   useEffect(() => {
@@ -117,11 +132,21 @@ export default function CartePage() {
         setKey(ind.key);
       }
       const c = q.get("commune") ?? q.get("dep");
-      if (c) setSelected(c.toUpperCase());
+      if (c) {
+        setSelected(c.toUpperCase());
+        placed.current = true;
+      }
     } catch {
       /* no URL access */
     }
   }, []);
+
+  // Signed-in account: open the map zoomed on its commune (once; the user can then move freely).
+  useEffect(() => {
+    if (placed.current || !account) return;
+    placed.current = true;
+    setSelected(account.city_code);
+  }, [account]);
 
   const ind = ALL_INDS.find((i) => i.key === key)!;
   const indMeta: Meta | null = ind.level === "commune" ? meta?.indicators[key] ?? null : dept.data?.indicators[key] ?? null;

@@ -151,23 +151,11 @@ export default function PredictionPage() {
                         {fmt(p.prediction, 2)} %
                       </p>
                       {pop != null && (
-                        <p className="mt-2 text-sm text-ink-2">
-                          soit environ <strong className="num font-semibold text-ink">{fmtPeople(people(p.prediction, pop))}</strong> personnes diabétiques
-                          <span className="text-ink-muted"> sur {fmtPeople(pop)} habitants</span>
+                        <p className="num mt-2 text-sm text-ink-2">
+                          <strong className="font-semibold text-ink">{fmtPeople(people(p.prediction, pop))}</strong> / {fmtPeople(pop)} habitants
                         </p>
                       )}
                     </div>
-                    {p.observed_departement != null && (
-                      <div className="pb-1 text-sm text-ink-2">
-                        Observé dans le département {p.departement} : <strong className="num text-ink">{fmt(p.observed_departement, 2)} %</strong>
-                        {pop != null && <span className="text-ink-muted"> (≈ {fmtPeople(people(p.observed_departement, pop))} pers.)</span>}
-                        <br />
-                        <span className="text-xs text-ink-muted">
-                          écart {p.gap! > 0 ? "+" : ""}
-                          {fmt(p.gap, 2)} pt
-                        </span>
-                      </div>
-                    )}
                   </div>
                   <h3 className="mb-2 mt-5 text-[13px] font-semibold text-ink">Profil utilisé</h3>
                   <ul className="grid gap-2 sm:grid-cols-2">
@@ -217,8 +205,8 @@ export default function PredictionPage() {
                     )}
                   </div>
                   {pop != null && (
-                    <p className="-mt-3 mb-5 text-sm text-ink-2">
-                      soit environ <strong className="num font-semibold text-ink">{fmtPeople(people(simRes?.prediction ?? p.prediction, pop))}</strong> personnes diabétiques
+                    <p className="num -mt-3 mb-5 text-sm text-ink-2">
+                      <strong className="font-semibold text-ink">{fmtPeople(people(simRes?.prediction ?? p.prediction, pop))}</strong> / {fmtPeople(pop)} habitants
                     </p>
                   )}
                   <div className="space-y-4">
@@ -260,7 +248,7 @@ export default function PredictionPage() {
                     <tr className="border-b border-hairline">
                       <th className="px-2 py-2 text-left font-medium">Territoire</th>
                       <th className="px-2 py-2 text-right font-medium">Prédiction</th>
-                      <th className="px-2 py-2 text-right font-medium">Personnes concernées (estimation)</th>
+                      <th className="px-2 py-2 text-right font-medium">Habitants concernés / population</th>
                       <th className="px-2 py-2 text-right font-medium">Observé (département)</th>
                       <th className="px-2 py-2 text-right font-medium">Écart</th>
                     </tr>
@@ -282,15 +270,17 @@ export default function PredictionPage() {
                             </span>
                           </td>
                           <td className="px-2 py-2.5 text-right">
-                            <span className="num font-semibold text-ink">{fmtPeople(people(r!.prediction, t.context.population))}</span>
-                            {t.context.population != null && (
-                              <span className="block text-xs text-ink-muted">sur {fmtPeople(t.context.population)} hab.</span>
-                            )}
+                            <span className="num">
+                              <span className="font-semibold text-ink">{fmtPeople(people(r!.prediction, t.context.population))}</span>
+                              {t.context.population != null && <span className="text-ink-muted"> / {fmtPeople(t.context.population)}</span>}
+                            </span>
                           </td>
                           <td className="num px-2 py-2.5 text-right text-ink-2">
                             {fmt(r!.observed_departement, 2)} %
                             {t.context.population != null && (
-                              <span className="block text-xs text-ink-muted">≈ {fmtPeople(people(r!.observed_departement, t.context.population))} pers.</span>
+                              <span className="block text-xs text-ink-muted">
+                                {fmtPeople(people(r!.observed_departement, t.context.population))} / {fmtPeople(t.context.population)}
+                              </span>
                             )}
                           </td>
                           <td className="num px-2 py-2.5 text-right text-ink-muted">
