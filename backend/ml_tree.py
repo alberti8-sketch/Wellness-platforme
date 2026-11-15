@@ -1,8 +1,15 @@
-"""Decision tree predicting chronic-disease prevalence from territory characteristics.
+"""Models predicting chronic-disease prevalence from territory characteristics.
 
 Training unit: the 96 metropolitan departments (data/ml/departements_<year>.csv, built by
-scripts/build_ml_dataset.py). One regression tree per pathology, deliberately shallow so every
-prediction can be read as a short chain of rules.
+scripts/build_ml_dataset.py). Per pathology:
+  * the estimate comes from a ridge linear model (density on a log scale). In cross-validation it is as accurate as
+    or more accurate than the tree for 9 diseases out of 10, and every factor moves it continuously, so the
+    « Et si… ? » simulator reacts to each slider;
+  * poverty, fast food and sport only enter a disease's model in the direction established by the literature
+    (more poverty or fast food → not less disease; more sport → not more disease). Between departments, fast food
+    goes with *less* diabetes (urban, younger, richer areas): kept as is, the simulator would tell a mayor that
+    closing fast-food outlets raises diabetes. A factor measured in the opposite direction is left out of that model;
+  * a shallow regression tree is kept as a readable chain of rules (/api/prediction/model nodes, factor studies).
 
 Honesty rules:
   * performance is measured by 5-fold cross-validation and compared with a naive baseline (the mean);
@@ -21,8 +28,14 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeRegressor
+
+import diseases
 
 ROOT = Path(__file__).resolve().parents[1]
 YEAR = 2024
@@ -50,8 +63,9 @@ EXTRA_COLUMNS = ("framingham_10y", "vet_per10k", "icp", "prev_sub_depistage", "p
 # Only measured per department: a commune inherits its department's value.
 DEPARTMENT_ONLY = {"pct_65plus", "poverty_rate"}
 
-# Diabetes is the single disease used as an example in the product (other pathologies removed).
-PATHOS: dict[str, str] = {"diabete": "Diabète"}
+# One tree per chronic-disease group of the commune report (Assurance Maladie level-1 groups).
+PATHOS: dict[str, str] = {key: label.split(" (")[0] for key, (_, label, *_) in diseases.DISEASES.items()}
+MIN_TRAINING_ROWS = 20
 
 
 class DatasetMissing(Exception):
@@ -72,10 +86,54 @@ def _num(v: str | None) -> float | None:
         return None
 
 
+DENSITY_INDEX = list(FEATURES).index("density_km2")
+
+
+def _log_density(X: np.ndarray) -> np.ndarray:
+    X = np.array(X, dtype=float, copy=True)
+    X[:, DENSITY_INDEX] = np.log10(np.maximum(X[:, DENSITY_INDEX], 1.0))
+    return X
+
+
+# Direction of the effect established by the evidence base: +1 = more of the factor, more disease.
+EXPECTED_SIGN = {"poverty_rate": 1, "fastfood_per10k": 1, "sport_per10k": -1}
+ALPHAS = np.logspace(-2, 3, 20)
+
+
+class SignedRidge(RegressorMixin, BaseEstimator):
+    """Ridge on standardised factors (density in log10), refitted without the factors whose coefficient
+    contradicts EXPECTED_SIGN. `coef_` is per factor in the standardised scale (0 for a factor left out)."""
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> SignedRidge:
+        Xl = _log_density(X)
+        keys = list(FEATURES)
+        used = list(range(Xl.shape[1]))
+        while True:
+            pipe = make_pipeline(StandardScaler(), RidgeCV(alphas=ALPHAS)).fit(Xl[:, used], y)
+            coef = pipe[-1].coef_
+            wrong = {c for c, w in zip(used, coef, strict=True) if keys[c] in EXPECTED_SIGN and w * EXPECTED_SIGN[keys[c]] < 0}
+            if not wrong:
+                break
+            used = [c for c in used if c not in wrong]
+        self.used_, self.pipe_ = used, pipe
+        self.coef_ = np.zeros(Xl.shape[1])
+        self.coef_[used] = coef
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return self.pipe_.predict(_log_density(X)[:, self.used_])
+
+
+def make_estimator() -> SignedRidge:
+    return SignedRidge()
+
+
 @dataclass
 class TrainedTree:
     patho: str
     model: DecisionTreeRegressor
+    estimator: SignedRidge
+    bounds: dict[str, tuple[float, float]]  # range of each factor among the departments (no extrapolation beyond)
     depts: list[dict[str, Any]]  # training rows (code, name, features, target)
     leaf_of: dict[str, int]
     metrics: dict[str, float]
@@ -114,6 +172,8 @@ def train(patho: str) -> TrainedTree:
         raise KeyError(patho)
     rows = [r for r in load_departements()
             if r["targets"][patho] is not None and all(v is not None for v in r["features"].values())]
+    if len(rows) < MIN_TRAINING_ROWS:
+        raise DatasetMissing(f"Prévalence « {PATHOS[patho]} » absente du jeu d'entraînement (lancer python -m scripts.add_disease_targets)")
     X = np.array([[r["features"][k] for k in FEATURES] for r in rows])
     y = np.array([r["targets"][patho] for r in rows])
 
@@ -121,7 +181,7 @@ def train(patho: str) -> TrainedTree:
         return DecisionTreeRegressor(max_depth=MAX_DEPTH, min_samples_leaf=MIN_SAMPLES_LEAF, random_state=SEED)
 
     cv = KFold(n_splits=5, shuffle=True, random_state=SEED)
-    pred_cv = cross_val_predict(make(), X, y, cv=cv)
+    pred_cv = cross_val_predict(make_estimator(), X, y, cv=cv)
     # Baseline: predict the training-fold mean.
     base = np.empty_like(y)
     for tr, te in cv.split(X):
@@ -133,9 +193,15 @@ def train(patho: str) -> TrainedTree:
 
     model = make().fit(X, y)
     leaves = model.apply(X)
+    estimator = make_estimator().fit(X, y)
+    # Weight of each factor: size of its standardised coefficient (share of the total).
+    coefs = np.abs(estimator.coef_)
+    weights = coefs / coefs.sum() if coefs.sum() else coefs
     return TrainedTree(
         patho=patho,
         model=model,
+        estimator=estimator,
+        bounds={k: (float(X[:, i].min()), float(X[:, i].max())) for i, k in enumerate(FEATURES)},
         depts=[{"code": r["code"], "name": r["name"], "features": r["features"], "target": r["targets"][patho]} for r in rows],
         leaf_of={r["code"]: int(leaf) for r, leaf in zip(rows, leaves, strict=True)},
         metrics={
@@ -148,7 +214,7 @@ def train(patho: str) -> TrainedTree:
             "target_min": round(float(y.min()), 3),
             "target_max": round(float(y.max()), 3),
         },
-        importances={k: round(float(v), 3) for k, v in zip(FEATURES, model.feature_importances_, strict=True)},
+        importances={k: round(float(v), 3) for k, v in zip(FEATURES, weights, strict=True)},
     )
 
 
@@ -177,6 +243,9 @@ def tree_json(t: TrainedTree) -> list[dict[str, Any]]:
 
 
 def predict(t: TrainedTree, features: dict[str, float]) -> dict[str, Any]:
+    """Estimate from the linear model (factors kept within the departments' range); leaf and rule path from the tree."""
+    clipped = [min(max(features[k], t.bounds[k][0]), t.bounds[k][1]) for k in FEATURES]
+    estimate = max(0.0, float(t.estimator.predict(np.array([clipped]))[0]))
     tr = t.model.tree_
     keys = list(FEATURES)
     node, path = 0, []
@@ -186,7 +255,7 @@ def predict(t: TrainedTree, features: dict[str, float]) -> dict[str, Any]:
         go_left = features[k] <= thr
         path.append({"node": node, "feature": k, "threshold": round(thr, 2), "value": features[k], "condition": "<=" if go_left else ">"})
         node = int(tr.children_left[node] if go_left else tr.children_right[node])
-    return {"prediction": round(float(tr.value[node][0][0]), 3), "leaf": node, "path": path}
+    return {"prediction": round(estimate, 3), "leaf": node, "path": path}
 
 
 # ---- Walking and cycling studies: do they help predict the disease? ----

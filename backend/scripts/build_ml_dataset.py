@@ -51,6 +51,7 @@ from openpyxl import load_workbook
 from pathlib import Path
 
 from config import departements
+from diseases import DISEASES
 from framingham import BANDS as FRAMINGHAM_BANDS
 from framingham import population_risk
 
@@ -70,12 +71,7 @@ ARRONDISSEMENTS = {
     "69123": [f"6938{i}" for i in range(1, 10)],  # Lyon
 }
 
-PATHOS = {  # level-1 aggregates of the CNAM cartography
-    "diabete": "DIA_CAT_CAT",
-    "cardio": "MCV_CAT_CAT",
-    "respiratoire": "RES_CAT_EXC",
-    "cancers": "CAN_CAT_CAT",
-}
+PATHOS = {key: top for key, (top, *_) in DISEASES.items()}  # level-1 aggregates of the CNAM cartography
 OLD_BANDS = {"65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95et+"}
 WP25_COMMUNES = ["74010", "35238", "44109", "29019", "25056", "93048", "06088", "13055",
                  "78646", "46042", "17300", "66124", "63236", "13102"]

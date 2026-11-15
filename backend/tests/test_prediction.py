@@ -120,3 +120,18 @@ def test_etudes_endpoint(client, ml_data):
     for f in body["factors"]:
         assert -1 <= f["r"] <= 1 and -1 <= f["r_partial"] <= 1
         assert isinstance(f["helps_prediction"], bool)
+
+
+def test_commune_predicts_every_disease_with_data(ml_data, client):
+    r = client.get("/api/prediction/commune?ville=35238", headers=ADMIN_B2G)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["departement"] == "35" and body["feature_levels"]["pct_65plus"] == "departement"
+    items = {i["patho"]: i for i in body["items"]}
+    # Only the diseases present in the training file are predicted; the others are skipped, not errors.
+    assert set(items) == {"diabete", "cardio", "respiratoire", "cancers"}
+    preds = [i["prediction"] for i in body["items"]]
+    assert preds == sorted(preds, reverse=True)
+    assert items["cardio"]["reliability"] == "fiable" and items["cardio"]["observed_departement"] is not None
+    assert client.get("/api/prediction/commune?ville=35", headers=ADMIN_B2G).status_code == 422
+    assert client.get("/api/prediction/commune?ville=35999", headers=ADMIN_B2G).status_code == 400

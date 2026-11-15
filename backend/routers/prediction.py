@@ -29,6 +29,17 @@ def _tree(patho: str) -> ml_tree.TrainedTree:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
 
 
+def _features_of(code: str, level: str, drow: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str]]:
+    communes = ml_tree.load_communes()
+    if level == "commune" and code in communes:
+        return communes[code]["features"], communes[code]["levels"]
+    return drow["features"], {k: "departement" for k in ml_tree.FEATURES}
+
+
+def reliability(r2: float) -> str:
+    return "fiable" if r2 >= 0.6 else "indicative" if r2 >= 0.3 else "peu fiable"
+
+
 @router.get("/model")
 def model(patho: str = "diabete", _: Principal = Depends(get_principal)) -> dict[str, Any]:
     t = _tree(patho)
@@ -59,7 +70,6 @@ def territories(
     _: Principal = Depends(get_principal),
 ) -> dict[str, Any]:
     t = _tree(patho)
-    communes = ml_tree.load_communes()
     out: dict[str, Any] = {}
     for code in [c.strip().upper() for c in territories.split(",") if c.strip()][:50]:
         level = territory_level(code)
@@ -71,10 +81,7 @@ def territories(
         if drow is None:
             out[code] = {"error": "Département hors du périmètre d'entraînement (métropole)"}
             continue
-        if level == "commune" and code in communes:
-            feats, levels = communes[code]["features"], communes[code]["levels"]
-        else:
-            feats, levels = drow["features"], {k: "departement" for k in ml_tree.FEATURES}
+        feats, levels = _features_of(code, level, drow)
         if any(v is None for v in feats.values()):
             out[code] = {"error": "Variables incomplètes pour ce territoire"}
             continue
@@ -93,6 +100,46 @@ def territories(
     return {"patho": patho, "label": ml_tree.PATHOS[patho], "caveat": CAVEAT, "territories": out}
 
 
+@router.get("/commune")
+def commune(
+    ville: str = Query(..., min_length=5, max_length=5, description="Code INSEE de la commune"),
+    _: Principal = Depends(get_principal),
+) -> dict[str, Any]:
+    """Every chronic disease of the report, predicted for one commune (one tree per disease)."""
+    code = ville.upper()
+    if territory_level(code) != "commune":
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Code INSEE de commune inconnu")
+    dept = code[:3] if code.startswith("97") else code[:2]
+    try:
+        drow = _dept_row(dept)
+    except ml_tree.DatasetMissing as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+    if drow is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Département hors du périmètre d'entraînement (métropole)")
+    feats, levels = _features_of(code, "commune", drow)
+    if any(v is None for v in feats.values()):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Variables incomplètes pour cette commune")
+    items = []
+    for patho, label in ml_tree.PATHOS.items():
+        try:
+            t = ml_tree.train(patho)
+        except ml_tree.DatasetMissing:
+            continue  # no training data for this disease
+        pred = ml_tree.predict(t, feats)["prediction"]
+        observed = drow["targets"][patho]
+        items.append({
+            "patho": patho, "label": label, "prediction": pred,
+            "observed_departement": observed,
+            "gap": round(pred - observed, 3) if observed is not None else None,
+            "departements_mean": t.metrics["target_mean"],
+            "r2_cv": t.metrics["r2_cv"], "mae_cv": t.metrics["mae_cv"],
+            "reliability": reliability(t.metrics["r2_cv"]),
+        })
+    items.sort(key=lambda i: -i["prediction"])
+    return {"code": code, "name": territory_name(code), "departement": dept, "year": ml_tree.YEAR,
+            "features": feats, "feature_levels": levels, "items": items, "caveat": CAVEAT}
+
+
 class SimulateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     patho: str = "diabete"
@@ -109,9 +156,11 @@ def simulate(body: SimulateIn, _: Principal = Depends(get_principal)) -> dict[st
     return {"patho": body.patho, **ml_tree.predict(t, body.model_dump(exclude={"patho"}))}
 
 
+MAP_PATHOS = ("diabete",)  # disease layers of the map
 DEPARTEMENT_TARGETS: dict[str, dict[str, str]] = {
-    f"prev_{k}": {"label": f"Prévalence — {v}", "unit": "%", "source": "Assurance Maladie — data.ameli.fr", "direction": "lower_is_better"}
-    for k, v in ml_tree.PATHOS.items()
+    f"prev_{k}": {"label": f"Prévalence — {ml_tree.PATHOS[k]}", "unit": "%", "source": "Assurance Maladie — data.ameli.fr",
+                  "direction": "lower_is_better"}
+    for k in MAP_PATHOS
 }
 DEPARTEMENT_FEATURE_DIRECTION = {
     "pct_65plus": None,  # descriptive, neither better nor worse
