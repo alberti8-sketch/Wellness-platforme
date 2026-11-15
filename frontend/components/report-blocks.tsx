@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Lightbulb, Printer } from "lucide-react";
+import { ArrowRight, Bike, Building2, Gauge, Lightbulb, Printer, Trees } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -120,93 +120,46 @@ export function DiseasesSummary({ report, onShowAll }: { report: Report; onShowA
   );
 }
 
-// Land-use colours (categorical, fixed order): built-up grey, urban green light green, natural dark green,
-// farmland wheat, water blue.
-const LAND = [
-  { key: "land_built_pct", label: "Sols artificialisés", note: "bâti, zones d'activité, routes", color: "#8A8D94" },
-  { key: "land_green_pct", label: "Espaces verts urbains", note: "parcs, terrains de sport et de loisirs", color: "#7ACB9C" },
-  { key: "land_natural_pct", label: "Forêts et milieux naturels", note: "", color: "#1F8A78" },
-  { key: "land_agri_pct", label: "Terres agricoles", note: "", color: "#D9C27A" },
-  { key: "land_water_pct", label: "Eau et zones humides", note: "", color: "#5B9BD5" },
-] as const;
-
-const STREETS = [
-  { key: "bike_share", label: "Voirie avec aménagement cyclable" },
-  { key: "zone30_share", label: "Voirie en zone 30" },
-  { key: "pedestrian_share", label: "Voirie en zone piétonne" },
-] as const;
-
-/** Land cover of the commune (share of its area) and calm streets (share of the road network). */
+/** Living environment in 4 big figures, each with one short sentence and a verdict vs communes of the same size. */
 export function LandCard({ report, className }: { report: Report; className?: string }) {
+  const num = (v: unknown) => (typeof v === "number" ? v : null);
   const land = report.land ?? {};
   const mob = report.mobility ?? {};
   const med = report.references.communes_median;
-  const num = (v: unknown) => (typeof v === "number" ? v : null);
-  const parts = LAND.map((l) => ({ ...l, v: num(land[l.key]) ?? 0 }));
+  const osm = num(land.osm_green_pct);
+  const tiles = [
+    { icon: Building2, value: num(land.land_built_pct), text: "de la commune est construite (bâti, routes, zones d'activité)", ref: med.land_built_pct, up: false },
+    osm != null
+      ? { icon: Trees, value: osm, text: `en parcs, jardins et nature, soit ${fmt(num(land.osm_green_m2_hab), 0)} m² par habitant`, ref: undefined, up: true }
+      : { icon: Trees, value: num(land.land_green_pct), text: "en parcs et espaces verts", ref: med.land_green_pct, up: true },
+    { icon: Bike, value: num(mob.bike_share), text: "des rues ont une piste cyclable", ref: med.bike_share, up: true },
+    { icon: Gauge, value: num(mob.zone30_share), text: "des rues sont en zone 30", ref: med.zone30_share, up: true },
+  ];
   return (
-    <Card className={className} title="Cadre de vie" subtitle="Occupation du sol (part de la surface de la commune) et rues apaisées (part de la voirie)">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
-          <div className="flex h-10 overflow-hidden rounded-xl" role="img" aria-label={parts.map((p) => `${p.label} ${fmt(p.v, 1)} %`).join(", ")}>
-            {parts
-              .filter((p) => p.v > 0)
-              .map((p) => (
-                <span key={p.key} style={{ width: `${p.v}%`, background: p.color }} className="border-r-2 border-white last:border-r-0" title={`${p.label} : ${fmt(p.v, 1)} %`} />
-              ))}
-          </div>
-          <ul className="mt-4 space-y-2">
-            {parts.map((p) => (
-              <li key={p.key} className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: p.color }} aria-hidden />
-                  <span className="font-semibold text-ink">{p.label}</span>
-                  {p.note && <span className="truncate text-xs text-ink-muted">{p.note}</span>}
+    <Card className={className} title="Cadre de vie">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {tiles.map((t) => {
+          const Icon = t.icon;
+          const better = t.value == null || t.ref == null ? null : t.up ? t.value > t.ref * 1.1 : t.value < t.ref * 0.9;
+          const worse = t.value == null || t.ref == null ? null : t.up ? t.value < t.ref * 0.9 : t.value > t.ref * 1.1;
+          return (
+            <div key={t.text} className="rounded-xl bg-plane p-4">
+              <Icon className="h-5 w-5 text-ink-muted" aria-hidden />
+              <p className="num mt-2 text-[30px] font-bold leading-none text-ink">{t.value == null ? "—" : `${fmt(t.value, 0)} %`}</p>
+              <p className="mt-1.5 text-[13px] leading-snug text-ink-2">{t.text}</p>
+              {(better || worse) && (
+                <span
+                  className="mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  style={better ? { background: "#DDF0EA", color: "#0E5A50" } : { background: "#FBE6DF", color: "#9A2F1C" }}
+                >
+                  {better ? "▲ Mieux" : "▼ Moins bien"} que les villes de même taille
                 </span>
-                <span className="shrink-0">
-                  <span className="num font-semibold text-ink">{fmt(p.v, 1)} %</span>
-                  {med[p.key] != null && <span className="text-xs text-ink-muted"> · réf. {fmt(med[p.key], 1)} %</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <ul className="space-y-4">
-          {num(land.osm_green_pct) != null && (
-            <li className="rounded-xl bg-[#EAF6EF] px-3.5 py-3">
-              <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="font-semibold text-ink">Espaces verts et naturels (OpenStreetMap)</span>
-                <span className="num font-semibold text-ink">{fmt(num(land.osm_green_pct), 1)} %</span>
-              </div>
-              <p className="mt-1 text-xs text-ink-2">
-                soit <strong className="num font-semibold text-ink">{fmt(num(land.osm_green_m2_hab), 0)} m²</strong> par habitant · parcs, jardins publics, bois,
-                prairies, jardins familiaux, y compris les petits
-              </p>
-            </li>
-          )}
-          {STREETS.map((st) => {
-            const v = num(mob[st.key]);
-            const m = med[st.key];
-            return (
-              <li key={st.key}>
-                <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                  <span className="font-semibold text-ink">{st.label}</span>
-                  <span>
-                    <span className="num font-semibold text-ink">{fmt(v, 1)} %</span>
-                    {m != null && <span className="text-xs text-ink-muted"> · réf. {fmt(m, 1)} %</span>}
-                  </span>
-                </div>
-                <div className="h-4 overflow-hidden rounded-full bg-[#EEEEE9]">
-                  <div className="h-full rounded-full bg-[#3E63DD]" style={{ width: `${Math.min(100, v ?? 0)}%` }} />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+              )}
+            </div>
+          );
+        })}
       </div>
-      <p className="mt-4 text-xs text-ink-muted">
-        Sols : Corine Land Cover 2018 par commune (SDES), zones de 25 ha minimum (petits parcs et jardins non comptés). Voirie : Vélo &amp; Territoires 2024.
-        Réf. : médiane des {report.references.communes_scope ?? "communes"} (moyenne pour les espaces verts, zones 30 et piétonnes).
-      </p>
+      <p className="mt-3 text-[11px] text-ink-faint">Sources : images satellite Corine Land Cover, OpenStreetMap, Vélo &amp; Territoires.</p>
     </Card>
   );
 }
