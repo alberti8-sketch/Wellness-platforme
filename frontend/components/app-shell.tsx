@@ -144,7 +144,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className={`min-w-0 flex-[999_1_560px] ${fullBleed ? "" : "px-4 pb-24 pt-7 md:px-8"}`}>
+      <main className={`relative isolate min-w-0 flex-[999_1_560px] ${fullBleed ? "" : "px-4 pb-24 pt-7 md:px-8"}`}>
+        {/* Full-width cover photo of a page (filled by <PageCover>). */}
+        <div id="page-cover" className="no-print pointer-events-none absolute inset-x-0 top-0 -z-10" aria-hidden />
         <div className={fullBleed ? "" : "mx-auto max-w-[1320px]"}>
           {error && (
             <div className="mb-4">

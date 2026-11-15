@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronRight, LayoutGrid, Lightbulb, PanelRightOpen, Target, ThumbsUp } from "lucide-react";
+import { ArrowRight, ChevronRight, LayoutGrid, Lightbulb, PanelRightOpen, Target, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
@@ -13,6 +13,8 @@ import { useSession } from "@/components/session";
 import { BandBadge, Card, Empty, Kpi, PageHeader, ScoreBar, Spinner } from "@/components/ui";
 import { BAND_META, BAND_ORDER, bandOf, fmt } from "@/lib/bands";
 import { TYPE_LABEL, mean } from "@/lib/metrics";
+import { PageCover } from "@/components/page-cover";
+import { CITY_COVERS } from "@/lib/covers";
 import { useReport } from "@/lib/rapport";
 import type { BandCode, Catalog, Territory } from "@/lib/types";
 
@@ -106,7 +108,6 @@ export default function DashboardPage() {
         catalog={catalog}
         mine={account?.city_code === cityT.code}
         extra={extra}
-        onBack={() => setCity(null)}
         onOpen={() => open(cityT.code)}
       />
     );
@@ -249,7 +250,6 @@ function CityOverview({
   catalog,
   mine,
   extra,
-  onBack,
   onOpen,
 }: {
   t: Territory;
@@ -257,7 +257,6 @@ function CityOverview({
   catalog: Catalog;
   mine: boolean;
   extra: ReturnType<typeof useExtraScores>;
-  onBack: () => void;
   onOpen: () => void;
 }) {
   const avg = mean(territories.map((x) => x.composite.score));
@@ -292,8 +291,11 @@ function CityOverview({
     .filter(Boolean)
     .join(" · ");
 
+  const cover = CITY_COVERS[t.code];
   return (
-    <div>
+    // With a cover photo, the content starts 120 px from the top of the page (28 px of page padding + 92 px).
+    <div className={cover ? "pt-[92px]" : undefined}>
+      {cover && <PageCover url={cover} />}
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Vue d'ensemble</p>
@@ -302,9 +304,6 @@ function CityOverview({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ReportActions code={t.code} name={t.name} />
-          <button onClick={onBack} className="no-print secondary-btn h-10">
-            <ArrowLeft className="h-4 w-4" aria-hidden /> Toutes les villes
-          </button>
         </div>
       </header>
 
