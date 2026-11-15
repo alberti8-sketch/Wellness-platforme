@@ -50,8 +50,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [pathname]);
   const cityCode = ville ?? account?.city_code ?? null;
-  // The map is full-screen (floating panels), the other pages use the centred column.
-  const fullBleed = pathname?.startsWith("/carte") ?? false;
+  // Full-screen pages (map with floating panels, chat), the other pages use the centred column.
+  const fullBleed = (pathname?.startsWith("/carte") || pathname?.startsWith("/assistant")) ?? false;
 
   // Demo sign-in gate: the app pages need a signed-in user; the landing page is public.
   useEffect(() => {

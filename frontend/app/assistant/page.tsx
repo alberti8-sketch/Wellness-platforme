@@ -1,18 +1,12 @@
 "use client";
 
-import { ArrowUp, Lightbulb, MessageSquarePlus, Trash2 } from "lucide-react";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ArrowUp, Lightbulb, MapPin, SquarePen, Trash2 } from "lucide-react";
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
-import { CitySearch } from "@/components/city-search";
 import { StructuredAnswer } from "@/components/assistant-answer";
+import { CitySearch } from "@/components/city-search";
 import { Markdown } from "@/components/markdown";
-import { ErrorBox, PageHeader, Spinner, cx } from "@/components/ui";
+import { cx } from "@/components/ui";
 import {
   type ChatMessage,
   type ConversationSummary,
@@ -25,24 +19,86 @@ import {
   useReport,
 } from "@/lib/rapport";
 
-const when = (iso: string) => {
-  const d = new Date(iso);
-  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
-  if (days < 1)
-    return `aujourd'hui, ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
-  if (days < 2) return "hier";
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-};
+/** History groups, like a chat app: today, last 7 days, older. */
+function groupOf(iso: string) {
+  const days = (Date.now() - new Date(iso).getTime()) / 86_400_000;
+  return days < 1 ? "Aujourd'hui" : days < 7 ? "7 derniers jours" : "Plus ancien";
+}
 
 /** Starter questions built from the report's weak points. */
 function suggestions(name: string, weaknesses: string[]): string[] {
-  const out = [
-    `Quelles sont les 3 actions prioritaires pour la santé à ${name} ?`,
-  ];
-  for (const w of weaknesses.slice(0, 3))
-    out.push(`Que faire pour : ${w.split(" : ")[0].toLowerCase()} ?`);
+  const out = [`Quelles sont les 3 actions prioritaires pour la santé à ${name} ?`];
+  for (const w of weaknesses.slice(0, 2)) out.push(`Que faire pour : ${w.split(" : ")[0].toLowerCase()} ?`);
   out.push("Comment augmenter la participation au dépistage des cancers ?");
   return [...new Set(out)].slice(0, 4);
+}
+
+/** Message box: grows with the text; Enter sends, Shift+Enter adds a line. */
+function Composer({
+  value,
+  onChange,
+  onSend,
+  disabled,
+  placeholder,
+  city,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSend: () => void;
+  disabled: boolean;
+  placeholder: string;
+  city: string | null;
+  autoFocus?: boolean;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [value]);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    onSend();
+  };
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+  return (
+    <form onSubmit={submit} className="rounded-[22px] border border-[#E2E0D8] bg-white px-4 pb-3 pt-3.5 shadow-[0_2px_12px_rgba(21,23,28,0.06)] focus-within:border-[#C9C6BB]">
+      <label className="sr-only" htmlFor="question">
+        Votre question
+      </label>
+      <textarea
+        id="question"
+        ref={ref}
+        rows={1}
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKey}
+        placeholder={placeholder}
+        className="block max-h-[200px] w-full resize-none bg-transparent text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+      />
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-plane px-2.5 py-1 text-[12px] text-ink-2">
+          <MapPin className="h-3.5 w-3.5" aria-hidden /> {city ?? "Choisir une commune"}
+        </span>
+        <button
+          type="submit"
+          disabled={disabled || !value.trim()}
+          className="grid h-9 w-9 place-items-center rounded-full bg-ink text-white transition hover:bg-black disabled:bg-[#D9D7CF]"
+          aria-label="Envoyer"
+        >
+          <ArrowUp className="h-[18px] w-[18px]" />
+        </button>
+      </div>
+    </form>
+  );
 }
 
 export default function AssistantPage() {
@@ -76,13 +132,7 @@ export default function AssistantPage() {
     try {
       const c = await getConversation(id);
       setCurrent(c.id);
-      setMessages(
-        c.items.map(({ role, content, structured }) => ({
-          role,
-          content,
-          structured,
-        })),
-      );
+      setMessages(c.items.map(({ role, content, structured }) => ({ role, content, structured })));
       if (c.ville !== city) setCity(c.ville);
     } catch (e) {
       setError((e as Error).message);
@@ -101,10 +151,7 @@ export default function AssistantPage() {
 
   const send = async (text: string) => {
     if (!city || !text.trim() || busy) return;
-    const next: ChatMessage[] = [
-      ...messages,
-      { role: "user", content: text.trim() },
-    ];
+    const next: ChatMessage[] = [...messages, { role: "user", content: text.trim() }];
     setMessages(next);
     setInput("");
     setError(null);
@@ -112,10 +159,7 @@ export default function AssistantPage() {
     try {
       const r = await askAssistant(city, text.trim(), current);
       setCurrent(r.conversation_id);
-      setMessages([
-        ...next,
-        { role: "assistant", content: r.reply, structured: r.structured },
-      ]);
+      setMessages([...next, { role: "assistant", content: r.reply, structured: r.structured }]);
       refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -124,7 +168,7 @@ export default function AssistantPage() {
     }
   };
 
-  // A question passed from the diseases page (?question=…) is sent once the commune is known.
+  // A question passed from another page (?question=…) is sent once the commune is known.
   useEffect(() => {
     if (asked.current || !city || !status.data?.configured) return;
     try {
@@ -144,191 +188,155 @@ export default function AssistantPage() {
   }, [messages, busy]);
 
   const name = report.data?.name ?? "votre commune";
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    void send(input);
-  };
+  const ready = !!city && !!status.data?.configured;
+  const groups = ["Aujourd'hui", "7 derniers jours", "Plus ancien"]
+    .map((g) => ({ g, items: history.filter((c) => groupOf(c.updated_at) === g) }))
+    .filter((x) => x.items.length);
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col">
-      <PageHeader
-        title="Solutions"
-        subtitle={`Un assistant qui propose des actions pour ${name}, à partir du rapport de la commune et de la base de preuves de l'équipe.`}
-        actions={
-          <>
-            <CitySearch
-              territories={territories}
-              value={city}
-              onPick={(c) => {
-                setCity(c);
-                startNew();
-              }}
-              placeholder="Changer de commune"
-            />
-          </>
-        }
-      />
-
-      {status.data && !status.data.configured && (
-        <ErrorBox>
-          Assistant non configuré : ajoutez OPENROUTER_API_KEY dans backend/.env
-          puis redémarrez l&apos;API.
-        </ErrorBox>
-      )}
-
-      <div className="grid flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside
-          className="flex flex-col rounded-card border border-hairline bg-white p-3 lg:max-h-[calc(100vh-11rem)]"
-          aria-label="Historique des conversations"
-        >
-          <button
-            onClick={startNew}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-ink px-3 text-sm font-semibold text-white hover:bg-black"
-          >
-            <MessageSquarePlus className="h-4 w-4" aria-hidden /> Nouvelle
-            conversation
-          </button>
-          <p className="mt-4 px-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">
-            Historique
+    <div className="flex h-[calc(100vh-0px)] min-h-[600px] bg-[#FAF9F6]">
+      {/* Conversation */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between gap-3 px-5 py-3">
+          <p className="truncate text-[14px] font-medium text-ink-2">
+            {current ? history.find((c) => c.id === current)?.title ?? "Conversation" : "Solutions"}
           </p>
-          <ul className="mt-2 flex-1 space-y-1 overflow-y-auto">
-            {history.length === 0 && (
-              <li className="px-1 py-2 text-sm text-ink-muted">
-                Vos conversations apparaîtront ici.
-              </li>
-            )}
-            {history.map((c) => (
-              <li key={c.id} className="group relative">
-                <button
-                  onClick={() => void openConversation(c.id)}
-                  aria-current={c.id === current ? "true" : undefined}
-                  className={cx(
-                    "w-full rounded-xl px-3 py-2.5 pr-9 text-left",
-                    c.id === current ? "bg-plane" : "hover:bg-[#FAFAF7]",
-                  )}
-                >
-                  <span className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">
-                    {c.title}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-ink-muted">
-                    {c.ville_nom ?? c.ville} · {when(c.updated_at)}
-                  </span>
-                </button>
-                <button
-                  onClick={() => void remove(c.id)}
-                  className="absolute right-1.5 top-2 grid h-7 w-7 place-items-center rounded-lg text-ink-faint opacity-0 hover:bg-white hover:text-[#9A2F1C] focus:opacity-100 group-hover:opacity-100"
-                  aria-label={`Supprimer la conversation « ${c.title} »`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
+          <CitySearch
+            territories={territories}
+            value={city}
+            onPick={(c) => {
+              setCity(c);
+              startNew();
+            }}
+            placeholder="Changer de commune"
+          />
+        </header>
 
-        <div className="flex flex-col rounded-card border border-hairline bg-white">
-          <div className="flex-1 space-y-5 overflow-y-auto p-5 md:p-7">
-            {messages.length === 0 && (
-              <div className="mx-auto max-w-[640px] py-6 text-center">
-                <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-plane">
-                  <Lightbulb className="h-5 w-5 text-ink" aria-hidden />
-                </span>
-                <p className="mt-3 text-[17px] font-semibold text-ink">
-                  Que voulez-vous améliorer à {name} ?
-                </p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  Les réponses s&apos;appuient sur les chiffres de la commune
-                  (score, maladies, alimentation, dépistage, marche, vélo,
-                  sport).
-                </p>
-                {report.data && (
-                  <div className="mt-5 flex flex-wrap justify-center gap-2">
-                    {suggestions(
-                      report.data.name,
-                      report.data.findings.weaknesses,
-                    ).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => void send(s)}
-                        disabled={busy || !status.data?.configured}
-                        className="rounded-full border border-hairline px-3.5 py-2 text-left text-[13px] text-ink-2 hover:border-ink-faint hover:text-ink disabled:opacity-50"
-                      >
-                        {s}
-                      </button>
-                    ))}
+        {status.data && !status.data.configured && (
+          <p className="mx-auto mb-2 max-w-[760px] rounded-xl bg-[#FBE6DF] px-4 py-2.5 text-[13px] text-[#9A2F1C]">
+            Assistant non configuré : ajoutez OPENROUTER_API_KEY dans backend/.env puis redémarrez l&apos;API.
+          </p>
+        )}
+
+        {messages.length === 0 ? (
+          // Welcome screen: greeting, centred message box, suggestions.
+          <div className="flex flex-1 flex-col items-center justify-center px-5 pb-16">
+            <div className="w-full max-w-[720px]">
+              <h1 className="flex items-center justify-center gap-3 text-center text-[30px] font-semibold tracking-[-0.02em] text-ink md:text-[34px]">
+                <Lightbulb className="h-8 w-8 text-[#D9592B]" aria-hidden />
+                Que voulez-vous améliorer à {name} ?
+              </h1>
+              <div className="mt-8">
+                <Composer
+                  value={input}
+                  onChange={setInput}
+                  onSend={() => void send(input)}
+                  disabled={busy || !ready}
+                  placeholder={`Posez votre question sur la santé à ${name}…`}
+                  city={report.data?.name ?? null}
+                  autoFocus
+                />
+              </div>
+              {report.data && (
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {suggestions(report.data.name, report.data.findings.weaknesses).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => void send(s)}
+                      disabled={busy || !ready}
+                      className="rounded-full border border-[#E2E0D8] bg-white px-3.5 py-1.5 text-[13px] text-ink-2 hover:border-[#C9C6BB] hover:text-ink disabled:opacity-50"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-y-auto px-5">
+              <div className="mx-auto max-w-[760px] space-y-7 py-6">
+                {messages.map((m, i) =>
+                  m.role === "user" ? (
+                    <div key={i} className="flex justify-end">
+                      <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-[#EFEDE6] px-4 py-2.5 text-[15px] leading-relaxed text-ink">{m.content}</p>
+                    </div>
+                  ) : (
+                    <div key={i} className="flex gap-3">
+                      <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#FCEDE6] text-[#D9592B]" aria-hidden>
+                        <Lightbulb className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">{m.structured ? <StructuredAnswer s={m.structured} /> : <Markdown text={m.content} />}</div>
+                    </div>
+                  ),
+                )}
+                {busy && (
+                  <div className="flex items-center gap-3 text-[14px] text-ink-muted">
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-[#FCEDE6] text-[#D9592B]" aria-hidden>
+                      <Lightbulb className="h-4 w-4 animate-pulse" />
+                    </span>
+                    Réflexion en cours…
                   </div>
                 )}
+                {error && <p className="rounded-xl bg-[#FBE6DF] px-4 py-2.5 text-[13px] text-[#9A2F1C]">{error}</p>}
+                <div ref={end} />
               </div>
-            )}
-            {messages.map((m, i) =>
-              m.role === "user" ? (
-                <div key={i} className="flex justify-end">
-                  <p className="max-w-[80%] rounded-2xl rounded-br-md bg-ink px-4 py-2.5 text-[14px] text-white">
-                    {m.content}
-                  </p>
-                </div>
-              ) : (
-                <div
-                  key={i}
-                  className={
-                    m.structured
-                      ? "rounded-2xl rounded-bl-md bg-plane p-3 md:p-4"
-                      : "max-w-[860px] rounded-2xl rounded-bl-md bg-plane px-5 py-4"
-                  }
-                >
-                  {m.structured ? (
-                    <StructuredAnswer s={m.structured} />
-                  ) : (
-                    <Markdown text={m.content} />
-                  )}
-                </div>
-              ),
-            )}
-            {busy && <Spinner label="L'assistant prépare des solutions…" />}
-            {error && <ErrorBox>{error}</ErrorBox>}
-            <div ref={end} />
-          </div>
-
-          <form
-            onSubmit={submit}
-            className="flex items-end gap-2 border-t border-hairline p-3 md:p-4"
-          >
-            <label className="sr-only" htmlFor="question">
-              Votre question
-            </label>
-            <textarea
-              id="question"
-              rows={2}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void send(input);
-                }
-              }}
-              placeholder={`Ex. : comment réduire le diabète à ${name} ?`}
-              className="min-h-[48px] flex-1 resize-none rounded-xl border border-hairline px-3.5 py-3 text-[14px] text-ink outline-none focus:border-ink focus:ring-2 focus:ring-ink/10"
-            />
-            <button
-              type="submit"
-              disabled={
-                busy || !input.trim() || !city || !status.data?.configured
-              }
-              className="grid h-12 w-12 place-items-center rounded-xl bg-ink text-white hover:bg-black disabled:opacity-40"
-              aria-label="Envoyer"
-            >
-              <ArrowUp className="h-5 w-5" />
-            </button>
-          </form>
-        </div>
+            </div>
+            <div className="px-5 pb-4 pt-2">
+              <div className="mx-auto max-w-[760px]">
+                <Composer
+                  value={input}
+                  onChange={setInput}
+                  onSend={() => void send(input)}
+                  disabled={busy || !ready}
+                  placeholder="Répondre…"
+                  city={report.data?.name ?? null}
+                />
+                <p className="mt-2 text-center text-[11px] text-ink-faint">
+                  Réponses générées par IA ({status.data?.model ?? "…"}), à vérifier. Seules les données publiques de la commune sont envoyées ; vos conversations restent privées.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      <p className="mt-2 text-xs text-ink-muted">
-        Réponses générées par IA via OpenRouter ({status.data?.model ?? "…"}), à
-        vérifier. Seules les données publiques agrégées de la commune sont
-        envoyées. Les conversations sont enregistrées sur la plateforme,
-        visibles par vous seul.
-      </p>
+
+      {/* History, on the right */}
+      <aside className="hidden w-[260px] shrink-0 flex-col border-l border-[#ECEAE3] bg-[#F4F3EF] p-3 md:flex" aria-label="Historique des conversations">
+        <button onClick={startNew} className="flex h-10 items-center gap-2.5 rounded-xl px-3 text-[14px] font-medium text-ink hover:bg-[#E9E7E0]">
+          <SquarePen className="h-[18px] w-[18px]" aria-hidden /> Nouvelle conversation
+        </button>
+        <div className="mt-3 flex-1 overflow-y-auto">
+          {history.length === 0 && <p className="px-3 py-2 text-[13px] text-ink-muted">Vos conversations apparaîtront ici.</p>}
+          {groups.map(({ g, items }) => (
+            <div key={g} className="mb-3">
+              <p className="px-3 pb-1 pt-2 text-[11px] font-semibold text-ink-faint">{g}</p>
+              <ul>
+                {items.map((c) => (
+                  <li key={c.id} className="group relative">
+                    <button
+                      onClick={() => void openConversation(c.id)}
+                      aria-current={c.id === current ? "true" : undefined}
+                      title={`${c.title} · ${c.ville_nom ?? c.ville}`}
+                      className={cx("w-full truncate rounded-lg py-2 pl-3 pr-8 text-left text-[13.5px]", c.id === current ? "bg-[#E6E4DC] text-ink" : "text-ink-2 hover:bg-[#ECEAE3]")}
+                    >
+                      {c.title}
+                    </button>
+                    <button
+                      onClick={() => void remove(c.id)}
+                      className="absolute right-1 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-ink-faint opacity-0 hover:text-[#9A2F1C] focus:opacity-100 group-hover:opacity-100"
+                      aria-label={`Supprimer « ${c.title} »`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </aside>
     </div>
   );
 }
