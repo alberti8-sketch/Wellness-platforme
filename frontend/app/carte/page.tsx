@@ -357,14 +357,18 @@ export default function CartePage() {
             c={selCommune}
             deptName={deptOfSel?.name ?? selCommune.dep}
             deptValues={deptOfSel?.values ?? null}
-            classesByKey={classesByKey}
-            deptClassesByKey={deptClassesByKey}
-            format={format}
-            medians={Object.fromEntries(
-              Object.keys(meta.indicators).map((k) => [k, median(communes.map((x) => x.values[k]).filter((v): v is number => v != null))]),
-            )}
-            sportRate={meta.sport_rate.by_size[selCommune.size_class]}
-            colorOf={colorOf}
+            refs={{
+              ...Object.fromEntries(
+                Object.keys(meta.indicators).map((k) => [k, mean(communes.map((x) => x.values[k]).filter((v): v is number => v != null))]),
+              ),
+              ...Object.fromEntries(
+                Object.keys(dept.data?.indicators ?? {}).map((k) => [k, mean((dept.data?.departements ?? []).map((d) => d.values[k]))]),
+              ),
+            }}
+            directions={{
+              ...Object.fromEntries(Object.entries(meta.indicators).map(([k, m]) => [k, m.direction])),
+              ...Object.fromEntries(Object.entries(dept.data?.indicators ?? {}).map(([k, m]) => [k, m.direction])),
+            }}
             onClose={() => setSelected(null)}
           />
         )}
@@ -444,59 +448,122 @@ function CommuneSearch({ communes, onPick }: { communes: Commune[]; onPick: (c: 
   );
 }
 
+type CardRow = { label: string; k: string; unit: string; dept?: boolean; digits?: number };
+
+const CARD_SECTIONS: { title: string; icon: LucideIcon; rows: CardRow[] }[] = [
+  {
+    title: "Vélo",
+    icon: Bike,
+    rows: [
+      { label: "Rues avec piste cyclable", k: "bike_share", unit: " %" },
+      { label: "Rues en zone 30", k: "zone30_share", unit: " %" },
+      { label: "Places de stationnement vélo", k: "bike_parking_1000", unit: " pour 1 000 hab." },
+    ],
+  },
+  {
+    title: "Alimentation",
+    icon: Sandwich,
+    rows: [
+      { label: "Score alimentation", k: "food_score", unit: " /100", digits: 0 },
+      { label: "Fast-foods", k: "fastfood_10k", unit: " pour 10 000 hab." },
+      { label: "Commerces de produits frais", k: "fresh_10k", unit: " pour 10 000 hab." },
+    ],
+  },
+  { title: "Sport", icon: Dumbbell, rows: [{ label: "Équipements sportifs", k: "sport_10k", unit: " pour 10 000 hab.", digits: 0 }] },
+  {
+    title: "Santé",
+    icon: Stethoscope,
+    rows: [
+      { label: "Médecins généralistes", k: "gp_10k", unit: " pour 10 000 hab." },
+      { label: "Diabète", k: "prev_diabete", unit: " % des habitants", dept: true },
+      { label: "Dépistage des cancers", k: "prev_sub_depistage", unit: " /100", dept: true, digits: 0 },
+    ],
+  },
+  {
+    title: "Cadre de vie",
+    icon: Trees,
+    rows: [
+      { label: "Espaces verts", k: "land_green_pct", unit: " % de la surface" },
+      { label: "Sols artificialisés", k: "land_built_pct", unit: " % de la surface", digits: 0 },
+    ],
+  },
+];
+
+type Verdict = "better" | "same" | "worse";
+const VERDICT: Record<Verdict, { label: string; mark: string; tint: string; text: string }> = {
+  better: { label: "Mieux que la moyenne", mark: "▲", tint: "#DDF0EA", text: "#0E5A50" },
+  same: { label: "Dans la moyenne", mark: "●", tint: "#F6EDD3", text: "#6E5110" },
+  worse: { label: "Moins bien", mark: "▼", tint: "#FBE6DF", text: "#9A2F1C" },
+};
+
+/** Commune vs reference (10 % margin), in the direction that is better for health. */
+function verdict(v: number | null | undefined, ref: number | null | undefined, direction: Direction | undefined): Verdict | null {
+  if (v == null || ref == null || !direction) return null;
+  if (ref === 0) return v === 0 ? "same" : direction === "higher_is_better" ? "better" : "worse";
+  const r = v / ref;
+  const up = direction === "higher_is_better";
+  if (r >= 1.1) return up ? "better" : "worse";
+  if (r <= 0.9) return up ? "worse" : "better";
+  return "same";
+}
+
+/** Right-hand panel of the map for one commune: one line per indicator, in plain words, with a written verdict. */
 function CommuneCard({
   c,
   deptName,
   deptValues,
-  classesByKey,
-  deptClassesByKey,
-  format,
-  medians,
-  sportRate,
-  colorOf,
+  refs,
+  directions,
   onClose,
 }: {
   c: Commune;
   deptName: string;
   deptValues: Record<string, number | null> | null;
-  classesByKey: Record<string, LegendClass[]>;
-  deptClassesByKey: Record<string, LegendClass[]>;
-  format: (v: number | null | undefined, k?: string) => string;
-  medians: Record<string, number | null>;
-  sportRate?: { rate: number; label: string };
-  colorOf: (classes: LegendClass[] | undefined, v: number | null | undefined) => string | null;
+  /** Reference of each indicator: median of the communes, mean of the departments for department-level ones. */
+  refs: Record<string, number | null>;
+  directions: Record<string, Direction | undefined>;
   onClose: () => void;
 }) {
-  const Row = ({ label, k, dept = false }: { label: string; k: string; dept?: boolean }) => {
-    const v = dept ? deptValues?.[k] : c.values[k];
-    const color = colorOf(dept ? deptClassesByKey[k] : classesByKey[k], v);
+  const Line = ({ row }: { row: CardRow }) => {
+    const v = row.dept ? deptValues?.[row.k] : c.values[row.k];
+    const ref = refs[row.k];
+    const vd = verdict(v, ref, directions[row.k]);
+    const m = vd ? VERDICT[vd] : null;
+    const d = row.digits ?? 1;
     return (
-      <div className="flex items-center gap-2 py-1">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color ?? NO_DATA }} aria-hidden />
-        <span className="flex-1 text-[13px] text-ink-2">
-          {label}
-          {dept && <span className="text-ink-faint"> (dépt)</span>}
-        </span>
-        <span className="num text-[13px] font-semibold text-ink" title={!dept && medians[k] != null ? `Médiane France : ${format(medians[k], k)}` : undefined}>
-          {format(v, k)}
-        </span>
-      </div>
+      <li className="py-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13.5px] font-medium text-ink">
+            {row.label}
+            {row.dept && <span className="text-[11px] font-normal text-ink-muted"> · département</span>}
+          </span>
+          {m && (
+            <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: m.tint, color: m.text }}>
+              {m.mark} {m.label}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-[13px]">
+          <span className="num font-bold text-ink">{v == null ? "—" : fmt(v, d)}</span>
+          <span className="text-ink-2">{v == null ? " (pas de donnée)" : row.unit}</span>
+          {ref != null && (
+            <span className="text-[12px] text-ink-muted">
+              {" "}
+              · moyenne {fmt(ref, d)}
+            </span>
+          )}
+        </p>
+      </li>
     );
   };
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="border-t border-hairline pt-2">
-      <p className="pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{title}</p>
-      {children}
-    </div>
-  );
 
   return (
     <div className="max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(21,23,28,0.12)]">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[17px] font-semibold text-ink">{c.name}</p>
-          <p className="text-[12px] text-ink-muted">
-            {deptName} · {c.population.toLocaleString("fr-FR")} hab.
+          <p className="text-[19px] font-bold leading-tight text-ink">{c.name}</p>
+          <p className="mt-0.5 text-[12.5px] text-ink-muted">
+            {deptName} · {c.population.toLocaleString("fr-FR")} habitants
           </p>
         </div>
         <button onClick={onClose} className="rounded-lg p-1 text-ink-muted hover:bg-plane" aria-label="Fermer">
@@ -504,50 +571,55 @@ function CommuneCard({
         </button>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <Section title="Marche">
-          {c.walk_class ? (
-            <div className="flex items-center gap-2 py-1">
-              <span
-                className="num inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-[13px] font-bold"
-                style={{ background: WALK_COLORS[c.walk_class], color: ["C", "D", "E"].includes(c.walk_class) ? "#15171C" : "#fff" }}
-              >
-                {c.walk_class}
-              </span>
-              <span className="flex-1 text-[13px] text-ink-2">Indice de marchabilité</span>
-              <span className="num text-[13px] font-semibold text-ink">{format(c.values.walk_score, "walk_score")}</span>
-            </div>
-          ) : (
-            <p className="py-1 text-[13px] text-ink-muted">Non évaluée par le baromètre 2023</p>
-          )}
-        </Section>
-        <Section title="Vélo">
-          <Row label="Voirie cyclable" k="bike_share" />
-          <Row label="Stationnement / 1 000 hab." k="bike_parking_1000" />
-        </Section>
-        <Section title="Alimentation">
-          <Row label="Score alimentation" k="food_score" />
-          {c.food_type && <p className="pb-1 pl-[18px] text-[12px] text-ink-muted">{c.food_type}</p>}
-          <Row label="Produits frais / 10 000 hab." k="fresh_10k" />
-          <Row label="Fast-foods / 10 000 hab." k="fastfood_10k" />
-          <Row label="Restaurants / 10 000 hab." k="restaurant_10k" />
-        </Section>
-        <Section title="Sport">
-          <Row label="Équipements / 10 000 hab." k="sport_10k" />
-          {sportRate && (
-            <p className="pb-1 text-[12px] leading-snug text-ink-muted">
-              Pratique sportive dans les {sportRate.label} : <strong className="font-semibold text-ink-2">{sportRate.rate} %</strong> (INJEP 2023, moyenne nationale)
-            </p>
-          )}
-        </Section>
-        <Section title="Santé">
-          <Row label="Médecine générale / 10 000 hab." k="gp_10k" />
-          <Row label="Diabète" k="prev_diabete" dept />
-          <Row label="Dépistage des cancers" k="prev_sub_depistage" dept />
-          <Row label="Prévention (ICP)" k="icp" dept />
-        </Section>
+      <div className="mt-3 rounded-xl bg-plane px-3 py-2 text-[11.5px] leading-relaxed text-ink-2">
+        Chaque chiffre est comparé à la <strong>moyenne des communes de France</strong> :
+        <span className="mt-1 flex flex-wrap gap-1.5">
+          {(["better", "same", "worse"] as const).map((k) => (
+            <span key={k} className="rounded-full px-2 py-0.5 font-semibold" style={{ background: VERDICT[k].tint, color: VERDICT[k].text }}>
+              {VERDICT[k].mark} {VERDICT[k].label}
+            </span>
+          ))}
+        </span>
       </div>
-      <p className="mt-3 text-[11px] text-ink-faint">Pastille : position de la commune parmi les communes de France (vert = favorable).</p>
+
+      <section className="mt-3">
+        <h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide text-ink">
+          <Footprints className="h-4 w-4" aria-hidden /> Marche
+        </h3>
+        {c.walk_class ? (
+          <div className="flex items-center gap-3 py-2">
+            <span
+              className="num grid h-9 min-w-9 place-items-center rounded-lg px-2 text-[15px] font-bold"
+              style={{ background: WALK_COLORS[c.walk_class], color: ["C", "D", "E"].includes(c.walk_class) ? "#15171C" : "#fff" }}
+            >
+              {c.walk_class}
+            </span>
+            <p className="text-[13px] leading-snug text-ink-2">
+              Note de marche <strong className="num text-ink">{fmt(c.values.walk_score, 1)} /20</strong>
+              <span className="block text-[12px] text-ink-muted">Classe de A+ (très agréable) à G (difficile)</span>
+            </p>
+          </div>
+        ) : (
+          <p className="py-2 text-[13px] text-ink-muted">Pas évaluée par le baromètre des villes marchables.</p>
+        )}
+      </section>
+
+      {CARD_SECTIONS.map((s) => {
+        const Icon = s.icon;
+        return (
+          <section key={s.title} className="mt-2 border-t border-hairline pt-3">
+            <h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide text-ink">
+              <Icon className="h-4 w-4" aria-hidden /> {s.title}
+            </h3>
+            {s.title === "Alimentation" && c.food_type && <p className="mt-1 text-[12px] text-ink-muted">Profil : {c.food_type}</p>}
+            <ul className="divide-y divide-[#F2F2EE]">
+              {s.rows.map((row) => (
+                <Line key={row.k} row={row} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </div>
   );
 }
