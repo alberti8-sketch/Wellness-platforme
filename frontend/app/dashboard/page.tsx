@@ -293,18 +293,19 @@ function CityOverview({
 
   return (
     <div>
-      <PageHeader
-        title={t.name}
-        subtitle={sub || undefined}
-        actions={
-          <>
-            <ReportActions code={t.code} name={t.name} />
-            <button onClick={onBack} className="no-print secondary-btn h-10">
-              <ArrowLeft className="h-4 w-4" aria-hidden /> Toutes les villes
-            </button>
-          </>
-        }
-      />
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Vue d'ensemble</p>
+          <h1 className="mt-1 text-[44px] font-bold leading-none tracking-[-0.03em] text-ink">{t.name}</h1>
+          {sub && <p className="mt-2.5 text-sm text-ink-muted">{sub}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ReportActions code={t.code} name={t.name} />
+          <button onClick={onBack} className="no-print secondary-btn h-10">
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Toutes les villes
+          </button>
+        </div>
+      </header>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
         <Kpi label="Score" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
