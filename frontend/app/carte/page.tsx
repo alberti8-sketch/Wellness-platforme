@@ -220,7 +220,7 @@ export default function CartePage() {
   const keyFigure = ind.level === "commune" ? median(nums) : mean(nums);
   const legend: LegendClass[] = isWalkClass
     ? WALK_LEVELS.map((l) => ({
-        label: `${l.label} (${l.range})`,
+        label: l.label,
         color: l.color,
         count: communes.filter((c) => walkLevelOf(c.walk_class) === l).length,
         test: () => false,
