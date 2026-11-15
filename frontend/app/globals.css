@@ -116,3 +116,36 @@ input[type="range"] {
   }
 }
 
+
+/* ---- Printable commune report (/rapport/pdf) ---- */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+@media print {
+  html,
+  body,
+  body > div {
+    background: #fff !important;
+  }
+  .report-doc {
+    max-width: none;
+    padding: 0;
+  }
+  .report-avoid,
+  .report-row,
+  .report-doc tr {
+    break-inside: avoid;
+  }
+  .report-doc h2 {
+    break-after: avoid;
+  }
+  /* Page 1 = summary page (score, what goes well / to improve, how to read); details from page 2. */
+  .report-page-end {
+    break-after: page;
+  }
+  .report-doc * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

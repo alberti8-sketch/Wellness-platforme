@@ -1,19 +1,19 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, LayoutGrid, PanelRightOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, LayoutGrid, PanelRightOpen } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
-import { CitySearch } from "@/components/city-search";
 import { DashboardTrends } from "@/components/dashboard-trends";
-import { EXTRA_DIMS, ExtraScoresCard, FoodScorePanel, ScreeningPanel, useExtraScores } from "@/components/extra-scores";
-import { TrendPanel } from "@/components/territory-context-panels";
-import { NextStep } from "@/components/next-step";
+import { EXTRA_DIMS, ExtraScoresCard, ScreeningPanel, useExtraScores } from "@/components/extra-scores";
+import { DiseasesModal } from "@/components/diseases-modal";
+import { ComparisonCard, DIMENSION_DETERMINANT, DimensionDrawer, DiseasesSummary, LandCard, ReportActions, UnmeasuredNote } from "@/components/report-blocks";
 import { PageActions } from "@/components/page-actions";
 import { useSession } from "@/components/session";
 import { BandBadge, Card, Empty, Kpi, PageHeader, ScoreBar, Spinner } from "@/components/ui";
 import { BAND_META, BAND_ORDER, bandOf, fmt } from "@/lib/bands";
 import { TYPE_LABEL, mean } from "@/lib/metrics";
+import { useReport } from "@/lib/rapport";
 import type { BandCode, Catalog, Territory } from "@/lib/types";
 
 function Donut({ counts, total }: { counts: Record<BandCode, number>; total: number }) {
@@ -53,19 +53,31 @@ function Donut({ counts, total }: { counts: Record<BandCode, number>; total: num
 }
 
 export default function DashboardPage() {
-  const { catalog } = useSession();
+  const { catalog, account, authReady } = useSession();
   const { territories, overview, weights, open, rankOf } = useAnalytics();
   const extra = useExtraScores(territories);
-  // Optional single-city view (?ville=<code>), chosen with the search box.
+  // Optional single-city view (?ville=<code>): the account's commune, a link, or a click in the tables.
   const [city, setCity] = useState<string | null>(null);
+  // Default: the ?ville= of the URL, else the signed-in account's commune (once: « Toutes les villes » stays possible).
+  const defaulted = useRef(false);
   useEffect(() => {
+    if (defaulted.current) return;
+    let v: string | null = null;
     try {
-      const v = new URLSearchParams(window.location.search).get("ville");
-      if (v) setCity(v.toUpperCase());
+      v = new URLSearchParams(window.location.search).get("ville");
     } catch {
       /* no URL access */
     }
-  }, []);
+    if (v) {
+      setCity(v.toUpperCase());
+      defaulted.current = true;
+    } else if (account) {
+      setCity(account.city_code);
+      defaulted.current = true;
+    } else if (authReady) {
+      defaulted.current = true;
+    }
+  }, [account, authReady]);
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
@@ -79,17 +91,11 @@ export default function DashboardPage() {
 
   if (!catalog || !weights) return <Spinner />;
   const cityT = city ? territories.find((t) => t.code === city) ?? null : null;
-  const search = <CitySearch territories={territories} value={cityT?.code ?? null} onPick={setCity} />;
   const header = (
     <PageHeader
       title="Vue d'ensemble"
-      subtitle={`L'indice de bien-être des villes, noté de 1 à 10 · ${overview?.period ?? ""}`}
-      actions={
-        <>
-          {search}
-          <PageActions />
-        </>
-      }
+      subtitle={`Le score des villes, noté de 1 à 10 · ${overview?.period ?? ""}`}
+      actions={<PageActions />}
     />
   );
   if (cityT && overview)
@@ -99,8 +105,8 @@ export default function DashboardPage() {
         territories={territories}
         catalog={catalog}
         rank={rankOf(cityT.code)}
+        mine={account?.city_code === cityT.code}
         extra={extra}
-        search={search}
         onBack={() => setCity(null)}
         onOpen={() => open(cityT.code)}
       />
@@ -233,7 +239,6 @@ export default function DashboardPage() {
 
       <ExtraScoresCard territories={territories} onPick={setCity} />
       <DashboardTrends />
-      <NextStep step={0} />
     </div>
   );
 }
@@ -244,8 +249,8 @@ function CityOverview({
   territories,
   catalog,
   rank,
+  mine,
   extra,
-  search,
   onBack,
   onOpen,
 }: {
@@ -253,8 +258,8 @@ function CityOverview({
   territories: Territory[];
   catalog: Catalog;
   rank: number;
+  mine: boolean;
   extra: ReturnType<typeof useExtraScores>;
-  search: React.ReactNode;
   onBack: () => void;
   onOpen: () => void;
 }) {
@@ -265,7 +270,27 @@ function CityOverview({
   const ordered = [...dims].sort((a, b) => (t.dimensions[b.code].score ?? 0) - (t.dimensions[a.code].score ?? 0));
   const best = ordered[0];
   const worst = ordered[ordered.length - 1];
-  const sub = [t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : null, t.context.population ? `${fmt(t.context.population, 0)} hab.` : null]
+  const report = useReport(t.code);
+  // Diseases pop-in: opened from « Toutes les maladies », and right after signing in (?maladies=1).
+  const [showDiseases, setShowDiseases] = useState(false);
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("maladies") === "1") setShowDiseases(true);
+    } catch {
+      /* no URL access */
+    }
+  }, []);
+  const closeDiseases = useCallback(() => {
+    setShowDiseases(false);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("maladies");
+      window.history.replaceState(window.history.state, "", url);
+    } catch {
+      /* no URL access */
+    }
+  }, []);
+  const sub = ["Rapport de la commune", mine ? "votre commune" : null, t.context.territory_type ? TYPE_LABEL[t.context.territory_type] : null, t.context.population ? `${fmt(t.context.population, 0)} hab.` : null]
     .filter(Boolean)
     .join(" · ");
 
@@ -276,8 +301,8 @@ function CityOverview({
         subtitle={sub || undefined}
         actions={
           <>
-            {search}
-            <button onClick={onBack} className="secondary-btn h-10">
+            <ReportActions code={t.code} name={t.name} />
+            <button onClick={onBack} className="no-print secondary-btn h-10">
               <ArrowLeft className="h-4 w-4" aria-hidden /> Toutes les villes
             </button>
           </>
@@ -285,7 +310,7 @@ function CityOverview({
       />
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Indice de bien-être" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
+        <Kpi label="Score" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
         <Kpi label="Rang" value={rank ? `${rank}ᵉ` : "—"} sub={`sur ${territories.length} villes suivies`} />
         <Kpi
           label="Écart à la moyenne"
@@ -299,10 +324,16 @@ function CityOverview({
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+
+      <div className="mb-4">
+        {report.data && showDiseases && <DiseasesModal report={report.data} onClose={closeDiseases} />}
+        {report.data ? <DiseasesSummary report={report.data} onShowAll={() => setShowDiseases(true)} /> : <Card title="Maladies chroniques">{report.error ?? "Chargement…"}</Card>}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <Card
           title="Scores par dimension"
-          subtitle="La ville (barre) face à la moyenne des villes (trait)"
+          subtitle="La ville (barre) face à la moyenne des villes (trait) · cliquez une ligne pour le détail"
           actions={
             <button onClick={onOpen} className="inline-flex items-center gap-1 text-[13px] font-medium text-ink hover:underline">
               Fiche complète <PanelRightOpen className="h-3.5 w-3.5" aria-hidden />
@@ -315,10 +346,12 @@ function CityOverview({
               ...EXTRA_DIMS.map((d) => ({ key: d.key, label: d.label, note: "hors indice", v: extra[d.key][t.code], m: mean(territories.map((x) => extra[d.key][x.code])) })),
             ].map(({ key, label, note, v, m }) => {
               const b = bandOf(v);
-              return (
-                <div key={key}>
+              const det = DIMENSION_DETERMINANT[key];
+              const row = (
+                <>
                   <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-ink">
+                    <span className="flex items-center gap-1.5 text-sm text-ink">
+                      {report.data && det && <ChevronRight className="h-4 w-4 text-ink-muted transition group-open:rotate-90" aria-hidden />}
                       {label}
                       {note && <span className="text-xs text-ink-muted"> · {note}</span>}
                     </span>
@@ -333,16 +366,29 @@ function CityOverview({
                       <span className="absolute -top-1 h-4 w-0.5 rounded bg-ink" style={{ left: `calc(${(m / 10) * 100}% - 1px)` }} aria-hidden />
                     )}
                   </div>
-                </div>
+                </>
+              );
+              // Each line is a drawer: the health determinant behind the score, its indicators and the diseases linked to it.
+              return report.data && det ? (
+                <details key={key} className="group">
+                  <summary className="cursor-pointer list-none rounded-lg [&::-webkit-details-marker]:hidden">{row}</summary>
+                  <DimensionDrawer report={report.data} determinant={det} only={key === "screening" ? ["prev_sub_depistage"] : undefined} />
+                </details>
+              ) : (
+                <div key={key}>{row}</div>
               );
             })}
           </div>
+          {report.data && <UnmeasuredNote report={report.data} />}
         </Card>
-        <TrendPanel code={t.code} />
-        <FoodScorePanel code={t.code} />
         <ScreeningPanel code={t.code} />
+        {report.data && <LandCard report={report.data} className="lg:col-span-2" />}
+        {report.data && (
+          <div className="lg:col-span-2">
+            <ComparisonCard report={report.data} />
+          </div>
+        )}
       </div>
-      <NextStep step={0} />
     </div>
   );
 }

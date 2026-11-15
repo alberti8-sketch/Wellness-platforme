@@ -1,12 +1,10 @@
 "use client";
 
-import { GitCompareArrows, X } from "lucide-react";
+import { X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { BAND_META, fmt } from "@/lib/bands";
 import type { BandCode, Catalog, Territory } from "@/lib/types";
-import { useAnalytics } from "./analytics";
 import { FoodPanel, PreventionPanel, TrendPanel } from "./territory-context-panels";
 
 const TYPE_LABEL: Record<string, string> = { urbain: "Ville", "semi-urbain": "Ville moyenne", rural: "Commune rurale" };
@@ -42,9 +40,6 @@ export function TerritoryDrawer({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const { compare, toggleCompare, open } = useAnalytics();
-  const router = useRouter();
-  const inCompare = compare.includes(t.code);
   useEffect(() => {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -84,7 +79,7 @@ export function TerritoryDrawer({
         {/* Score */}
         <section className="rounded-2xl border border-[#E7E7E2] bg-white p-5">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[13px] font-medium text-[#61656E]">Indice de bien-être</p>
+            <p className="text-[13px] font-medium text-[#61656E]">Score</p>
             <BandChip band={t.composite.band} />
           </div>
           <p className="mt-3 flex items-baseline gap-1">
@@ -130,22 +125,6 @@ export function TerritoryDrawer({
             );
           })}
           <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              onClick={() => {
-                if (inCompare) {
-                  toggleCompare(t.code);
-                  return;
-                }
-                toggleCompare(t.code);
-                open(null);
-                router.push("/classement#comparaison");
-              }}
-              aria-pressed={inCompare}
-              className={`inline-flex h-11 flex-[1_1_140px] items-center justify-center gap-2 rounded-xl text-sm font-medium ${inCompare ? "border border-[#15171C] bg-white text-[#15171C]" : "bg-[#15171C] text-white hover:bg-[#2B2E35]"}`}
-            >
-              <GitCompareArrows className="h-4 w-4" aria-hidden />
-              {inCompare ? "Retirer de la comparaison" : "Comparer"}
-            </button>
             <Link href="/ponderation" className="inline-flex h-11 flex-[1_1_140px] items-center justify-center rounded-xl border border-[#E0E0DA] bg-white text-sm font-medium text-[#15171C] hover:bg-[#F0F0EB]">
               Voir le calcul
             </Link>

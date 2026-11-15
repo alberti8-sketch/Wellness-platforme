@@ -22,7 +22,7 @@ export function parseMetric(k: string): Metric {
 }
 
 export function metricLabel(m: Metric, catalog: Catalog) {
-  if (m.kind === "composite") return "Indice de bien-être";
+  if (m.kind === "composite") return "Score";
   if (m.kind === "dim") return catalog.dimensions.find((d) => d.code === m.code)?.label ?? m.code;
   return catalog.indicators.find((i) => i.code === m.code)?.label ?? m.code;
 }

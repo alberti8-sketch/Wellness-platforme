@@ -1,5 +1,6 @@
 "use client";
 
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BAND_META, bandOf, fmt } from "@/lib/bands";
 import { useCommuneRows } from "@/lib/communes";
 import { mean } from "@/lib/metrics";
@@ -13,6 +14,9 @@ const colorOf = (v: number | null | undefined) => {
   const b = bandOf(v == null ? null : v / 10);
   return b ? BAND_META[b].color : "#B9B9B2";
 };
+
+// Bar colour per screening: pink for breast cancer, blue for colorectal, light green for the cervix.
+const SCREENING_COLOR: Record<string, string> = { depistage_sein: "#E4639E", depistage_colorectal: "#3E63DD", depistage_col: "#7ACB9C" };
 
 const SCREENING: [string, string][] = [
   ["depistage_sein", "Cancer du sein (50-74 ans)"],
@@ -71,6 +75,67 @@ export function FoodScorePanel({ code }: { code: string }) {
   );
 }
 
+const SCREENING_SHORT: Record<string, string> = { depistage_sein: "Cancer du sein", depistage_colorectal: "Cancer colorectal", depistage_col: "Col de l'utérus" };
+const FRANCE_GREY = "#B4B6B0";
+
+type ScreeningRow = { key: string; name: string; label: string; local: number | null; france: number | null };
+
+function ScreeningTip({ active, payload }: { active?: boolean; payload?: { payload: ScreeningRow }[] }) {
+  if (!active || !payload?.length) return null;
+  const r = payload[0].payload;
+  return (
+    <div className="rounded-xl border border-hairline bg-white px-3 py-2.5 text-[13px] shadow-[0_6px_20px_rgba(21,23,28,0.12)]">
+      <p className="font-semibold text-ink">{r.label}</p>
+      <p className="mt-1 flex items-center gap-2 text-ink-2">
+        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: SCREENING_COLOR[r.key] }} aria-hidden /> Département :{" "}
+        <span className="num font-semibold text-ink">{fmt(r.local, 1)} %</span>
+      </p>
+      <p className="flex items-center gap-2 text-ink-2">
+        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: FRANCE_GREY }} aria-hidden /> Moyenne France :{" "}
+        <span className="num font-semibold text-ink">{fmt(r.france, 1)} %</span>
+      </p>
+    </div>
+  );
+}
+
+/** Participation rate per screening: the department (screening colour) vs the French average (grey). */
+function ScreeningChart({ rows }: { rows: ScreeningRow[] }) {
+  return (
+    <>
+      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-ink" aria-hidden>
+        {rows.map((r) => (
+          <span key={r.key} className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: SCREENING_COLOR[r.key] }} /> {r.name}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm" style={{ background: FRANCE_GREY }} /> Moyenne France
+        </span>
+      </div>
+      <div
+        className="mt-2 h-[260px]"
+        role="img"
+        aria-label={`Taux de dépistage : ${rows.map((r) => `${r.label} ${fmt(r.local, 1)} % (France ${fmt(r.france, 1)} %)`).join(", ")}`}
+      >
+        <ResponsiveContainer>
+          <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 4, left: -8 }} barGap={2} barCategoryGap="28%">
+            <CartesianGrid vertical={false} stroke="#EEEEE9" />
+            <XAxis dataKey="name" interval={0} tick={{ fontSize: 13, fill: "#15171C", fontWeight: 600 }} tickLine={false} axisLine={{ stroke: "#D9D9D3" }} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 13, fill: "#4A4E57" }} tickLine={false} axisLine={false} tickFormatter={(x: number) => `${x} %`} width={54} />
+            <Tooltip content={<ScreeningTip />} cursor={{ fill: "#F6F6F3" }} />
+            <Bar dataKey="local" name="Département" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false}>
+              {rows.map((r) => (
+                <Cell key={r.key} fill={SCREENING_COLOR[r.key]} />
+              ))}
+            </Bar>
+            <Bar dataKey="france" name="Moyenne France" fill={FRANCE_GREY} radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </>
+  );
+}
+
 /** Cancer-screening score of the commune's department (Santé publique France), with the three rates. */
 export function ScreeningPanel({ code }: { code: string }) {
   const { data } = useDepartementData();
@@ -88,27 +153,15 @@ export function ScreeningPanel({ code }: { code: string }) {
       ) : (
         <>
           <Big value={v.prev_sub_depistage} />
-          <ul className="mt-4 space-y-3">
-            {SCREENING.map(([k, label]) => {
-              const x = v[k];
-              const avg = mean((data?.departements ?? []).map((d) => d.values[k]));
-              return (
-                <li key={k}>
-                  <div className="mb-1 flex items-baseline justify-between gap-3 text-[13px]">
-                    <span className="text-ink-2">{label}</span>
-                    <span>
-                      <span className="num font-semibold text-ink">{x == null ? "—" : `${fmt(x, 1)} %`}</span>
-                      {avg != null && <span className="text-xs text-ink-muted"> · France {fmt(avg, 1)} %</span>}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <ScoreBar score={x == null ? null : x / 10} color="#3E63DD" height={6} />
-                    {avg != null && <span className="absolute -top-1 h-3.5 w-0.5 rounded bg-ink" style={{ left: `calc(${avg}% - 1px)` }} aria-hidden />}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <ScreeningChart
+            rows={SCREENING.map(([k, label]) => ({
+              key: k,
+              name: SCREENING_SHORT[k],
+              label,
+              local: v[k] ?? null,
+              france: mean((data?.departements ?? []).map((d) => d.values[k])),
+            }))}
+          />
           <p className="mt-3 text-xs text-ink-muted">
             Score = rang moyen du département sur les trois dépistages (100 = le meilleur). Taux de participation 2024-2025, Santé publique France.
           </p>
