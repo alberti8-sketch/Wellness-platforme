@@ -54,7 +54,7 @@ function Donut({ counts, total }: { counts: Record<BandCode, number>; total: num
 
 export default function DashboardPage() {
   const { catalog, account, authReady } = useSession();
-  const { territories, overview, weights, open, rankOf } = useAnalytics();
+  const { territories, overview, weights, open } = useAnalytics();
   const extra = useExtraScores(territories);
   // Optional single-city view (?ville=<code>): the account's commune, a link, or a click in the tables.
   const [city, setCity] = useState<string | null>(null);
@@ -104,7 +104,6 @@ export default function DashboardPage() {
         t={cityT}
         territories={territories}
         catalog={catalog}
-        rank={rankOf(cityT.code)}
         mine={account?.city_code === cityT.code}
         extra={extra}
         onBack={() => setCity(null)}
@@ -243,12 +242,11 @@ export default function DashboardPage() {
   );
 }
 
-/** Overview of one city: its index, rank and gap to the average, its dimensions against the average, health context. */
+/** Overview of one city: its index and gap to the average, its dimensions against the average, health context. */
 function CityOverview({
   t,
   territories,
   catalog,
-  rank,
   mine,
   extra,
   onBack,
@@ -257,7 +255,6 @@ function CityOverview({
   t: Territory;
   territories: Territory[];
   catalog: Catalog;
-  rank: number;
   mine: boolean;
   extra: ReturnType<typeof useExtraScores>;
   onBack: () => void;
@@ -309,9 +306,8 @@ function CityOverview({
         }
       />
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid gap-4 sm:grid-cols-3">
         <Kpi label="Score" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
-        <Kpi label="Rang" value={rank ? `${rank}ᵉ` : "—"} sub={`sur ${territories.length} villes suivies`} />
         <Kpi
           label="Écart à la moyenne"
           value={gap == null ? "—" : `${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmt(Math.abs(gap))}`}
