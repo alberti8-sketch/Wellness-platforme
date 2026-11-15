@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronRight, LayoutGrid, PanelRightOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, LayoutGrid, Lightbulb, PanelRightOpen, Target, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalytics } from "@/components/analytics";
@@ -267,6 +267,7 @@ function CityOverview({
   const ordered = [...dims].sort((a, b) => (t.dimensions[b.code].score ?? 0) - (t.dimensions[a.code].score ?? 0));
   const best = ordered[0];
   const worst = ordered[ordered.length - 1];
+  const dimAvg = (code: string) => mean(territories.map((x) => x.dimensions[code]?.score ?? null).filter((v): v is number => v != null));
   const report = useReport(t.code);
   // Diseases pop-in: opened from « Toutes les maladies », and right after signing in (?maladies=1).
   const [showDiseases, setShowDiseases] = useState(false);
@@ -307,18 +308,65 @@ function CityOverview({
         </div>
       </header>
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-3">
-        <Kpi label="Score" value={fmt(score)} sub={<BandBadge band={t.composite.band} />} />
-        <Kpi
-          label="Écart à la moyenne"
-          value={gap == null ? "—" : `${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmt(Math.abs(gap))}`}
-          sub={avg == null ? undefined : `moyenne des villes : ${fmt(avg)}`}
-        />
-        <Kpi
-          label="Point fort"
-          value={best ? fmt(t.dimensions[best.code].score) : "—"}
-          sub={best ? `${best.label}${worst && worst.code !== best.code ? ` · à améliorer : ${worst.label}` : ""}` : undefined}
-        />
+      <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        {/* The score, the most important figure, with its gap to the average of the cities inside. */}
+        <div className="rounded-card border border-hairline bg-white p-6">
+          <p className="text-[14px] font-medium text-ink-muted">Score</p>
+          <p className="num mt-2 leading-none tracking-[-0.03em] text-ink">
+            <span className="text-[64px] font-bold">{fmt(score)}</span>
+            <span className="ml-1 text-[20px] font-semibold text-ink-muted">/10</span>
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <BandBadge band={t.composite.band} />
+            {gap != null && avg != null && (
+              <span
+                className="num inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold"
+                style={gap >= 0 ? { background: "#DDF0EA", color: "#0E5A50" } : { background: "#FBE6DF", color: "#9A2F1C" }}
+              >
+                <span className="text-[11px]" aria-hidden>
+                  {gap >= 0 ? "▲" : "▼"}
+                </span>
+                {gap > 0 ? "+" : gap < 0 ? "−" : ""}
+                {fmt(Math.abs(gap))} vs la moyenne des villes ({fmt(avg)})
+              </span>
+            )}
+          </div>
+        </div>
+        {/* What to improve first: the weakest dimension, highlighted. */}
+        <div className="rounded-card border-2 border-[#E7B9A9] bg-[#FDF3EF] p-5">
+          <p className="flex items-center gap-1.5 text-[14px] font-semibold text-[#9A2F1C]">
+            <Target className="h-4 w-4" aria-hidden /> À améliorer en priorité
+          </p>
+          <p className="mt-2 text-[22px] font-bold leading-tight text-ink">{worst?.label ?? "—"}</p>
+          {worst && (
+            <>
+              <p className="num mt-1.5 text-[13px] text-ink-2">
+                <strong className="text-[#9A2F1C]">{fmt(t.dimensions[worst.code].score)}</strong> /10 · moyenne des villes {fmt(dimAvg(worst.code))}
+              </p>
+              <Link
+                href={`/assistant?ville=${t.code}&question=${encodeURIComponent(
+                  `Comment améliorer le score « ${worst.label} » de ${t.name} ? Il est de ${fmt(t.dimensions[worst.code].score)} /10 contre ${fmt(
+                    dimAvg(worst.code),
+                  )} en moyenne pour les villes suivies. Propose des actions concrètes que la mairie peut lancer.`,
+                )}`}
+                className="no-print mt-3 inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#9A2F1C] px-3 text-[13px] font-semibold text-white hover:bg-[#7E2615]"
+              >
+                <Lightbulb className="h-4 w-4" aria-hidden /> Trouver une solution
+              </Link>
+            </>
+          )}
+        </div>
+        <div className="rounded-card border border-hairline bg-white p-5">
+          <p className="flex items-center gap-1.5 text-[14px] font-semibold text-[#0E5A50]">
+            <ThumbsUp className="h-4 w-4" aria-hidden /> Point fort
+          </p>
+          <p className="mt-2 text-[22px] font-bold leading-tight text-ink">{best?.label ?? "—"}</p>
+          {best && (
+            <p className="num mt-1.5 text-[13px] text-ink-2">
+              <strong className="text-[#0E5A50]">{fmt(t.dimensions[best.code].score)}</strong> /10 · moyenne des villes {fmt(dimAvg(best.code))}
+            </p>
+          )}
+        </div>
       </div>
 
 
