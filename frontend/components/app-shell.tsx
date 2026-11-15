@@ -1,16 +1,21 @@
 "use client";
 
-import { Activity, Database, GitCompareArrows, LayoutGrid, LogOut, Map, Network, type LucideIcon } from "lucide-react";
+import { Activity, Database, LayoutGrid, Lightbulb, LogOut, Map, Network, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAnalytics } from "./analytics";
-import { STEPS } from "@/lib/steps";
+import { CITY_PAGES, STEPS } from "@/lib/steps";
 import { DEMO_ACCOUNTS, useSession } from "./session";
 import { TerritoryDrawer } from "./territory-drawer";
 import { ErrorBox, cx } from "./ui";
 
-const ICONS: Record<string, LucideIcon> = { "/dashboard": LayoutGrid, "/carte": Map, "/classement": GitCompareArrows, "/prediction": Network };
+const ICONS: Record<string, LucideIcon> = {
+  "/dashboard": LayoutGrid,
+  "/assistant": Lightbulb,
+  "/carte": Map,
+  "/prediction": Network,
+};
 
 function initials(name: string) {
   return name
@@ -32,9 +37,19 @@ function GlobalDrawer() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { apiKey, setApiKey, me, error, loggedIn, authReady, logout } = useSession();
+  const { apiKey, setApiKey, me, error, loggedIn, authReady, logout, account } = useSession();
   const router = useRouter();
-  const isLanding = pathname === "/";
+  const isLanding = pathname === "/" || (pathname?.startsWith("/connexion") ?? false) || (pathname?.startsWith("/rapport/pdf") ?? false);
+  // Current commune (?ville=), kept when moving between the commune pages; the account's commune by default.
+  const [ville, setVille] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setVille(new URLSearchParams(window.location.search).get("ville"));
+    } catch {
+      /* no URL access */
+    }
+  }, [pathname]);
+  const cityCode = ville ?? account?.city_code ?? null;
   // The map is full-screen (floating panels), the other pages use the centred column.
   const fullBleed = pathname?.startsWith("/carte") ?? false;
 
@@ -66,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={href}
-                href={href}
+                href={CITY_PAGES.has(href) && cityCode ? `${href}?ville=${cityCode}` : href}
                 aria-current={on ? "page" : undefined}
                 className={cx("flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-sm transition", on ? "bg-primary font-medium text-white" : "text-[#3A3D44] hover:bg-hover")}
               >
@@ -91,11 +106,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
           <div className="flex items-center gap-2.5 px-2">
             <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-hairline text-xs font-semibold text-ink">
-              {me ? initials(me.name) : "··"}
+              {account ? account.email.slice(0, 2).toUpperCase() : me ? initials(me.name) : "··"}
             </span>
             <div className="min-w-0 text-[13px] leading-tight">
-              <p className="truncate font-medium text-ink">{me?.name ?? "Connexion…"}</p>
-              <p className="truncate text-ink-muted">{me ? `${me.tenant.stakeholder_type} · ${me.role}` : ""}</p>
+              <p className="truncate font-medium text-ink">{account?.email ?? me?.name ?? "Connexion…"}</p>
+              <p className="truncate text-ink-muted">
+                {account ? [account.job, account.city_name].filter(Boolean).join(" · ") : me ? `${me.tenant.stakeholder_type} · ${me.role}` : ""}
+              </p>
             </div>
           </div>
           <button
@@ -107,6 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <LogOut className="h-4 w-4" aria-hidden /> Se déconnecter
           </button>
+          {!account && (
           <details className="px-2 text-xs text-ink-muted">
             <summary className="cursor-pointer select-none py-1 hover:text-ink">Changer de compte (démo)</summary>
             <select
@@ -122,6 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               ))}
             </select>
           </details>
+          )}
         </div>
       </aside>
 

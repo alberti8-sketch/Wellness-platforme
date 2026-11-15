@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api, setApiKey as setClientKey } from "@/lib/api";
+import { api, setApiKey as setClientKey, setToken as setClientToken } from "@/lib/api";
 import type { Catalog, Me } from "@/lib/types";
 
 export const DEMO_ACCOUNTS = [
@@ -10,6 +10,15 @@ export const DEMO_ACCOUNTS = [
   { key: "demo-b2b-admin", label: "B2B · Admin (QVT entreprise)" },
 ];
 const STORAGE_KEY = "wellness.apiKey";
+const TOKEN_KEY = "wellness.token";
+
+/** A signed-in account (e-mail / password). */
+export interface Account {
+  email: string;
+  job: string;
+  city_code: string;
+  city_name: string | null;
+}
 
 interface Session {
   apiKey: string;
@@ -19,10 +28,15 @@ interface Session {
   error: string | null;
   ready: boolean;
   isAdmin: boolean;
-  /** Demo sign-in: a flag remembered in this browser (replace with real auth / SSO). */
+  /** Signed in with an account (token) or through the demo access. */
   loggedIn: boolean;
   authReady: boolean;
+  /** The signed-in account, null for the demo access. */
+  account: Account | null;
+  /** Demo access (one click, demo API key). */
   login: () => void;
+  /** Account sign-in: keep the session token and profile. */
+  signIn: (token: string, account: Account) => void;
   logout: () => void;
 }
 
@@ -35,9 +49,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [token, setTokenState] = useState("");
+  const [account, setAccount] = useState<Account | null>(null);
+  const [demo, setDemo] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Keep the API client in sync synchronously so child effects use the right key.
+  // Keep the API client in sync synchronously so child effects use the right credentials.
   setClientKey(apiKey);
+  setClientToken(token);
 
   useEffect(() => {
     try {
@@ -49,6 +68,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!authChecked) return;
     let cancelled = false;
     setMe(null);
     setError(null);
@@ -62,7 +82,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [apiKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey, token, authChecked]);
 
   const setApiKey = useCallback((k: string) => {
     setKey(k);
@@ -73,32 +94,69 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
+  // Restore the session: a saved account token is checked against the API before use.
   useEffect(() => {
+    let saved = "";
     try {
-      setLoggedIn(window.localStorage.getItem(AUTH_KEY) === "1");
+      setDemo(window.localStorage.getItem(AUTH_KEY) === "1");
+      saved = window.localStorage.getItem(TOKEN_KEY) ?? "";
     } catch {
       /* storage unavailable: signed out */
     }
-    setAuthReady(true);
+    if (!saved) {
+      setAuthChecked(true);
+      return;
+    }
+    setClientToken(saved);
+    api
+      .get<Account>("/api/auth/me")
+      .then((a) => {
+        setTokenState(saved);
+        setAccount(a);
+      })
+      .catch(() => {
+        setClientToken("");
+        try {
+          window.localStorage.removeItem(TOKEN_KEY);
+        } catch {
+          /* storage unavailable */
+        }
+      })
+      .finally(() => setAuthChecked(true));
   }, []);
+  const loggedIn = !!account || demo;
+  const authReady = authChecked;
   const login = useCallback(() => {
-    setLoggedIn(true);
+    setDemo(true);
     try {
       window.localStorage.setItem(AUTH_KEY, "1");
     } catch {
       /* storage unavailable: session-only sign-in */
     }
   }, []);
+  const signIn = useCallback((t: string, a: Account) => {
+    setClientToken(t);
+    setTokenState(t);
+    setAccount(a);
+    try {
+      window.localStorage.setItem(TOKEN_KEY, t);
+    } catch {
+      /* storage unavailable: session-only sign-in */
+    }
+  }, []);
   const logout = useCallback(() => {
-    setLoggedIn(false);
+    if (token) void api.post("/api/auth/logout").catch(() => undefined);
+    setClientToken("");
+    setTokenState("");
+    setAccount(null);
+    setDemo(false);
     try {
       window.localStorage.removeItem(AUTH_KEY);
+      window.localStorage.removeItem(TOKEN_KEY);
     } catch {
       /* storage unavailable */
     }
-  }, []);
+  }, [token]);
 
   const value = useMemo<Session>(
     () => ({
@@ -111,10 +169,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isAdmin: me?.role === "admin",
       loggedIn,
       authReady,
+      account,
       login,
+      signIn,
       logout,
     }),
-    [apiKey, setApiKey, me, catalog, error, loggedIn, authReady, login, logout],
+    [apiKey, setApiKey, me, catalog, error, loggedIn, authReady, account, login, signIn, logout],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Activity, ArrowRight, Columns2, MapPin, TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "@/components/session";
@@ -9,7 +10,7 @@ import type { BandCode } from "@/lib/types";
 
 const FEATURES = [
   { icon: MapPin, title: "Situez chaque ville", text: "Sur une carte de France : marche, vélo, alimentation, sport et santé." },
-  { icon: Columns2, title: "Comparez-les", text: "Jusqu'à 4 villes côte à côte, thème par thème, et le podium des meilleures." },
+  { icon: Columns2, title: "Comparez-vous", text: "Votre commune face aux villes qui lui ressemblent, indicateur par indicateur." },
   { icon: TrendingUp, title: "Anticipez les maladies", text: "Estimez le diabète à partir du profil d'une ville." },
 ];
 
@@ -30,17 +31,13 @@ const PREVIEW: { name: string; type: string; score: string; band: BandCode; rank
 
 /** Public landing page (signed-out). Signed-in users go straight to the app. */
 export default function LandingPage() {
-  const { loggedIn, authReady, login } = useSession();
+  const { loggedIn, authReady, account } = useSession();
   const router = useRouter();
 
+  // Signed in: straight to the overview (of their commune for an account).
   useEffect(() => {
-    if (authReady && loggedIn) router.replace("/dashboard");
-  }, [authReady, loggedIn, router]);
-
-  const signIn = () => {
-    login();
-    router.push("/dashboard");
-  };
+    if (authReady && loggedIn) router.replace(account ? `/dashboard?ville=${account.city_code}` : "/dashboard");
+  }, [authReady, loggedIn, account, router]);
   const band = BAND_META[PREVIEW.band];
 
   return (
@@ -58,14 +55,19 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-[1180px] flex-col gap-14">
           <div className="flex flex-wrap items-center gap-12">
             <div className="flex min-w-0 flex-[1_1_420px] flex-col items-start gap-6">
-              <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[13px] text-ink-muted">Démo · santé des territoires</span>
-              <h1 className="text-[40px] font-semibold leading-[1.05] tracking-[-0.025em] md:text-[56px]">La santé de vos villes, en un coup d&apos;œil.</h1>
+              <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[13px] text-ink-muted">Pour les maires et leurs équipes</span>
+              <h1 className="text-[40px] font-semibold leading-[1.05] tracking-[-0.025em] md:text-[56px]">La santé de votre commune, en un coup d&apos;œil.</h1>
               <p className="max-w-[480px] text-[17px] text-ink-muted md:text-[19px]">
-                Un indice de bien-être de 1 à 10 pour chaque ville, pour la comparer aux autres et anticiper les maladies chroniques.
+                Un score de 1 à 10 pour votre commune, pour la comparer à des communes semblables et anticiper les maladies chroniques.
               </p>
-              <button onClick={signIn} className="inline-flex h-[52px] items-center gap-2.5 rounded-xl bg-ink px-6 font-semibold text-white hover:bg-black">
-                Se connecter <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href="/connexion" className="inline-flex h-[52px] items-center gap-2.5 rounded-xl bg-ink px-6 font-semibold text-white hover:bg-black">
+                  Se connecter <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
+                </Link>
+                <Link href="/connexion?mode=inscription" className="inline-flex h-[52px] items-center rounded-xl border border-hairline bg-white px-6 font-semibold text-ink hover:bg-hover">
+                  Créer un compte
+                </Link>
+              </div>
             </div>
 
             <figure
