@@ -31,13 +31,13 @@ const PREVIEW: { name: string; type: string; score: string; band: BandCode; rank
 
 /** Public landing page (signed-out). Signed-in users go straight to the app. */
 export default function LandingPage() {
-  const { loggedIn, authReady, account } = useSession();
+  const { loggedIn, authReady } = useSession();
   const router = useRouter();
 
-  // Signed in: straight to the overview (of their commune for an account).
+  // Signed in: straight to the map (zoomed on the account's commune).
   useEffect(() => {
-    if (authReady && loggedIn) router.replace(account ? `/dashboard?ville=${account.city_code}` : "/dashboard");
-  }, [authReady, loggedIn, account, router]);
+    if (authReady && loggedIn) router.replace("/carte");
+  }, [authReady, loggedIn, router]);
   const band = BAND_META[PREVIEW.band];
 
   return (

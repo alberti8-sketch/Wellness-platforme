@@ -18,7 +18,7 @@ const field = "h-11 w-full rounded-xl border border-hairline bg-white px-3.5 tex
 
 /** Sign in, or create an account (e-mail, password, role in the town hall, commune). */
 export default function ConnexionPage() {
-  const { loggedIn, authReady, account, signIn, login } = useSession();
+  const { loggedIn, authReady, signIn, login } = useSession();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [opts, setOpts] = useState<Options | null>(null);
@@ -29,10 +29,10 @@ export default function ConnexionPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Already signed in: straight to the overview (of the commune for an account).
   useEffect(() => {
-    if (authReady && loggedIn) router.replace(account ? `/dashboard?ville=${account.city_code}&maladies=1` : "/dashboard");
-  }, [authReady, loggedIn, account, router]);
+    // First page after signing in: the map (zoomed on the account's commune).
+    if (authReady && loggedIn) router.replace("/carte");
+  }, [authReady, loggedIn, router]);
 
   useEffect(() => {
     try {
@@ -57,7 +57,7 @@ export default function ConnexionPage() {
       const body = mode === "login" ? { email, password } : { email, password, job, city_code: city };
       const res = await api.post<{ token: string; user: Account }>(mode === "login" ? "/api/auth/login" : "/api/auth/register", body);
       signIn(res.token, res.user);
-      // The redirect effect above then opens the commune's report with the diseases pop-in, to look for solutions.
+      // The redirect effect above then opens the map, zoomed on the commune.
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -170,7 +170,7 @@ export default function ConnexionPage() {
             <button
               onClick={() => {
                 login();
-                router.push("/dashboard");
+                router.push("/carte");
               }}
               className="font-medium text-ink underline-offset-2 hover:underline"
             >
