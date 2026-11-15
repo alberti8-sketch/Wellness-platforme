@@ -6,7 +6,6 @@ export const BAND_META: Record<BandCode, { label: string; color: string; tint: s
   middle: { label: "Middle", color: "#D4A33A", tint: "#F6EDD3", text: "#6E5110", range: "4 – 6,9" },
   bad: { label: "Bad", color: "#C8513A", tint: "#FBE6DF", text: "#9A2F1C", range: "1 – 3,9" },
 };
-export const NO_DATA_COLOR = "#E2E2DC";
 export const BAND_ORDER: BandCode[] = ["best", "middle", "bad"];
 
 export function bandOf(score: number | null | undefined): BandCode | null {

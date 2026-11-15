@@ -261,7 +261,7 @@ export function UnmeasuredNote({ report }: { report: Report }) {
 /** The commune and the 3 most similar tracked cities, one theme at a time: one column chart per indicator (real values),
  * and curves for the diseases. */
 export function ComparisonCard({ report }: { report: Report }) {
-  const { cities, indicators, diseases } = report.comparison;
+  const { cities, indicators } = report.comparison;
   const themes = [
     ...indicators
       .filter((i) => i.theme)

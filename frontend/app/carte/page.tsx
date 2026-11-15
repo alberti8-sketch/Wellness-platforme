@@ -152,7 +152,6 @@ export default function CartePage() {
 
   const ind = ALL_INDS.find((i) => i.key === key)!;
   const indMeta: Meta | null = ind.level === "commune" ? meta?.indicators[key] ?? null : dept.data?.indicators[key] ?? null;
-  const unit = indMeta ? unitOf(indMeta.unit) : "";
   const format = (v: number | null | undefined, k = key) => {
     if (v == null) return "—";
     const m = meta?.indicators[k] ?? dept.data?.indicators[k];
@@ -228,7 +227,6 @@ export default function CartePage() {
     : ind.level === "commune"
       ? classesByKey[key] ?? []
       : deptClassesByKey[key] ?? [];
-  const scale = ind.level === "commune" ? "communes" : "départements";
   const missing = ind.level === "commune" ? communes.length - nums.length : 0;
 
   const selCommune = communes.find((c) => c.code === selected) ?? null;

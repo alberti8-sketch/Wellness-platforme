@@ -126,22 +126,6 @@ export function Empty({ icon: Icon, title, children }: { icon: LucideIcon; title
   );
 }
 
-export function BandLegend() {
-  return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted">
-      {(["best", "middle", "bad"] as BandCode[]).map((b) => (
-        <span key={b} className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full" style={{ background: BAND_META[b].color }} />
-          {BAND_META[b].label} <span className="text-ink-faint">({BAND_META[b].range})</span>
-        </span>
-      ))}
-      <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-band-none" /> Pas de donnée
-      </span>
-    </div>
-  );
-}
-
 /** Page header (maquette): 28px title, muted subtitle, actions on the right. */
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (

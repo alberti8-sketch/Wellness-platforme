@@ -1,4 +1,4 @@
-import type { Catalog, DimensionScore, Territory } from "./types";
+import type { Catalog } from "./types";
 
 /** Dimension identity colours (maquette): fixed per dimension, never by rank. */
 export const DIM_COLOR: Record<string, string> = {
@@ -13,25 +13,10 @@ export const TYPE_LABEL: Record<string, string> = { urbain: "Ville", "semi-urbai
 
 export type Metric = { kind: "composite" } | { kind: "dim"; code: string } | { kind: "ind"; code: string };
 
-export const metricKey = (m: Metric) => (m.kind === "composite" ? "composite" : `${m.kind}:${m.code}`);
-
-export function parseMetric(k: string): Metric {
-  if (k === "composite") return { kind: "composite" };
-  const [kind, code] = k.split(":");
-  return { kind: kind as "dim" | "ind", code };
-}
-
 export function metricLabel(m: Metric, catalog: Catalog) {
   if (m.kind === "composite") return "Score";
   if (m.kind === "dim") return catalog.dimensions.find((d) => d.code === m.code)?.label ?? m.code;
   return catalog.indicators.find((i) => i.code === m.code)?.label ?? m.code;
-}
-
-export function metricValue(t: Territory, m: Metric): DimensionScore & { raw?: number | null } {
-  if (m.kind === "composite") return t.composite;
-  if (m.kind === "dim") return t.dimensions[m.code] ?? { score: null, band: null, coverage: 0 };
-  const c = t.indicators[m.code];
-  return { score: c?.score ?? null, band: c?.band ?? null, coverage: c?.score != null ? 1 : 0, raw: c?.raw_value ?? null };
 }
 
 export const mean = (xs: (number | null | undefined)[]) => {

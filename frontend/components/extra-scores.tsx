@@ -34,47 +34,6 @@ function Big({ value, unit = "/100" }: { value: number | null | undefined; unit?
   );
 }
 
-/** Food-environment score of a commune (team file: BPE 2025 + SIRENE, mRFEI-like method). */
-export function FoodScorePanel({ code }: { code: string }) {
-  const { byCode, loading } = useCommuneRows([code]);
-  const c = byCode[code];
-  const v = c?.values;
-  return (
-    <section className="rounded-2xl border border-hairline bg-white p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-[15px] font-semibold text-ink">Alimentation</h3>
-        <span className="text-xs text-ink-muted">Commune</span>
-      </div>
-      {loading ? (
-        <p className="mt-3 text-sm text-ink-muted">Chargement…</p>
-      ) : v?.food_score == null ? (
-        <p className="mt-3 text-sm text-ink-muted">Score indisponible pour cette commune.</p>
-      ) : (
-        <>
-          <Big value={v.food_score} />
-          {c.food_type && <span className="mt-2 inline-block rounded-full bg-plane px-2.5 py-1 text-xs font-medium text-ink-2">{c.food_type}</span>}
-          <ul className="mt-4 divide-y divide-[#F2F2EE] text-[13px]">
-            {(
-              [
-                ["Commerces favorables (sur favorables + défavorables)", v.food_balance, "%"],
-                ["Commerces de produits frais / 10 000 hab.", v.fresh_10k, ""],
-                ["Fast-foods / 10 000 hab.", v.fastfood_10k, ""],
-              ] as const
-            ).map(([label, x, u]) => (
-              <li key={label} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="text-ink-2">{label}</span>
-                <span className="num font-semibold text-ink">{x == null ? "—" : `${fmt(x, 1)}${u ? ` ${u}` : ""}`}</span>
-              </li>
-            ))}
-          </ul>
-          {v.food_reliable === 0 && <p className="mt-2 text-xs text-ink-muted">Petite commune : l&apos;offre réelle se situe souvent dans le bourg voisin.</p>}
-          <p className="mt-3 text-xs text-ink-muted">Équilibre de l&apos;offre 40 %, accès aux produits frais 35 %, faible densité de fast-foods 25 % (BPE 2025, SIRENE).</p>
-        </>
-      )}
-    </section>
-  );
-}
-
 const SCREENING_SHORT: Record<string, string> = { depistage_sein: "Cancer du sein", depistage_colorectal: "Cancer colorectal", depistage_col: "Col de l'utérus" };
 const FRANCE_GREY = "#B4B6B0";
 
