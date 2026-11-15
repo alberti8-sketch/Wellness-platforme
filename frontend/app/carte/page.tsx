@@ -13,7 +13,8 @@ import {
   type LegendClass,
   NO_DATA,
   OUR_CITIES,
-  WALK_COLORS,
+  WALK_LEVELS,
+  walkLevelOf,
   median,
   normalize,
   quintileClasses,
@@ -190,8 +191,9 @@ export default function CartePage() {
     const classes = classesByKey[key];
     return communes.map((c) => {
       const v = c.values[key];
-      const color = isWalkClass ? (c.walk_class ? WALK_COLORS[c.walk_class] ?? null : null) : colorOf(classes, v);
-      const display = isWalkClass && c.walk_class ? `classe ${c.walk_class} · ${fmt(v, 1)} /20` : v == null ? "non évalué" : format(v);
+      const level = walkLevelOf(c.walk_class);
+      const color = isWalkClass ? level?.color ?? null : colorOf(classes, v);
+      const display = isWalkClass && level ? `${level.label} · ${fmt(v, 1)} /20` : v == null ? "non évalué" : format(v);
       return { code: c.code, name: c.name, lat: c.lat, lon: c.lon, population: c.population, color, display };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,10 +218,10 @@ export default function CartePage() {
       : (dept.data?.departements ?? []).map((d) => d.values[key]).filter((v): v is number => v != null);
   const keyFigure = ind.level === "commune" ? median(nums) : mean(nums);
   const legend: LegendClass[] = isWalkClass
-    ? (meta?.walk_classes ?? []).map((cl) => ({
-        label: `Classe ${cl}`,
-        color: WALK_COLORS[cl],
-        count: communes.filter((c) => c.walk_class === cl).length,
+    ? WALK_LEVELS.map((l) => ({
+        label: `${l.label} (${l.range})`,
+        color: l.color,
+        count: communes.filter((c) => walkLevelOf(c.walk_class) === l).length,
         test: () => false,
       }))
     : ind.level === "commune"
@@ -586,17 +588,13 @@ function CommuneCard({
         <h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide text-ink">
           <Footprints className="h-4 w-4" aria-hidden /> Marche
         </h3>
-        {c.walk_class ? (
+        {walkLevelOf(c.walk_class) ? (
           <div className="flex items-center gap-3 py-2">
-            <span
-              className="num grid h-9 min-w-9 place-items-center rounded-lg px-2 text-[15px] font-bold"
-              style={{ background: WALK_COLORS[c.walk_class], color: ["C", "D", "E"].includes(c.walk_class) ? "#15171C" : "#fff" }}
-            >
-              {c.walk_class}
-            </span>
+            <span className="h-9 w-2 shrink-0 rounded-full" style={{ background: walkLevelOf(c.walk_class)!.color }} aria-hidden />
             <p className="text-[13px] leading-snug text-ink-2">
-              Note de marche <strong className="num text-ink">{fmt(c.values.walk_score, 1)} /20</strong>
-              <span className="block text-[12px] text-ink-muted">Classe de A+ (très agréable) à G (difficile)</span>
+              <strong className="block text-[15px] text-ink">{walkLevelOf(c.walk_class)!.label}</strong>
+              Note des piétons <strong className="num text-ink">{fmt(c.values.walk_score, 1)} /20</strong>
+              <span className="text-[12px] text-ink-muted"> · moyenne {fmt(refs.walk_score, 1)} · classe {c.walk_class} du baromètre</span>
             </p>
           </div>
         ) : (

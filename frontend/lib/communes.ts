@@ -85,17 +85,18 @@ export function useCommuneRows(codes: string[]) {
 export const DIVERGING = ["#B5442C", "#E0875A", "#DCCCA6", "#78B3A2", "#1E7462"];
 /** Sequential ramp for context indicators (no "better" end). */
 export const SEQUENTIAL = ["#D9E7EE", "#A9C9D8", "#77A5BB", "#3F7FA0", "#0B5E80"];
-/** Baromètre des villes marchables classes, A+ (best) → G (worst). */
-export const WALK_COLORS: Record<string, string> = {
-  "A+": "#0F5446",
-  A: "#1E7462",
-  B: "#5FA390",
-  C: "#A8CDBF",
-  D: "#DCCCA6",
-  E: "#E8A877",
-  F: "#D06B43",
-  G: "#A3381F",
-};
+/**
+ * Baromètre des villes marchables: its 8 classes (A+ … G) are bands of the pedestrians' score /20.
+ * Shown as 5 levels in plain words (score ranges observed in the 2023 data).
+ */
+export const WALK_LEVELS = [
+  { label: "Très agréable à pied", classes: ["A+", "A", "B"], range: "11,7 /20 et plus", color: "#1E7462" },
+  { label: "Agréable", classes: ["C"], range: "10 à 11,6 /20", color: "#78B3A2" },
+  { label: "Dans la moyenne", classes: ["D"], range: "8,4 à 10 /20", color: "#DCCCA6" },
+  { label: "Peu agréable", classes: ["E"], range: "6,9 à 8,4 /20", color: "#E0875A" },
+  { label: "Difficile à pied", classes: ["F", "G"], range: "moins de 6,9 /20", color: "#B5442C" },
+] as const;
+export const walkLevelOf = (cls: string | null | undefined) => (cls ? WALK_LEVELS.find((l) => (l.classes as readonly string[]).includes(cls)) ?? null : null);
 export const NO_DATA = "#B9BAB4";
 
 export interface LegendClass {
