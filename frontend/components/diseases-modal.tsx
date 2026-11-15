@@ -58,7 +58,7 @@ function Row({ d, city, code, pop }: { d: Disease; city: string; code: string; p
       </div>
       <Link
         href={`/assistant?ville=${code}&question=${encodeURIComponent(question(d, city))}`}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-black"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-brand-700"
       >
         <Lightbulb className="h-4 w-4" aria-hidden /> Trouver des solutions
       </Link>

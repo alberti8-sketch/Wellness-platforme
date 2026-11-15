@@ -357,7 +357,7 @@ export default function CartePage() {
         {account && (
           <Link
             href={`/dashboard?ville=${account.city_code}`}
-            className="group flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_8px_30px_rgba(21,23,28,0.18)] transition hover:bg-[#2A2D35]"
+            className="group flex items-center gap-3 rounded-2xl bg-primary px-4 py-3 text-white shadow-[0_8px_30px_rgba(27,63,102,0.25)] transition hover:bg-brand-700"
           >
             <LayoutGrid className="h-5 w-5 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1">

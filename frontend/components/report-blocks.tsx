@@ -16,7 +16,7 @@ export function ReportActions({ code, name }: { code: string; name: string }) {
       <a href={`/rapport/pdf?ville=${code}`} target="_blank" rel="noopener" className="secondary-btn h-10" title={`Rapport de ${name} au format A4, à enregistrer en PDF`}>
         <Printer className="h-4 w-4" aria-hidden /> Exporter en PDF
       </a>
-      <Link href={`/assistant?ville=${code}`} className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-ink px-4 text-sm font-semibold text-white hover:bg-black">
+      <Link href={`/assistant?ville=${code}`} className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-primary px-4 text-sm font-semibold text-white hover:bg-brand-700">
         <Lightbulb className="h-4 w-4" aria-hidden /> Trouver des solutions
       </Link>
     </div>
@@ -287,7 +287,7 @@ export function ComparisonCard({ report }: { report: Report }) {
       actions={
         <Link
           href={`/assistant?ville=${report.code}&question=${encodeURIComponent(question)}`}
-          className="no-print inline-flex h-10 items-center gap-2 rounded-[10px] bg-ink px-4 text-sm font-semibold text-white hover:bg-black"
+          className="no-print inline-flex h-10 items-center gap-2 rounded-[10px] bg-primary px-4 text-sm font-semibold text-white hover:bg-brand-700"
         >
           <Lightbulb className="h-4 w-4" aria-hidden /> Solutions inspirées de ces villes
         </Link>

@@ -4,13 +4,21 @@
 
 html,
 body {
-  background: #f6f6f3;
+  background: #f7f9fb;
   color: #15171c;
   -webkit-font-smoothing: antialiased;
 }
+/* Titles: Bricolage Grotesque; body text: Radio Canada Big. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Bricolage Grotesque", "Radio Canada Big", system-ui, sans-serif;
+}
+
+/* Radio Canada Big's tabular figures are spaced too wide: numbers keep the proportional figures. */
 .num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+  font-variant-numeric: normal;
 }
 button:focus-visible,
 a:focus-visible,
@@ -24,7 +32,7 @@ input[type="range"] {
 }
 
 .leaflet-container {
-  font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Radio Canada Big", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: #e9e9e4;
 }
 

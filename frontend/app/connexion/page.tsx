@@ -158,7 +158,7 @@ export default function ConnexionPage() {
             <button
               type="submit"
               disabled={busy}
-              className="mt-1 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-ink font-semibold text-white hover:bg-black disabled:opacity-60"
+              className="mt-1 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
             >
               {busy ? "Un instant…" : mode === "login" ? "Se connecter" : "Créer mon compte"}
               {!busy && <ArrowRight className="h-[18px] w-[18px]" aria-hidden />}

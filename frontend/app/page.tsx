@@ -61,7 +61,7 @@ export default function LandingPage() {
                 Un score de 1 à 10 pour votre commune, pour la comparer à des communes semblables et anticiper les maladies chroniques.
               </p>
               <div className="flex flex-wrap items-center gap-3">
-                <Link href="/connexion" className="inline-flex h-[52px] items-center gap-2.5 rounded-xl bg-ink px-6 font-semibold text-white hover:bg-black">
+                <Link href="/connexion" className="inline-flex h-[52px] items-center gap-2.5 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-brand-700">
                   Se connecter <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
                 </Link>
                 <Link href="/connexion?mode=inscription" className="inline-flex h-[52px] items-center rounded-xl border border-hairline bg-white px-6 font-semibold text-ink hover:bg-hover">

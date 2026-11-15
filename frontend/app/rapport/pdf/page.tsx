@@ -77,7 +77,7 @@ function Doc({ r }: { r: Report }) {
     <div className="report-doc mx-auto max-w-[210mm] bg-white px-[14mm] py-[12mm] text-ink">
       <div className="no-print mb-6 flex items-center justify-between gap-3 rounded-xl bg-plane px-4 py-3 text-sm">
         <span className="text-ink-2">Dans la fenêtre d&apos;impression, choisissez « Enregistrer au format PDF ».</span>
-        <button onClick={() => window.print()} className="inline-flex h-9 items-center gap-2 rounded-lg bg-ink px-3 font-semibold text-white">
+        <button onClick={() => window.print()} className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3 font-semibold text-white hover:bg-brand-700">
           <Printer className="h-4 w-4" aria-hidden /> Imprimer / PDF
         </button>
       </div>
