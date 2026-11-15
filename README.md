@@ -155,6 +155,47 @@ données brutes (ignorés automatiquement sinon), télécharger localement :
 | `VT_2024_cyclabilite_stationnement_commune.csv` (Vélo & Territoires) | `data/sources/` | idem |
 | `DATA & PONDERATION/2024_effectif-departemental-….xls` | `context/` | `scripts/build_reference_data.py` + tests CNAM réels |
 
+## Rapport, maladies et solutions (assistant IA)
+
+- **Maladies** (`/maladies`, ouverte dès la connexion) : les maladies chroniques de l'Assurance Maladie (cardioneurovasculaires,
+  diabète, cancers, psychiatriques, respiratoires, neurologiques, inflammatoires/rares/VIH, foie-pancréas, insuffisance
+  rénale, plus l'hypertension/cholestérol traités) pour le département de la commune, face à la France (`dept=999`,
+  `region=99`), avec l'évolution depuis 2015, le nombre de personnes estimé dans la commune et les habitudes de vie liées.
+  Chaque maladie a un bouton « Trouver des solutions ». `GET /api/maladies?ville=`.
+- **Vue d'ensemble = rapport de la commune** (`/dashboard?ville=`, par défaut la commune du compte) : constats calculés
+  (points forts, à améliorer), score et dimensions, maladies, alimentation, dépistage ; export PDF (impression) et Markdown.
+  `GET /api/rapport?ville=` (JSON) et `GET /api/rapport.md?ville=` (export).
+- **Solutions** (`/assistant`) : chatbot qui propose des actions municipales à partir du rapport de la commune et de la base de
+  preuves de l'équipe (`data/evidence/preuves.json`, généré par `python -m scripts.build_evidence` depuis la feuille « Liens
+  maladies-habitudes » du classeur prototype 2, + chiffres INJEP). LLM via **OpenRouter** : `OPENROUTER_API_KEY` dans
+  `backend/.env` (ignoré par Git), `OPENROUTER_MODEL` facultatif (par défaut un modèle gratuit,
+  `nvidia/nemotron-3-ultra-550b-a55b:free`, 30-60 s par réponse ; avec des crédits, `openrouter/auto` ou un autre modèle).
+  Seules les données publiques agrégées de la commune sont envoyées (jamais le compte). Consignes : chiffres du rapport
+  uniquement, preuves de la base uniquement, pas de conseil médical individuel. Réponse structurée (synthèse, priorités avec constat, action, preuve, horizon,
+  ville semblable qui fait mieux) affichée en cartes, schéma « levier → maladies » et calendrier.
+  **Historique** : chaque conversation est enregistrée en base (`chat_conversations`), par utilisateur (compte ou clé),
+  reprise ou supprimée depuis le panneau « Historique ». `POST /api/assistant/chat` (`question`, `conversation_id`),
+  `GET /api/assistant/conversations`, `GET|DELETE /api/assistant/conversations/{id}`.
+
+## Comptes (maires et équipes municipales)
+
+L'outil s'adresse aux **maires élus et à leurs équipes**. Page `/connexion` : **connexion** (e-mail, mot de passe) ou
+**inscription** (e-mail, mot de passe de 8 caractères minimum, fonction : maire, adjoint·e, conseiller·e municipal·e, DGS,
+agent ; commune parmi celles suivies). Après connexion, l'app ouvre directement la page **Maladies** de la commune
+(`/maladies?ville=<code>`) ; la vue d'ensemble est le rapport de la commune. « Accéder à la démo » garde l'accès en un clic (clés de démo).
+
+| Endpoint | Rôle |
+|---|---|
+| `GET /api/auth/options` | Public : fonctions et communes proposées à l'inscription |
+| `POST /api/auth/register`, `POST /api/auth/login` | Crée le compte / ouvre une session → `{token, user}` |
+| `GET /api/auth/me`, `POST /api/auth/logout` | Profil de la session / fin de session |
+
+Mots de passe hachés en PBKDF2-HMAC-SHA256 (sel aléatoire, 310 000 itérations) ; jeton de session aléatoire envoyé en
+`Authorization: Bearer`, seule son empreinte SHA-256 est stockée (valable 30 jours, `WELLNESS_SESSION_DAYS`). Les comptes
+sont en lecture seule (rôle viewer) sur le tenant `WELLNESS_USER_TENANT` (par défaut l'ORS B2G) ; l'import de données
+reste aux clés contributeur / admin. À ajouter avant une mise en production : limitation des tentatives de connexion,
+vérification de l'e-mail et mot de passe oublié.
+
 ## Interface
 
 Landing publique (`/`) : un titre, une phrase, un bouton « Se connecter » (connexion de démo en un clic).
@@ -164,7 +205,6 @@ Une fois connecté, la barre latérale ne propose que **4 entrées**, dans l'ord
 |---|---|---|
 | Vue d'ensemble | `/dashboard` | Indice moyen, villes Best / Middle / Bad, scores par dimension, extrêmes, évolution du diabète |
 | Carte de France | `/carte` | **Carte plein écran par domaine** (style baromètre vélo FUB) : 5 401 communes de métropole (≥ 2 000 hab.) en cercles colorés par classe (vert = favorable), panneau flottant Marche / Vélo / Alimentation / Sport / Santé / Contexte, chiffre clé, légende ; recherche d'une commune (« Nos villes » en raccourci), zoom et fiche avec les pastilles de tous les domaines. Les indicateurs départementaux (diabète, prévention, Framingham, pauvreté, vétérinaires) s'affichent en choroplèthe des départements |
-| Comparer | `/classement` | Un seul sélecteur « Villes à comparer » (2 à 4 villes), radar et tableau d'écarts, puis le classement complet |
 | Prédire | `/prediction` | Arbre de décision, chemin d'une ville, simulateur « Et si… ? » |
 
 Hors du menu, accessibles par des liens : `/ponderation` (« Comment l'indice est calculé »), `/collect` et `/processing`
@@ -195,9 +235,8 @@ l'indicateur n'a pas de sens favorable : restaurants, densité). Le baromètre I
 **Vue d'ensemble** : recherche d'une ville (« Rechercher une ville », lien `?ville=35238`) → vue de la ville : indice, rang,
 écart à la moyenne, dimensions face à la moyenne, évolution du diabète, **score alimentation** (commune) et **score dépistage**
 (département : rang moyen des dépistages du sein, colorectal et du col de l'utérus, Santé publique France). Sans ville
-choisie, un tableau compare les deux scores pour toutes les villes. **Comparer** : par défaut, la ville suivie la plus proche
-de l'utilisateur (géolocalisation, position gardée dans le navigateur) face à la ville la plus semblable (même type,
-population et densité proches). **Prédire** : prévalence en % et en nombre de personnes (prévalence × population).
+choisie, un tableau compare les deux scores pour toutes les villes. La comparaison avec les 3 villes suivies les plus
+semblables (même type, population et densité proches) est dans le rapport, en courbes. **Prédire** : prévalence en % et en nombre de personnes (prévalence × population).
 
 ## Prédiction du diabète (arbre de décision) — `/prediction`
 
